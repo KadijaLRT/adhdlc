@@ -117,6 +117,7 @@ export const selectActiveGymId = (s: AppState) => s.activeGymId;
 export const selectWeekdayAssignment = (s: AppState) => s.weekdayAssignment || [null, 'A', 'B', 'C', 'D', 'E', 'F'];
 export const selectTextSize = (s: AppState) => s.textSize || 'medium';
 export const selectReduceMotion = (s: AppState) => s.reduceMotion ?? false;
+export const selectNotificationsEnabled = (s: AppState) => s.notificationsEnabled ?? false;
 export const selectHighContrast = (s: AppState) => s.highContrast ?? false;
 export const selectDyslexiaFont = (s: AppState) => s.dyslexiaFont ?? false;
 export const selectColorScheme = (s: AppState) => s.colorScheme || 'light';

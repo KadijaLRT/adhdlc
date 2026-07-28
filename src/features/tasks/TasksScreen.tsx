@@ -1,7 +1,8 @@
 import { useMemo, useState } from 'react';
 import { View, Text, Pressable, TextInput, FlatList, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAppStore, selectTasks, selectEnergyLevel, type TaskCategory, type TaskPriority } from '@/store/index';
+import { useAppStore, selectTasks, selectEnergyLevel, type TaskCategory, type TaskPriority, type MotivatorTag } from '@/store/index';
+import { MOTIVATOR_OPTIONS } from '@/content/toolkitContent';
 import { suggestNextTask } from './suggestNextTask';
 import { Heading } from '@/shared/components/Heading';
 
@@ -38,9 +39,10 @@ function isImportant(task: { priority?: TaskPriority }): boolean {
 function TaskRow({
   task, onPress, onToggle,
 }: {
-  task: { id: string; title: string; isComplete: boolean; priority?: TaskPriority; subSteps?: { isComplete: boolean }[] };
+  task: { id: string; title: string; isComplete: boolean; priority?: TaskPriority; motivators?: MotivatorTag[]; subSteps?: { isComplete: boolean }[] };
   onPress: () => void; onToggle: () => void;
 }) {
+  const motivatorEmojis = (task.motivators || []).map((m) => MOTIVATOR_OPTIONS.find((o) => o.id === m)?.emoji).filter(Boolean);
   return (
     <Pressable onPress={onPress} className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900">
       <Pressable
@@ -61,6 +63,9 @@ function TaskRow({
           </Text>
         )}
       </View>
+      {motivatorEmojis.length > 0 && (
+        <Text className="text-sm">{motivatorEmojis.join(' ')}</Text>
+      )}
     </Pressable>
   );
 }
@@ -75,20 +80,26 @@ export default function TasksScreen() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('nice');
   const [selectedCategory, setSelectedCategory] = useState<TaskCategory>('general');
+  const [selectedMotivator, setSelectedMotivator] = useState<MotivatorTag | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'priority' | 'matrix'>('list');
   const [collapsedGroups, setCollapsedGroups] = useState<Set<TaskPriority>>(new Set());
 
   const suggested = useMemo(() => suggestNextTask(tasks, energyLevel), [tasks, energyLevel]);
+
+  const anyMotivatorsTagged = useMemo(() => (tasks || []).some((t) => (t.motivators?.length || 0) > 0), [tasks]);
 
   const filteredTasks = useMemo(() => {
     const withoutSuggested = (tasks || []).filter((t) => t.id !== suggested?.id);
     const byCategory = selectedCategory === 'general'
       ? withoutSuggested
       : withoutSuggested.filter((t) => (t.category || 'general') === selectedCategory);
-    const incomplete = byCategory.filter((t) => !t.isComplete);
-    const complete = byCategory.filter((t) => t.isComplete);
+    const byMotivator = selectedMotivator
+      ? byCategory.filter((t) => (t.motivators || []).includes(selectedMotivator))
+      : byCategory;
+    const incomplete = byMotivator.filter((t) => !t.isComplete);
+    const complete = byMotivator.filter((t) => t.isComplete);
     return [...incomplete, ...complete];
-  }, [tasks, selectedCategory, suggested]);
+  }, [tasks, selectedCategory, selectedMotivator, suggested]);
 
   const incompleteFiltered = useMemo(() => filteredTasks.filter((t) => !t.isComplete), [filteredTasks]);
 
@@ -225,6 +236,27 @@ export default function TasksScreen() {
           );
         }}
       />
+
+      {anyMotivatorsTagged && (
+        <FlatList
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          data={MOTIVATOR_OPTIONS}
+          keyExtractor={(item) => item.id}
+          contentContainerStyle={{ gap: 8, marginBottom: 12 }}
+          renderItem={({ item }) => {
+            const isActive = selectedMotivator === item.id;
+            return (
+              <Pressable
+                onPress={() => setSelectedMotivator(isActive ? null : item.id)}
+                className={isActive ? 'bg-emerald-400/10 border-2 border-emerald-400 rounded-full py-2 px-4' : 'bg-white border-2 border-transparent rounded-full py-2 px-4 dark:bg-slate-900'}
+              >
+                <Text className={isActive ? 'text-emerald-700 dark:text-emerald-400 text-xs' : 'text-slate-700 text-xs dark:text-slate-300'}>{item.emoji} {item.label}</Text>
+              </Pressable>
+            );
+          }}
+        />
+      )}
 
       <View className="flex-row gap-2 mb-3">
         {([

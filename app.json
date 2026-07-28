@@ -37,7 +37,11 @@
     },
     "plugins": [
       "expo-router",
-      ["expo-camera", { "cameraPermission": "Used only to scan a food barcode when logging what you ate — nothing is recorded or stored." }]
+      ["expo-camera", { "cameraPermission": "Used only to scan a food barcode when logging what you ate — nothing is recorded or stored." }],
+      ["expo-notifications", {
+        "icon": "./assets/icon.png",
+        "color": "#4f46e5"
+      }]
     ],
     "experiments": { "typedRoutes": true }
   }

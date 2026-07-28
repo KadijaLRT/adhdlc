@@ -1,18 +1,27 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAppStore, selectAdhdFocusModeEnabled, selectSetLogs } from '@/store/index';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
-import { getWarmupForGroups } from '@/content/warmupContent';
 import InlineStepTimer from '@/shared/components/InlineStepTimer';
 import { Heading } from '@/shared/components/Heading';
+import { getRepository } from '@/core/storage';
+import { createWriteGuard } from '@/core/storage/writeGuard';
+import type { WorkoutSessionDraft, WorkoutSessionSetRow } from '@/store/slices/workoutSlice';
 
-interface SetRow {
-  weight: string;
-  reps: string;
-  done: boolean;
-  side?: 'right' | 'left'; // set for unilateral exercises (Glute Kickback, Bulgarian Split Squat, etc.) — each "set" becomes a distinct Right and Left entry rather than one row silently meaning "do both sides"
+type SetRow = WorkoutSessionSetRow;
+
+/**
+ * Identifies which in-progress session a saved draft belongs to. Built
+ * from what's actually stable for a given day (program + day title + the
+ * original exercise set), not from sessionStartedAt — sessionStartedAt is
+ * *restored from* the matching draft, so it can't also be part of the key
+ * used to find it. Sorting the exercise ids means the key doesn't change
+ * just because a route re-serialized the list in a different order.
+ */
+export function buildSessionKey(programId: string | undefined, dayTitle: string | undefined, exerciseIds: string[]): string {
+  return `${programId || ''}|${dayTitle || ''}|${[...exerciseIds].sort().join(',')}`;
 }
 
 function formatElapsed(totalSeconds: number): string {
@@ -72,16 +81,20 @@ export default function WorkoutDaySession({
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState('');
   const [swappingId, setSwappingId] = useState<string | null>(null);
-  const [warmupExpanded, setWarmupExpanded] = useState(true);
-  const [warmupDone, setWarmupDone] = useState(false);
 
-  const dayMuscleGroups = useMemo(
-    () => Array.from(new Set(exerciseIds.map((id) => WORKOUT_EXERCISES?.[id]?.group).filter((g): g is string => !!g))),
-    [exerciseIds]
-  );
-  const warmup = useMemo(() => getWarmupForGroups(dayMuscleGroups), [dayMuscleGroups]);
+  // The session's real start time — normally seeded from the
+  // sessionStartedAt route param, but overwritten with the original
+  // draft's timestamp if an in-progress session is restored below, so the
+  // elapsed timer reflects when the workout actually began, not when this
+  // screen happened to remount.
+  const [startedAtMs, setStartedAtMs] = useState<number>(() => (sessionStartedAt ? new Date(sessionStartedAt).getTime() : Date.now()));
 
-  const startedAtMs = useMemo(() => (sessionStartedAt ? new Date(sessionStartedAt).getTime() : Date.now()), [sessionStartedAt]);
+  const sessionKey = useMemo(() => buildSessionKey(programId, dayTitle, exerciseIds), [programId, dayTitle, exerciseIds]);
+  const [isDraftChecked, setIsDraftChecked] = useState(false);
+  const persistDraft = useRef(createWriteGuard(async (draft: WorkoutSessionDraft | null) => {
+    const repo = await getRepository();
+    await repo.saveWorkoutSessionDraft(draft);
+  })).current;
 
   // Per-exercise set rows, seeded from each exercise's default set
   // count and (if flagged) lightened by one — but freely add/remove
@@ -97,6 +110,50 @@ export default function WorkoutDaySession({
     }
     return initial;
   });
+
+  // Restore an in-progress session, if one exists for this exact day.
+  // Runs once on mount, before the autosave effect below is allowed to
+  // write anything — otherwise a fresh, empty default state would
+  // overwrite the very draft this is trying to recover.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const repo = await getRepository();
+        const draft = await repo.getWorkoutSessionDraft();
+        if (!cancelled && draft && draft.sessionKey === sessionKey) {
+          if (draft.sessionExerciseIds?.length) setSessionExerciseIds(draft.sessionExerciseIds);
+          if (draft.rowsByExercise) setRowsByExercise(draft.rowsByExercise);
+          if (draft.sessionStartedAt) setStartedAtMs(new Date(draft.sessionStartedAt).getTime());
+        }
+      } catch (error) {
+        console.error('WorkoutDaySession: failed to restore in-progress session draft', error);
+      } finally {
+        if (!cancelled) setIsDraftChecked(true);
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // Autosaves the entire in-progress session on every change — typed
+  // weight/reps, checked-off sets, added/removed/swapped exercises — so
+  // exiting to the phone Home Screen (which can kill the app process
+  // outright, not just background it) never loses anything beyond what
+  // was true a moment before. Gated on isDraftChecked so this can't fire
+  // with fresh default state before the restore check above has run.
+  useEffect(() => {
+    if (!isDraftChecked) return;
+    persistDraft({
+      sessionKey,
+      sessionStartedAt: new Date(startedAtMs).toISOString(),
+      programId,
+      dayTitle,
+      sessionExerciseIds,
+      rowsByExercise,
+      updatedAt: new Date().toISOString(),
+    });
+  }, [isDraftChecked, sessionKey, startedAtMs, programId, dayTitle, sessionExerciseIds, rowsByExercise, persistDraft]);
 
   useEffect(() => {
     const interval = setInterval(() => setElapsedSeconds(Math.max(0, Math.round((Date.now() - startedAtMs) / 1000))), 1000);
@@ -230,6 +287,10 @@ export default function WorkoutDaySession({
       setSessionRecorded(true);
       await recordProgramSession();
     }
+    // Routed through the same write-guarded persistDraft (not a direct
+    // repo call) so this clear can never be overtaken by an autosave that
+    // was still in flight from a change made a moment before Finish was tapped.
+    await persistDraft(null);
     router?.replace?.('/(tabs)/workout');
   };
 
@@ -261,26 +322,6 @@ export default function WorkoutDaySession({
               <Text className="text-amber-600 dark:text-amber-400 text-center text-sm font-medium">{recordBanner}</Text>
             </View>
           )}
-
-          <View className="bg-white dark:bg-slate-900 rounded-2xl mb-3 overflow-hidden">
-            <Pressable onPress={() => setWarmupExpanded(!warmupExpanded)} className="p-4 flex-row items-center justify-between">
-              <View className="flex-row items-center gap-2 flex-1 pr-2">
-                <View className={warmupDone ? 'w-6 h-6 rounded-full bg-emerald-500 items-center justify-center' : 'w-6 h-6 rounded-full border-2 border-stone-300 dark:border-slate-700 items-center justify-center'}>
-                  {warmupDone && <Text className="text-white text-xs">✓</Text>}
-                </View>
-                <View className="flex-1">
-                  <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold">🔥 {warmup.title}</Text>
-                  <Text className="text-slate-500 text-xs">{warmup.steps.length} moves, matched to today's session</Text>
-                </View>
-              </View>
-              <Text className="text-slate-400 text-xs">{warmupExpanded ? '▲' : '▼'}</Text>
-            </Pressable>
-            {warmupExpanded && (
-              <View className="px-4 pb-4">
-                <InlineStepTimer steps={warmup.steps} onFinish={() => setWarmupDone(true)} />
-              </View>
-            )}
-          </View>
 
           {sessionExerciseIds.map((exerciseId) => {
             const exercise = WORKOUT_EXERCISES?.[exerciseId];

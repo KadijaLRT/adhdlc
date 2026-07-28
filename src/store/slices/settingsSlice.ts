@@ -15,6 +15,7 @@ export interface SettingsState {
   colorScheme: ColorSchemePreference;
   dateFormat: DateFormat;
   unitSystem: UnitSystem;
+  notificationsEnabled: boolean;
 }
 
 export interface SettingsSlice extends SettingsState {
@@ -25,6 +26,7 @@ export interface SettingsSlice extends SettingsState {
   setColorScheme: (scheme: ColorSchemePreference) => Promise<void>;
   setDateFormat: (format: DateFormat) => Promise<void>;
   setUnitSystem: (system: UnitSystem) => Promise<void>;
+  setNotificationsEnabled: (enabled: boolean) => Promise<void>;
 }
 
 const DEFAULT_STATE: SettingsState = {
@@ -35,6 +37,7 @@ const DEFAULT_STATE: SettingsState = {
   colorScheme: 'light',
   dateFormat: 'MM-DD-YYYY',
   unitSystem: 'imperial',
+  notificationsEnabled: false,
 };
 
 const persist = createWriteGuard(async (state: SettingsState) => {
@@ -51,6 +54,7 @@ function currentState(get: () => SettingsState): SettingsState {
     colorScheme: get().colorScheme || 'light',
     dateFormat: get().dateFormat || 'MM-DD-YYYY',
     unitSystem: get().unitSystem || 'imperial',
+    notificationsEnabled: get().notificationsEnabled ?? false,
   };
 }
 
@@ -89,6 +93,11 @@ export const createSettingsSlice: StateCreator<SettingsSlice> = (set, get) => ({
   },
   setUnitSystem: async (unitSystem) => {
     const nextState = { ...currentState(get), unitSystem };
+    set(nextState);
+    await persist(nextState);
+  },
+  setNotificationsEnabled: async (notificationsEnabled) => {
+    const nextState = { ...currentState(get), notificationsEnabled };
     set(nextState);
     await persist(nextState);
   },

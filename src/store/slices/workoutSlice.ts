@@ -31,6 +31,30 @@ export interface RecoveryLogEntry {
   sorenessLevel?: number; // 1 (barely) – 5 (a lot) — self-reported, never diagnostic
 }
 
+export interface WorkoutSessionSetRow {
+  weight: string;
+  reps: string;
+  done: boolean;
+  side?: 'right' | 'left';
+}
+
+// A single in-progress workout session, autosaved continuously so nothing
+// typed or checked off is lost if the app/PWA gets killed mid-workout
+// (e.g. going to the phone Home Screen) before "Finish workout" is tapped.
+// Only one session is ever in progress at a time, so this is a single slot,
+// not a list — sessionKey identifies which day/program/exercise-set it
+// belongs to, so a stale draft from a different day is never mistakenly
+// restored into a new session.
+export interface WorkoutSessionDraft {
+  sessionKey: string;
+  sessionStartedAt: string;
+  programId?: string;
+  dayTitle?: string;
+  sessionExerciseIds: string[];
+  rowsByExercise: Record<string, WorkoutSessionSetRow[]>;
+  updatedAt: string;
+}
+
 export interface WorkoutState {
   setLogs: SetLogEntry[];
   personalRecords: PersonalRecord[];

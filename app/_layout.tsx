@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAppStore, selectDyslexiaFont, selectColorScheme, selectIsHydrated, selectStorageWorking } from '@/store/index';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import AvivaFloatingButton from '@/features/aviva/AvivaFloatingButton';
+import NotificationsSync from '@/features/notifications/NotificationsSync';
 import { completeNativeSessionFromUrl } from '@/core/supabase/client';
 
 export default function RootLayout() {
@@ -89,6 +90,7 @@ export default function RootLayout() {
           )}
           <Stack screenOptions={{ headerShown: false }} />
           {!hideFloatingButton && <AvivaFloatingButton />}
+          <NotificationsSync />
         </View>
       </QueryClientProvider>
     </ErrorBoundary>

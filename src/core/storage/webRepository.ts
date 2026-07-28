@@ -44,6 +44,13 @@ export const webRepository: TaskRepository = {
   saveEnergyLogs: async (v) => writeJson('energyLogs', v || []),
   getCycleLogs: async () => readJson('cycleLogs', []),
   saveCycleLogs: async (v) => writeJson('cycleLogs', v || []),
+  // The on/off toggle itself, separate from the logs it gates. Previously
+  // this had no storage key at all — only cycleLogs was persisted — so the
+  // switch always reverted to its default (off) on reload, and re-enabling
+  // it right in the middle of an Apple Health import discarded the
+  // in-progress screen along with it.
+  getCycleTrackingEnabled: async () => readJson('cycleTrackingEnabled', false),
+  saveCycleTrackingEnabled: async (v) => writeJson('cycleTrackingEnabled', !!v),
   getStressLogs: async () => readJson('stressLogs', []),
   saveStressLogs: async (v) => writeJson('stressLogs', v || []),
   getWellnessPreferences: async () => readJson('wellnessPreferences', null),
@@ -70,6 +77,12 @@ export const webRepository: TaskRepository = {
   saveNutritionFitnessState: async (v) => writeJson('nutritionFitnessState', v),
   getWorkoutState: async () => readJson('workoutState', null),
   saveWorkoutState: async (v) => writeJson('workoutState', v),
+  // Separate key from workoutState itself: this is transient in-progress
+  // session data (unchecked weight/reps, which exercises were swapped in
+  // for today), autosaved on every change and cleared once the session is
+  // finished — not a permanent record like setLogs/personalRecords.
+  getWorkoutSessionDraft: async () => readJson('workoutSessionDraft', null),
+  saveWorkoutSessionDraft: async (v) => writeJson('workoutSessionDraft', v),
   getProgramState: async () => readJson('programState', null),
   saveProgramState: async (v) => writeJson('programState', v),
   getGroceryState: async () => readJson('groceryState', null),

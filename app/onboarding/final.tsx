@@ -126,7 +126,7 @@ export default function FinalScreen() {
       }
 
       if (o.cycleTrackingEnabled) {
-        setCycleTrackingEnabled(true);
+        await setCycleTrackingEnabled(true);
       }
 
       // Medication times become real Schedule items immediately — a

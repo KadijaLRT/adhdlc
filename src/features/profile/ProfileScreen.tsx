@@ -58,6 +58,10 @@ export default function ProfileScreen() {
 
         <Subheading className="mb-3">Settings</Subheading>
         <View className="gap-2 mb-6">
+          <Pressable onPress={() => router?.push?.('/settings/notifications')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+            <Text className="text-slate-800 dark:text-slate-200 text-sm">🔔 Notifications</Text>
+            <Text className="text-slate-600 text-xs">→</Text>
+          </Pressable>
           <Pressable onPress={() => router?.push?.('/settings/accessibility')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
             <Text className="text-slate-800 dark:text-slate-200 text-sm">♿ Accessibility</Text>
             <Text className="text-slate-600 text-xs">→</Text>

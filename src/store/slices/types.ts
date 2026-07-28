@@ -4,13 +4,18 @@ export type BodyDoublingRoom = 'eat' | 'work' | 'gym' | null;
 export type BloodType = 'O+' | 'O-' | 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-';
 export type TaskPriority = 'critical' | 'important' | 'nice';
 export type TaskCategory = 'home' | 'work' | 'school' | 'health' | 'errands' | 'adhd' | 'general';
+// PINCH: what the ADHD brain actually finds compelling enough to get
+// activated (Dodson's "interest-based nervous system"), separate from
+// priority/category which are about what matters, not what motivates.
+// Multiple can apply to one task — Play and Novelty often overlap.
+export type MotivatorTag = 'play' | 'interest' | 'novelty' | 'connection' | 'urgency';
 
 export interface SubStep { id: string; title: string; isComplete: boolean; }
 export interface Task {
   id: string; title: string; notes?: string; isComplete: boolean;
   estimatedMinutes?: number; realMinutes?: number; energyRequired: EnergyLevel;
   createdAt: string; scheduledFor?: string; subSteps: SubStep[];
-  priority?: TaskPriority; category?: TaskCategory;
+  priority?: TaskPriority; category?: TaskCategory; motivators?: MotivatorTag[];
 }
 export interface RoutineStreak {
   routineId: string; count: number; lastCompletedDate: string | null;

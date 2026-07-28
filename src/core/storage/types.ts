@@ -11,7 +11,7 @@ import type { SchoolState } from '@/store/slices/schoolSlice';
 import type { BodyProgressState } from '@/store/slices/bodyProgressSlice';
 import type { MomentumState } from '@/store/slices/momentumSlice';
 import type { NutritionFitnessState } from '@/store/slices/nutritionFitnessSlice';
-import type { WorkoutState } from '@/store/slices/workoutSlice';
+import type { WorkoutState, WorkoutSessionDraft } from '@/store/slices/workoutSlice';
 import type { ProgramProgressState } from '@/store/slices/programSlice';
 import type { GroceryState } from '@/store/slices/grocerySlice';
 import type { NutritionTrackingState } from '@/store/slices/nutritionTrackingSlice';
@@ -44,6 +44,8 @@ export interface TaskRepository {
   saveEnergyLogs(logs: EnergyLogEntry[]): Promise<void>;
   getCycleLogs(): Promise<CycleLogEntry[]>;
   saveCycleLogs(logs: CycleLogEntry[]): Promise<void>;
+  getCycleTrackingEnabled(): Promise<boolean>;
+  saveCycleTrackingEnabled(enabled: boolean): Promise<void>;
   getStressLogs(): Promise<StressLogEntry[]>;
   saveStressLogs(logs: StressLogEntry[]): Promise<void>;
   getWellnessPreferences(): Promise<WellnessPreferences | null>;
@@ -70,6 +72,8 @@ export interface TaskRepository {
   saveNutritionFitnessState(state: NutritionFitnessState): Promise<void>;
   getWorkoutState(): Promise<WorkoutState | null>;
   saveWorkoutState(state: WorkoutState): Promise<void>;
+  getWorkoutSessionDraft(): Promise<WorkoutSessionDraft | null>;
+  saveWorkoutSessionDraft(draft: WorkoutSessionDraft | null): Promise<void>;
   getProgramState(): Promise<ProgramProgressState | null>;
   saveProgramState(state: ProgramProgressState): Promise<void>;
   getGroceryState(): Promise<GroceryState | null>;

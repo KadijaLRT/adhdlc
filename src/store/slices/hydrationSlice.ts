@@ -53,12 +53,12 @@ export const createHydrationSlice: StateCreator<FullState, [], [], HydrationSlic
     try {
       const repo = await getRepository();
       const [
-        tasks, streaks, milestones, energyLogs, cycleLogs, stressLogs,
+        tasks, streaks, milestones, energyLogs, cycleLogs, cycleTrackingEnabledStored, stressLogs,
         wellnessPreferences, profile, routines, rpgState, settingsState, reflectionState,
         nutritionFitnessState, workoutState, programState, groceryState, scheduleState, schoolState, bodyProgressState, momentumState, nutritionTrackingState, countdownState,
       ] = await Promise.all([
           repo.getTasks(), repo.getStreaks(), repo.getMilestones(),
-          repo.getEnergyLogs(), repo.getCycleLogs(), repo.getStressLogs(),
+          repo.getEnergyLogs(), repo.getCycleLogs(), repo.getCycleTrackingEnabled(), repo.getStressLogs(),
           repo.getWellnessPreferences(), repo.getProfile(), repo.getRoutines(), repo.getRpgState(), repo.getSettingsState(), repo.getReflectionState(),
           repo.getNutritionFitnessState(), repo.getWorkoutState(), repo.getProgramState(), repo.getGroceryState(), repo.getScheduleState(), repo.getSchoolState(), repo.getBodyProgressState(), repo.getMomentumState(), repo.getNutritionTrackingState(), repo.getCountdownState(),
         ]);
@@ -77,6 +77,7 @@ export const createHydrationSlice: StateCreator<FullState, [], [], HydrationSlic
         // selection.
         energyLevel: (energyLogs || []).find((l) => l.date === today())?.energyLevel ?? state.energyLevel,
         cycleLogs: cycleLogs || [],
+        cycleTrackingEnabled: cycleTrackingEnabledStored ?? state.cycleTrackingEnabled,
         stressLogs: stressLogs || [],
         wellnessPreferences: wellnessPreferences || state.wellnessPreferences,
         profile: profile || null,

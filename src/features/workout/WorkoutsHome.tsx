@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, ScrollView, FlatList } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import {
   useAppStore, selectActiveProgramId, selectFitnessPreferences, selectFitnessCardDismissed, selectEnergyLevel,
   selectGyms, selectActiveGymId, selectSetLogs, selectWeekdayAssignment,
@@ -16,6 +16,9 @@ import PersonalizeFitnessCard from './PersonalizeFitnessCard';
 import RecoveryPlanCard from './RecoveryPlanCard';
 import InlineStepTimer from '@/shared/components/InlineStepTimer';
 import { Heading, Subheading } from '@/shared/components/Heading';
+import { getRepository } from '@/core/storage';
+import { buildSessionKey } from './WorkoutDaySession';
+import type { WorkoutSessionDraft } from '@/store/slices/workoutSlice';
 
 function DayStrip({
   days, activeIndex, onJumpTo, onEditDay,
@@ -51,9 +54,9 @@ function DayStrip({
 }
 
 function DayCard({
-  day, onStart, onLayout, programId,
+  day, onStart, onLayout, programId, isResumable,
 }: {
-  day: WeeklySplitDay; onStart: () => void; onLayout: (y: number) => void; programId?: string;
+  day: WeeklySplitDay; onStart: () => void; onLayout: (y: number) => void; programId?: string; isResumable?: boolean;
 }) {
   const router = useRouter();
   const setLogs = useAppStore(selectSetLogs);
@@ -128,8 +131,13 @@ function DayCard({
         </View>
       )}
 
+      {isResumable && (
+        <View className="bg-indigo-400/10 border border-indigo-400 rounded-xl p-3 mb-3">
+          <Text className="text-indigo-700 dark:text-indigo-300 text-xs font-medium">↩ Workout in progress — pick up right where you left off.</Text>
+        </View>
+      )}
       <Pressable onPress={onStart} className="bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500">
-        <Text className="text-white font-semibold">▶ Start Day {day.dayLetter}</Text>
+        <Text className="text-white font-semibold">{isResumable ? `▶ Resume Day ${day.dayLetter}` : `▶ Start Day ${day.dayLetter}`}</Text>
       </Pressable>
     </View>
   );
@@ -155,6 +163,28 @@ export default function WorkoutsHome() {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [hasCheckedAutoAssign, setHasCheckedAutoAssign] = useState(false);
+  const [inProgressDraft, setInProgressDraft] = useState<WorkoutSessionDraft | null>(null);
+
+  // Re-checked on every focus, not just mount — tab screens in expo-router
+  // stay mounted when you switch tabs, so a mount-only check would miss a
+  // session that got started, finished, or abandoned while this tab
+  // wasn't the active one. useFocusEffect fires both on first focus and
+  // every time navigation returns here.
+  useFocusEffect(
+    useCallback(() => {
+      let cancelled = false;
+      (async () => {
+        try {
+          const repo = await getRepository();
+          const draft = await repo.getWorkoutSessionDraft();
+          if (!cancelled) setInProgressDraft(draft);
+        } catch (error) {
+          console.error('WorkoutsHome: failed to check for an in-progress workout draft', error);
+        }
+      })();
+      return () => { cancelled = true; };
+    }, [])
+  );
 
   const scrollRef = useRef<ScrollView>(null);
   const cardOffsets = useRef<Record<number, number>>({});
@@ -199,13 +229,18 @@ export default function WorkoutsHome() {
 
   const handleStartDay = (day: WeeklySplitDay) => {
     if (!day.exerciseIds.length) return;
+    const sessionKey = buildSessionKey(activeProgram?.id, day.title, day.exerciseIds);
+    const matchingDraft = inProgressDraft?.sessionKey === sessionKey ? inProgressDraft : null;
     router?.push?.({
       pathname: '/workout/day-session',
       params: {
         exerciseIds: day.exerciseIds.join(','),
         programId: activeProgram?.id || '',
         dayTitle: day.title,
-        sessionStartedAt: new Date().toISOString(),
+        // Reuse the original start time when resuming, so the elapsed
+        // timer reflects when the workout actually began rather than
+        // restarting from zero.
+        sessionStartedAt: matchingDraft?.sessionStartedAt || new Date().toISOString(),
         energyLightened: isLowEnergyToday ? '1' : '',
       },
     });
@@ -281,6 +316,7 @@ export default function WorkoutsHome() {
                 onStart={() => handleStartDay(day)}
                 onLayout={(y) => { cardOffsets.current[index] = y; }}
                 programId={activeProgram?.id}
+                isResumable={!!inProgressDraft && inProgressDraft.sessionKey === buildSessionKey(activeProgram?.id, day.title, day.exerciseIds)}
               />
             ))}
           </View>

@@ -7,10 +7,11 @@ import { STUCK_PROMPTS, getRandomPrompt } from '@/content/stuckPrompts';
 import { Heading } from '@/shared/components/Heading';
 import LaunchCountdown from '@/features/toolkit/LaunchCountdown';
 import DopamineMenuCard from '@/features/toolkit/DopamineMenuCard';
+import PinchToolCard from '@/features/toolkit/PinchToolCard';
 
 type Room = 'eat' | 'work' | 'gym';
 const ROOM_LABELS: Record<Room, string> = { eat: 'Eating', work: 'Work', gym: 'Gym' };
-type ExtraTool = 'launch' | 'dopamine' | null;
+type ExtraTool = 'launch' | 'dopamine' | 'pinch' | null;
 
 export default function StuckFlow() {
   const router = useRouter();
@@ -70,7 +71,7 @@ export default function StuckFlow() {
           </View>
         </View>
 
-        <View className="flex-row gap-2 mb-4">
+        <View className="flex-row gap-2 mb-2">
           <Pressable onPress={() => setExtraTool(extraTool === 'launch' ? null : 'launch')} className="flex-1 border-2 border-stone-300 rounded-xl py-2.5 items-center">
             <Text className="text-slate-600 text-xs font-medium">🚀 Launch</Text>
           </Pressable>
@@ -78,8 +79,13 @@ export default function StuckFlow() {
             <Text className="text-slate-600 text-xs font-medium">⚡ Dopamine Menu</Text>
           </Pressable>
         </View>
+        <Pressable onPress={() => setExtraTool(extraTool === 'pinch' ? null : 'pinch')} className="border-2 border-stone-300 rounded-xl py-2.5 items-center mb-4">
+          <Text className="text-slate-600 text-xs font-medium">🧲 What could make this easier? (PINCH)</Text>
+        </Pressable>
         {extraTool === 'launch' && <View className="mb-6"><LaunchCountdown /></View>}
         {extraTool === 'dopamine' && <View className="mb-6"><DopamineMenuCard /></View>}
+        {extraTool === 'pinch' && <View className="mb-6"><PinchToolCard /></View>}
+        {extraTool === 'pinch' && <View className="mb-6"><PinchToolCard /></View>}
 
         <Pressable onPress={handleDone} className="py-3">
           <Text className="text-slate-500 text-center text-sm">I&apos;m okay now, take me back</Text>

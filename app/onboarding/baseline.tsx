@@ -15,8 +15,7 @@ export default function BaselineScreen() {
   const biggestHurdle = useOnboardingStore((s) => s.biggestHurdle);
   const energyBaseline = useOnboardingStore((s) => s.energyBaseline);
   const stressThreshold = useOnboardingStore((s) => s.stressThreshold);
-  const setEnergyBaseline = useOnboardingStore((s) => s.setEnergyBaseline);
-  const setStressThreshold = useOnboardingStore((s) => s.setStressThreshold);
+  const setField = useOnboardingStore((s) => s.setField);
   const resetOnboarding = useOnboardingStore((s) => s.reset);
   const setEnergyLevel = useAppStore((s) => s.setEnergyLevel);
   const setProfile = useAppStore((s) => s.setProfile);
@@ -49,7 +48,7 @@ export default function BaselineScreen() {
           {(LEVELS || []).map((option) => {
             const isActive = energyBaseline === option.level;
             return (
-              <Pressable key={option.level} onPress={() => setEnergyBaseline(option.level)}
+              <Pressable key={option.level} onPress={() => setField('energyBaseline', option.level)}
                 accessibilityRole="radio" accessibilityState={{ selected: isActive }} accessibilityLabel={`Energy baseline ${option.label}`}
                 className={isActive ? 'flex-1 bg-indigo-600/20 border-2 border-indigo-400 rounded-xl py-3 items-center' : 'flex-1 bg-slate-800 border-2 border-transparent rounded-xl py-3 items-center'}>
                 <Text className={isActive ? 'text-indigo-200' : 'text-slate-300'}>{option.label}</Text>
@@ -62,7 +61,7 @@ export default function BaselineScreen() {
           {(LEVELS || []).map((option) => {
             const isActive = stressThreshold === option.level;
             return (
-              <Pressable key={option.level} onPress={() => setStressThreshold(option.level)}
+              <Pressable key={option.level} onPress={() => setField('stressThreshold', option.level)}
                 accessibilityRole="radio" accessibilityState={{ selected: isActive }} accessibilityLabel={`Stress threshold ${option.label}`}
                 className={isActive ? 'flex-1 bg-amber-400/10 border-2 border-amber-400 rounded-xl py-3 items-center' : 'flex-1 bg-slate-800 border-2 border-transparent rounded-xl py-3 items-center'}>
                 <Text className={isActive ? 'text-amber-200' : 'text-slate-300'}>{option.label}</Text>

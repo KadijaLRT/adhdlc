@@ -9,8 +9,10 @@ import {
   selectIsOverwhelmed,
   type TaskPriority,
   type TaskCategory,
+  type MotivatorTag,
 } from '@/store/index';
 import { avivaBrain } from '@/core/ai/AvivaBrain';
+import { MOTIVATOR_OPTIONS } from '@/content/toolkitContent';
 import { Heading } from '@/shared/components/Heading';
 import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
 
@@ -71,6 +73,12 @@ export default function TaskDetailScreen() {
     router?.back?.();
   };
 
+  const toggleMotivator = (tag: MotivatorTag) => {
+    const current = task.motivators || [];
+    const next = current.includes(tag) ? current.filter((m) => m !== tag) : [...current, tag];
+    updateTask(task.id, { motivators: next });
+  };
+
   return (
     <SafeAreaView className="flex-1 bg-stone-50 dark:bg-slate-950">
       <ScreenBackButton />
@@ -112,6 +120,22 @@ export default function TaskDetailScreen() {
                   className={isActive ? 'bg-stone-100 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white border-2 border-transparent rounded-full py-1.5 px-3'}
                 >
                   <Text className="text-slate-700 text-xs capitalize dark:text-slate-300">{cat}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
+          <Text className="text-slate-500 text-xs font-medium mb-2">What might make this easier to start? (optional)</Text>
+          <View className="flex-row flex-wrap gap-2 mb-6">
+            {MOTIVATOR_OPTIONS.map((option) => {
+              const isActive = (task?.motivators || []).includes(option.id);
+              return (
+                <Pressable
+                  key={option.id}
+                  onPress={() => toggleMotivator(option.id)}
+                  className={isActive ? 'bg-emerald-400/10 border-2 border-emerald-400 rounded-full py-1.5 px-3' : 'bg-white border-2 border-transparent rounded-full py-1.5 px-3 dark:bg-slate-900'}
+                >
+                  <Text className={isActive ? 'text-emerald-700 dark:text-emerald-400 text-xs' : 'text-slate-700 text-xs dark:text-slate-300'}>{option.emoji} {option.label}</Text>
                 </Pressable>
               );
             })}

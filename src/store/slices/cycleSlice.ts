@@ -5,7 +5,7 @@ import type { CycleLogEntry } from './types';
 export interface CycleSlice {
   cycleTrackingEnabled: boolean;
   cycleLogs: CycleLogEntry[];
-  setCycleTrackingEnabled: (enabled: boolean) => void;
+  setCycleTrackingEnabled: (enabled: boolean) => Promise<void>;
   logCycleForToday: (phase: CycleLogEntry['phase'], note?: string) => Promise<void>;
   logCycleForDate: (date: string, phase: CycleLogEntry['phase'], note?: string) => Promise<void>;
   importCycleLogs: (entries: CycleLogEntry[]) => Promise<void>;
@@ -25,7 +25,15 @@ export const createCycleSlice: StateCreator<CycleSlice> = (set, get) => ({
   cycleTrackingEnabled: false,
   cycleLogs: [],
 
-  setCycleTrackingEnabled: (cycleTrackingEnabled) => set({ cycleTrackingEnabled }),
+  // Previously this only called set() — nothing ever wrote it to disk, so
+  // the toggle silently reverted to "off" on every reload no matter how
+  // many times someone turned it on. Now mirrors the same set-then-persist
+  // pattern every other action in this slice already uses.
+  setCycleTrackingEnabled: async (cycleTrackingEnabled) => {
+    set({ cycleTrackingEnabled });
+    const repo = await getRepository();
+    await repo.saveCycleTrackingEnabled(cycleTrackingEnabled);
+  },
 
   logCycleForToday: async (phase, note) => {
     const next = upsertLog(get().cycleLogs || [], today(), phase, note);
