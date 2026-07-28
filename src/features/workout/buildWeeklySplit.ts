@@ -1,6 +1,6 @@
 import { WORKOUT_EXERCISES } from '@/content/exercises';
 import type { ProgramDefinition } from '@/content/programs';
-import type { FitnessPreferences } from '@/store/slices/nutritionFitnessSlice';
+import type { FitnessPreferences, SessionTimeBudget } from '@/store/slices/nutritionFitnessSlice';
 import { interleaveByGroup } from './interleaveExercises';
 
 // Full calendar week, Sunday first. The 6 lettered training days
@@ -34,6 +34,21 @@ export interface DayLetterContent {
  * not just its letter, so a person can choose based on what a day
  * actually is rather than guessing from "Day C").
  */
+/**
+ * Scales a program's baseline exercise count by the person's stated
+ * session-length preference. This is a standing structural adjustment —
+ * it changes what's actually in Day A/B/etc, not just what happens when
+ * today's session starts (that's energy-based trimming, handled
+ * separately at session start, since it's transient and shouldn't
+ * rewrite the fixed weekly split for everyone's next visit to Day A).
+ * Clamped to a sane range so "short" can never hit zero exercises and
+ * "long" can't run away into an unreasonably long single session.
+ */
+export function getEffectiveSessionExerciseCount(baseCount: number, timeBudget?: SessionTimeBudget | null): number {
+  const delta = timeBudget === 'short' ? -1 : timeBudget === 'long' ? 1 : 0;
+  return Math.max(2, Math.min(8, baseCount + delta));
+}
+
 export function buildDayLetterContent(
   program: ProgramDefinition,
   preferences: FitnessPreferences | null,
@@ -61,7 +76,7 @@ export function buildDayLetterContent(
   // groups to zero.
   filtered = interleaveByGroup(filtered, preferences?.focusAreas);
 
-  const perDay = Math.max(1, program.sessionExerciseCount || 4);
+  const perDay = Math.max(1, getEffectiveSessionExerciseCount(program.sessionExerciseCount || 4, preferences?.sessionTimeBudget));
   const trainingDayCount = Math.min(DAY_LETTERS.length, Math.max(1, Math.ceil(filtered.length / perDay)));
 
   const lettersToContent = new Map<string, DayLetterContent>();
@@ -136,12 +151,40 @@ export function buildWeeklySplit(
   return days;
 }
 
-export function getAvailableDayLetters(program: ProgramDefinition): string[] {
+/**
+ * Adjusts *today's* actual exercise list based on a same-day energy
+ * check-in — separate from getEffectiveSessionExerciseCount above,
+ * which changes the standing plan itself. This only affects what's
+ * pulled up when a session is started right now; the underlying Day
+ * A/B/etc content in the weekly split is never rewritten by it, so a
+ * low-energy day doesn't permanently shrink what Day A means going
+ * forward. Never trims below 2 exercises, and only adds a bonus
+ * exercise on a high-energy day if a distinct one from the same muscle
+ * groups actually exists to add.
+ */
+export function getEnergyAdjustedExerciseIds(
+  exerciseIds: string[],
+  muscleGroups: string[],
+  energyLevel: 'low' | 'medium' | 'high' | undefined
+): string[] {
+  if (energyLevel === 'low') {
+    if (exerciseIds.length <= 2) return exerciseIds;
+    return exerciseIds.slice(0, -1);
+  }
+  if (energyLevel === 'high') {
+    const bonus = Object.entries(WORKOUT_EXERCISES || {})
+      .find(([id, ex]) => muscleGroups.includes((ex as any).group) && !exerciseIds.includes(id));
+    return bonus ? [...exerciseIds, bonus[0]] : exerciseIds;
+  }
+  return exerciseIds;
+}
+
+export function getAvailableDayLetters(program: ProgramDefinition, preferences?: FitnessPreferences | null): string[] {
   const entries = Object.entries(WORKOUT_EXERCISES || {});
   const matchesGroup = ([, ex]: [string, any]) =>
     (program.targetGroups || []).includes('all') || (program.targetGroups || []).includes(ex.group);
   const filtered = entries.filter(matchesGroup);
-  const perDay = Math.max(1, program.sessionExerciseCount || 4);
+  const perDay = Math.max(1, getEffectiveSessionExerciseCount(program.sessionExerciseCount || 4, preferences?.sessionTimeBudget));
   const trainingDayCount = Math.min(DAY_LETTERS.length, Math.max(1, Math.ceil(filtered.length / perDay)));
   return DAY_LETTERS.slice(0, trainingDayCount);
 }

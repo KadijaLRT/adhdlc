@@ -26,7 +26,7 @@ import { createNutritionTrackingSlice, type NutritionTrackingSlice } from './sli
 import { createCountdownSlice, type CountdownSlice } from './slices/countdownSlice';
 
 export * from './slices/types';
-export type { NutritionPreferences, FitnessPreferences, Gender, WeightGoalDirection, BodyType, ActivityLevel } from './slices/nutritionFitnessSlice';
+export type { NutritionPreferences, FitnessPreferences, Gender, WeightGoalDirection, BodyType, ActivityLevel, SessionTimeBudget } from './slices/nutritionFitnessSlice';
 export type { TextSize, ColorSchemePreference, DateFormat, UnitSystem } from './slices/settingsSlice';
 export type { MomentumEntry, MomentumActionType } from './slices/momentumSlice';
 export type { MeasurementSite, WeightEntry, MeasurementEntry } from './slices/bodyProgressSlice';

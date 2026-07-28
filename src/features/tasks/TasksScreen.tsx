@@ -5,6 +5,7 @@ import { useAppStore, selectTasks, selectEnergyLevel, type TaskCategory, type Ta
 import { MOTIVATOR_OPTIONS } from '@/content/toolkitContent';
 import { suggestNextTask } from './suggestNextTask';
 import { Heading } from '@/shared/components/Heading';
+import { useSafeTopInset } from '@/shared/hooks/useSafeTopInset';
 
 const CATEGORY_OPTIONS: { id: TaskCategory; label: string; emoji: string }[] = [
   { id: 'general', label: 'All', emoji: '📋' },
@@ -71,6 +72,7 @@ function TaskRow({
 }
 
 export default function TasksScreen() {
+  const topInset = useSafeTopInset();
   const router = useRouter();
   const tasks = useAppStore(selectTasks);
   const energyLevel = useAppStore(selectEnergyLevel);
@@ -156,7 +158,7 @@ export default function TasksScreen() {
   };
 
   return (
-    <View className="flex-1 w-full max-w-md self-center px-4 pt-safe">
+    <View className="flex-1 w-full max-w-md self-center px-4" style={{ paddingTop: topInset }}>
       <Heading className="mb-1 mt-2">Tasks</Heading>
 
       {totalCount > 0 && (

@@ -1,4 +1,4 @@
-import type { CycleLogEntry } from '@/store/slices/types';
+import type { CycleLogEntry, EnergyLogEntry, StressLogEntry, EnergyLevel } from '@/store/slices/types';
 import { parseLocalDate, toLocalDateString } from '@/shared/formatDate';
 
 /**
@@ -52,4 +52,52 @@ export function getPredictedNextPeriod(periodStarts: string[], averageCycleLengt
   const predicted = parseLocalDate(lastStart);
   predicted.setDate(predicted.getDate() + averageCycleLength);
   return toLocalDateString(predicted);
+}
+
+const LEVEL_SCORE: Record<EnergyLevel, number> = { low: 0, medium: 1, high: 2 };
+const LEVEL_LABEL: EnergyLevel[] = ['low', 'medium', 'high'];
+
+export interface PhaseCorrelation {
+  phase: CycleLogEntry['phase'];
+  daysLogged: number;
+  averageEnergy: EnergyLevel | null;
+  averageStress: EnergyLevel | null;
+}
+
+/**
+ * Cross-references logged cycle phases against the same-date energy
+ * and stress check-ins that already exist elsewhere in the app —
+ * there's no dedicated mood field anywhere in this app, so these are
+ * the closest real, already-collected signals to correlate against.
+ * Only a day that has BOTH a cycle log and an energy/stress log for
+ * that exact date contributes — no inference or interpolation across
+ * gaps, since that would misrepresent a pattern that isn't really
+ * there yet.
+ *
+ * A phase with zero overlapping days is still returned (with nulls),
+ * rather than omitted, so the UI can show "not enough data yet" per
+ * phase instead of a confusing gap in the list.
+ */
+export function getPhaseCorrelations(
+  cycleLogs: CycleLogEntry[],
+  energyLogs: EnergyLogEntry[],
+  stressLogs: StressLogEntry[]
+): PhaseCorrelation[] {
+  const energyByDate = new Map((energyLogs || []).map((l) => [l.date, l.energyLevel]));
+  const stressByDate = new Map((stressLogs || []).map((l) => [l.date, l.stressLevel]));
+  const phases: CycleLogEntry['phase'][] = ['menstrual', 'follicular', 'ovulation', 'luteal', 'unspecified'];
+
+  return phases.map((phase) => {
+    const datesForPhase = (cycleLogs || []).filter((l) => l.phase === phase).map((l) => l.date);
+    const energyScores = datesForPhase.map((d) => energyByDate.get(d)).filter((v): v is EnergyLevel => !!v).map((v) => LEVEL_SCORE[v]);
+    const stressScores = datesForPhase.map((d) => stressByDate.get(d)).filter((v): v is EnergyLevel => !!v).map((v) => LEVEL_SCORE[v]);
+    const avg = (scores: number[]): EnergyLevel | null =>
+      scores.length ? (LEVEL_LABEL[Math.round(scores.reduce((a, b) => a + b, 0) / scores.length)] ?? null) : null;
+    return {
+      phase,
+      daysLogged: datesForPhase.length,
+      averageEnergy: avg(energyScores),
+      averageStress: avg(stressScores),
+    };
+  });
 }

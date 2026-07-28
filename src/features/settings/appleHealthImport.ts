@@ -11,6 +11,52 @@
 // works for both — construct a `File`/native path once, then everything
 // downstream is platform-agnostic.
 
+/**
+ * Web-only: picks a file via a bare `<input type="file">`, bypassing
+ * expo-document-picker's web implementation entirely.
+ *
+ * expo-document-picker's web fallback (ExpoDocumentPicker.web.ts) reads
+ * every picked file through `FileReader.readAsDataURL()` before handing
+ * it back — that loads the *entire* file into memory and base64-encodes
+ * it (~33% larger than the original) as a single string, regardless of
+ * what the caller actually needs it for. A real Apple Health export is
+ * routinely several hundred MB to multiple GB (see MAX_FILE_SIZE
+ * above) — forcing one of those through readAsDataURL is exactly the
+ * kind of memory spike that crashes a mobile browser tab outright, with
+ * no JS exception for any try/catch here to even catch. All the
+ * chunked-streaming work below (`parsePlainXmlFile`, `parseZipFile`) is
+ * pointless if the file has already been fully loaded and bloated
+ * before it gets there — so for this import specifically, get the raw
+ * File directly instead and skip that step entirely.
+ */
+export function pickWebFile(accept: string): Promise<File | null> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = accept;
+    input.style.display = 'none';
+    document.body.appendChild(input);
+
+    const cleanup = () => {
+      input.removeEventListener('change', handleChange);
+      document.body.removeChild(input);
+    };
+    const handleChange = () => {
+      const file = input.files?.[0] || null;
+      cleanup();
+      resolve(file);
+    };
+    input.addEventListener('change', handleChange);
+    // No 'cancel' event wired here (unlike expo-document-picker's own
+    // web fallback) — browser support for the file input 'cancel' event
+    // is inconsistent, and resolving null only on a real change event
+    // is the safer default: a person who dismisses the picker just
+    // sees the button return to normal, no different from any other
+    // no-op cancel elsewhere in this flow.
+    input.click();
+  });
+}
+
 export interface AppleHealthImportResult {
   periodDates: Set<string>;
   ovulationDates: Set<string>;

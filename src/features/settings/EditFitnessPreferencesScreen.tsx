@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
   useAppStore, selectFitnessPreferences, selectWellnessPreferences,
-  type Gender, type WeightGoalDirection, type BodyType, type ActivityLevel,
+  type Gender, type WeightGoalDirection, type BodyType, type ActivityLevel, type SessionTimeBudget,
 } from '@/store/index';
 import type { BloodType } from '@/content/bloodTypeAffinities';
 import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
@@ -41,6 +41,11 @@ const EXERCISE_GOALS = [
   { id: 'flexibility', label: 'Flexibility', emoji: '🧘' },
   { id: 'general_health', label: 'General Health', emoji: '❤️' },
 ];
+const SESSION_TIME_BUDGETS: { id: SessionTimeBudget; label: string; blurb: string }[] = [
+  { id: 'short', label: 'Short', blurb: 'Fewer exercises per session \u2014 fits in a tight window' },
+  { id: 'standard', label: 'Standard', blurb: "As programmed \u2014 no adjustment" },
+  { id: 'long', label: 'Long', blurb: 'More exercises per session \u2014 when you have extra time' },
+];
 const FOCUS_AREAS = ['glutes', 'quads', 'hamstrings', 'back', 'chest', 'shoulders', 'arms', 'core', 'calves', 'fullbody'];
 const BLOOD_TYPES: BloodType[] = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
@@ -76,6 +81,7 @@ export default function EditFitnessPreferencesScreen() {
   const [weightGoalDirections, setWeightGoalDirections] = useState<WeightGoalDirection[]>(fitnessPreferences?.weightGoalDirections || []);
   const [bodyType, setBodyType] = useState<BodyType | undefined>(fitnessPreferences?.bodyType);
   const [activityLevel, setActivityLevel] = useState<ActivityLevel | undefined>(fitnessPreferences?.activityLevel);
+  const [sessionTimeBudget, setSessionTimeBudget] = useState<SessionTimeBudget>(fitnessPreferences?.sessionTimeBudget || 'standard');
   const [exerciseGoals, setExerciseGoals] = useState<string[]>(fitnessPreferences?.exerciseGoals || []);
   const [focusAreas, setFocusAreas] = useState<string[]>(fitnessPreferences?.focusAreas || []);
   const [bloodType, setBloodType] = useState<BloodType | null>((wellnessPreferences?.bloodType as BloodType | null) || null);
@@ -88,7 +94,7 @@ export default function EditFitnessPreferencesScreen() {
 
   const handleSave = async () => {
     await setFitnessPreferences({
-      equipment, gender, weightGoalDirections, bodyType, activityLevel, exerciseGoals, focusAreas,
+      equipment, gender, weightGoalDirections, bodyType, activityLevel, exerciseGoals, focusAreas, sessionTimeBudget,
       primaryGoal: goalFromExerciseGoals(exerciseGoals),
     });
     if (bloodType) {
@@ -149,6 +155,17 @@ export default function EditFitnessPreferencesScreen() {
           <View className="flex-row flex-wrap gap-2 mb-6">
             {EXERCISE_GOALS.map((g) => <Pill key={g.id} label={`${g.emoji} ${g.label}`} active={exerciseGoals.includes(g.id)} onPress={() => toggleIn(exerciseGoals, setExerciseGoals, g.id)} />)}
           </View>
+
+          <Text className="text-slate-900 dark:text-slate-100 text-base font-medium mb-2">How long should a session be?</Text>
+          <View className="gap-2 mb-6">
+            {SESSION_TIME_BUDGETS.map((b) => (
+              <Pressable key={b.id} onPress={() => { setSessionTimeBudget(b.id); setSaved(false); }} className={sessionTimeBudget === b.id ? 'bg-emerald-400/10 border-2 border-emerald-400 rounded-xl p-3' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl p-3'}>
+                <Text className={sessionTimeBudget === b.id ? 'text-emerald-700 dark:text-emerald-300 font-medium' : 'text-slate-900 dark:text-slate-100 font-medium'}>{b.label}</Text>
+                <Text className="text-slate-500 text-xs">{b.blurb}</Text>
+              </Pressable>
+            ))}
+          </View>
+          <Text className="text-slate-500 text-xs mb-6">Changes how many exercises are in each day of your split immediately \u2014 swaps you've made mid-workout for today's session aren't affected, but the underlying plan updates right away.</Text>
 
           <Text className="text-slate-900 dark:text-slate-100 text-base font-medium mb-2">Focus areas</Text>
           <View className="flex-row flex-wrap gap-2 mb-6">

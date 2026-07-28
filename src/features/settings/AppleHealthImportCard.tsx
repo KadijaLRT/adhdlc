@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, Platform } from 'react-native';
 import * as DocumentPicker from 'expo-document-picker';
 import { useAppStore } from '@/store/index';
-import { parseAppleHealthFile, openNativeHealthFile } from './appleHealthImport';
+import { parseAppleHealthFile, openNativeHealthFile, pickWebFile } from './appleHealthImport';
 
 /**
  * Imports real Apple Health data by parsing the export the Health app
@@ -35,38 +35,43 @@ export default function AppleHealthImportCard() {
     setProgress(0);
 
     try {
-      const picked = await DocumentPicker.getDocumentAsync({
-        type: ['application/zip', 'application/xml', 'text/xml', '*/*'],
-        copyToCacheDirectory: true,
-      });
-      if (picked.canceled || !picked.assets?.[0]) {
-        setImporting(false);
-        return;
+      let file: (Blob & { name?: string; type?: string }) | Awaited<ReturnType<typeof openNativeHealthFile>>;
+      let name: string;
+
+      if (Platform.OS === 'web') {
+        // Bypasses expo-document-picker's web implementation entirely —
+        // see pickWebFile's own comment for why: it forces every file
+        // through FileReader.readAsDataURL(), which is a real crash
+        // risk for a file this size.
+        const webFile = await pickWebFile('.zip,.xml,application/zip,application/xml,text/xml');
+        if (!webFile) {
+          setImporting(false);
+          return;
+        }
+        file = webFile;
+        name = webFile.name;
+      } else {
+        const picked = await DocumentPicker.getDocumentAsync({
+          type: ['application/zip', 'application/xml', 'text/xml', '*/*'],
+          copyToCacheDirectory: true,
+        });
+        if (picked.canceled || !picked.assets?.[0]) {
+          setImporting(false);
+          return;
+        }
+        const asset = picked.assets[0];
+        name = asset.name || 'export';
+        file = await openNativeHealthFile(asset.uri, name);
       }
 
-      const asset = picked.assets[0];
-      const lowerName = asset.name?.toLowerCase() || '';
+      const lowerName = name.toLowerCase();
       if (!lowerName.endsWith('.xml') && !lowerName.endsWith('.zip')) {
         setError('Please upload the export.zip from the Health app, or export.xml if you already extracted it.');
         setImporting(false);
         return;
       }
 
-      // Web: the picked asset already carries a real browser File.
-      // Native: wrap the picked file:// URI so it behaves the same way
-      // (same .slice()/.text()/.size interface) — everything after
-      // this point doesn't need to know which platform it's on.
-      const file = Platform.OS === 'web'
-        ? (asset as any)?.file
-        : await openNativeHealthFile(asset.uri, asset.name || 'export');
-
-      if (!file) {
-        setError('Could not read that file.');
-        setImporting(false);
-        return;
-      }
-
-      const health = await parseAppleHealthFile(file, setProgress);
+      const health = await parseAppleHealthFile(file as any, setProgress);
 
       // Weight and cycle history import as one batch each — real dates
       // preserved, one storage write per domain instead of one per

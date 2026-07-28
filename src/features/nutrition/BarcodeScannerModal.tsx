@@ -3,6 +3,7 @@ import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { lookupBarcodeProduct } from '@/core/nutrition/openFoodFactsApi';
 import type { FoodItem } from '@/content/foodDatabase';
+import { useSafeTopInset, useSafeBottomInset } from '@/shared/hooks/useSafeTopInset';
 
 /**
  * Scans a product barcode and looks it up via Open Food Facts. Common
@@ -15,6 +16,8 @@ export default function BarcodeScannerModal({
   onFound: (item: FoodItem) => void; onClose: () => void;
 }) {
   const [permission, requestPermission] = useCameraPermissions();
+  const topInset = useSafeTopInset();
+  const bottomInset = useSafeBottomInset();
   const [scanning, setScanning] = useState(true);
   const [looking, setLooking] = useState(false);
   const [notFound, setNotFound] = useState(false);
@@ -70,11 +73,11 @@ export default function BarcodeScannerModal({
       <View className="absolute inset-0 items-center justify-center pointer-events-none">
         <View className="w-64 h-40 border-2 border-white/70 rounded-2xl" />
       </View>
-      <View className="absolute top-0 left-0 right-0 pt-safe px-4 pb-3 bg-black/50">
+      <View className="absolute top-0 left-0 right-0 px-4 pb-3 bg-black/50" style={{ paddingTop: topInset }}>
         <Text className="text-white text-center text-sm">Point the camera at a product barcode</Text>
       </View>
       {(looking || notFound) && (
-        <View className="absolute bottom-0 left-0 right-0 pb-safe px-4 pt-4 bg-black/70 items-center">
+        <View className="absolute bottom-0 left-0 right-0 px-4 pt-4 bg-black/70 items-center" style={{ paddingBottom: bottomInset }}>
           {looking ? (
             <View className="flex-row items-center gap-2">
               <ActivityIndicator color="#fff" size="small" />
@@ -85,7 +88,7 @@ export default function BarcodeScannerModal({
           )}
         </View>
       )}
-      <Pressable onPress={onClose} className="absolute bottom-0 left-0 right-0 pb-safe px-4 pt-3 items-center">
+      <Pressable onPress={onClose} className="absolute bottom-0 left-0 right-0 px-4 pt-3 items-center" style={{ paddingBottom: bottomInset }}>
         <Text className="text-slate-300 text-sm">Cancel</Text>
       </Pressable>
     </View>

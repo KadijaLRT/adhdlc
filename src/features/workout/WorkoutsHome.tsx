@@ -7,7 +7,7 @@ import {
 } from '@/store/index';
 import { PROGRAMS } from '@/content/programs';
 import { getCurrentProgramWeek, getSessionsThisWeek } from './buildProgramSession';
-import { buildWeeklySplit, type WeeklySplitDay } from './buildWeeklySplit';
+import { buildWeeklySplit, getEnergyAdjustedExerciseIds, type WeeklySplitDay } from './buildWeeklySplit';
 import { getWeightProgressLabel } from './weightProgress';
 import { pickStartSomewhereExercise } from './pickStartSomewhere';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
@@ -229,12 +229,19 @@ export default function WorkoutsHome() {
 
   const handleStartDay = (day: WeeklySplitDay) => {
     if (!day.exerciseIds.length) return;
+    // sessionKey deliberately uses the day's original structural exercise
+    // list, not the energy-adjusted one below — "which day this is"
+    // shouldn't change just because today's energy differs from
+    // whenever an in-progress draft for it was last saved.
     const sessionKey = buildSessionKey(activeProgram?.id, day.title, day.exerciseIds);
     const matchingDraft = inProgressDraft?.sessionKey === sessionKey ? inProgressDraft : null;
+    const effectiveExerciseIds = matchingDraft
+      ? day.exerciseIds // resuming an existing draft: its own saved exercise list takes over on the next screen, not a fresh energy-adjusted one
+      : getEnergyAdjustedExerciseIds(day.exerciseIds, day.muscleGroups, energyLevel);
     router?.push?.({
       pathname: '/workout/day-session',
       params: {
-        exerciseIds: day.exerciseIds.join(','),
+        exerciseIds: effectiveExerciseIds.join(','),
         programId: activeProgram?.id || '',
         dayTitle: day.title,
         // Reuse the original start time when resuming, so the elapsed
@@ -275,7 +282,7 @@ export default function WorkoutsHome() {
 
         {isLowEnergyToday && (
           <View className="bg-amber-400/10 border border-amber-400 rounded-xl p-3 mb-3">
-            <Text className="text-amber-700 text-xs dark:text-amber-400">🔋 Energy is low today — sessions are lightened up automatically (one fewer set each). Change it anytime from Home.</Text>
+            <Text className="text-amber-700 text-xs dark:text-amber-400">🔋 Energy is low today — sessions are lightened up automatically (one fewer exercise, one fewer set each). Change it anytime from Home.</Text>
           </View>
         )}
 

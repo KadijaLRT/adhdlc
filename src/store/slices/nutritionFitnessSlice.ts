@@ -14,10 +14,17 @@ export type Gender = 'female' | 'male' | 'non_binary' | null;
 export type WeightGoalDirection = 'gain' | 'maintain' | 'lose';
 export type BodyType = 'naturally_lean' | 'athletic_build' | 'naturally_curvy' | 'stocky_build';
 export type ActivityLevel = 'mostly_sitting' | 'somewhat_active' | 'active' | 'very_active';
+// How long a single workout session should realistically take: shrinks
+// or grows how many exercises land in each day of the split, on top of
+// whatever the chosen program is calibrated to. Distinct from today's
+// energy level (which trims the session at start time, not the
+// underlying plan) — this is a standing preference, not a daily one.
+export type SessionTimeBudget = 'short' | 'standard' | 'long';
 
 export interface FitnessPreferences {
   equipment: string[];
   primaryGoal: 'strength' | 'endurance' | 'mobility' | 'general' | null;
+  sessionTimeBudget?: SessionTimeBudget;
   gender?: Gender;
   weightGoalDirections?: WeightGoalDirection[];
   bodyType?: BodyType;
