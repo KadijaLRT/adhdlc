@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { View, Text, Pressable, Switch } from 'react-native';
+import { View, Text, Pressable, Switch, ScrollView } from 'react-native';
 import { useAppStore, selectCycleTrackingEnabled, selectCycleLogs, selectDateFormat, selectEnergyLogs, selectStressLogs, type CycleLogEntry } from '@/store/index';
 import { getPeriodStartDates, getAverageCycleLength, getPredictedNextPeriod, getPhaseCorrelations } from './cyclePredictions';
 import CycleCalendar from './CycleCalendar';
@@ -38,7 +38,7 @@ export default function CycleTracking() {
   const hasAnyCorrelationData = correlations.some((c) => c.daysLogged > 0 && (c.averageEnergy || c.averageStress));
 
   return (
-    <View className="gap-4">
+    <ScrollView className="flex-1" contentContainerStyle={{ gap: 16, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
       <View className="bg-white rounded-2xl p-5 w-full dark:bg-slate-900">
         <View className="flex-row items-center justify-between mb-1">
           <Text className="text-slate-900 text-base font-semibold dark:text-slate-100">Cycle Tracking</Text>
@@ -147,6 +147,6 @@ export default function CycleTracking() {
       {cycleTrackingEnabled && (
         <AppleHealthImportCard />
       )}
-    </View>
+    </ScrollView>
   );
 }
