@@ -224,7 +224,17 @@ export default function WorkoutDaySession({
 
   const handleCompleteSet = async (exerciseId: string, index: number) => {
     const row = rowsByExercise[exerciseId]?.[index];
-    if (!row || row.done) return;
+    if (!row) return;
+    if (row.done) {
+      // Tapping an already-checked set un-checks it — this needs to be a
+      // real toggle, not a one-way door, same as handleToggleExerciseDone
+      // below already treats a fully-done exercise. Doesn't retract the
+      // logged set from history (there's no undo-log mechanism yet, and
+      // handleToggleExerciseDone's own "uncheck all" path has the same
+      // gap) — just corrects what's shown as complete right now.
+      updateRow(exerciseId, index, { done: false });
+      return;
+    }
     const { isNewRecord } = await logSet(exerciseId, Number(row.weight) || 0, Number(row.reps) || 0);
     updateRow(exerciseId, index, { done: true });
     if (isNewRecord) {
@@ -369,7 +379,7 @@ export default function WorkoutDaySession({
                       autoFocus
                       className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-2"
                     />
-                    <View className="max-h-64">
+                    <ScrollView style={{ maxHeight: 256 }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
                       {exerciseSearchResults.map((ex) => (
                         <Pressable key={ex.id} onPress={() => handleSwapExercise(exerciseId, ex.id)} className="py-2 border-b border-stone-100 dark:border-slate-800 flex-row items-center gap-2">
                           <Text className="text-base">{ex.icon}</Text>
@@ -382,7 +392,7 @@ export default function WorkoutDaySession({
                       {exerciseSearchResults.length === 0 && (
                         <Text className="text-slate-500 text-xs py-2">No matches.</Text>
                       )}
-                    </View>
+                    </ScrollView>
                     <Pressable onPress={() => { setSwappingId(null); setExerciseSearch(''); }} className="py-2 mt-1">
                       <Text className="text-slate-500 text-center text-xs">Cancel</Text>
                     </Pressable>
@@ -464,7 +474,14 @@ export default function WorkoutDaySession({
                 autoFocus
                 className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-2"
               />
-              <View className="max-h-64">
+              {/* A plain View with only a max-height class doesn't clip
+                  or scroll overflow content on its own — once results
+                  exceed 256px, they spilled out past this box and sat
+                  on top of "Cancel", "Simplify (hide cues)", and
+                  "Finish workout" below it instead of being contained.
+                  A real ScrollView with nestedScrollEnabled actually
+                  bounds and scrolls the list. */}
+              <ScrollView style={{ maxHeight: 256 }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
                 {exerciseSearchResults.map((ex) => (
                   <Pressable key={ex.id} onPress={() => handleAddExercise(ex.id)} className="py-2 border-b border-stone-100 dark:border-slate-800 flex-row items-center gap-2">
                     <Text className="text-base">{ex.icon}</Text>
@@ -477,7 +494,7 @@ export default function WorkoutDaySession({
                 {exerciseSearchResults.length === 0 && (
                   <Text className="text-slate-500 text-xs py-2">No matches.</Text>
                 )}
-              </View>
+              </ScrollView>
               <Pressable onPress={() => { setShowAddExercise(false); setExerciseSearch(''); }} className="py-2 mt-1">
                 <Text className="text-slate-500 text-center text-xs">Cancel</Text>
               </Pressable>

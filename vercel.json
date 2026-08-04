@@ -9,7 +9,6 @@
     { "source": "/workout/session/:exerciseId", "destination": "/workout/session/[exerciseId].html" },
     { "source": "/school/course/:courseId", "destination": "/school/course/[courseId].html" },
     { "source": "/school/assignment/:assignmentId", "destination": "/school/assignment/[assignmentId].html" },
-    { "source": "/nutrition/recipe/:recipeId", "destination": "/nutrition/recipe/[recipeId].html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/nutrition/recipe/:recipeId", "destination": "/nutrition/recipe/[recipeId].html" }
   ]
 }
