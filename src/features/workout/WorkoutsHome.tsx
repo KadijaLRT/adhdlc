@@ -3,18 +3,16 @@ import { View, Text, Pressable, ScrollView, FlatList } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import {
   useAppStore, selectActiveProgramId, selectFitnessPreferences, selectFitnessCardDismissed, selectEnergyLevel,
-  selectGyms, selectActiveGymId, selectSetLogs, selectWeekdayAssignment,
+  selectGyms, selectActiveGymId, selectSetLogs, selectWeekdayAssignment, selectRecentDayExerciseHistory,
 } from '@/store/index';
 import { PROGRAMS } from '@/content/programs';
 import { getCurrentProgramWeek, getSessionsThisWeek } from './buildProgramSession';
-import { buildWeeklySplit, getEnergyAdjustedExerciseIds, type WeeklySplitDay } from './buildWeeklySplit';
+import { buildWeeklySplit, getEnergyAdjustedExerciseIds, getVariedExerciseSelection, type WeeklySplitDay } from './buildWeeklySplit';
 import { getWeightProgressLabel } from './weightProgress';
 import { pickStartSomewhereExercise } from './pickStartSomewhere';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
-import { getWarmupForGroups } from '@/content/warmupContent';
 import PersonalizeFitnessCard from './PersonalizeFitnessCard';
 import RecoveryPlanCard from './RecoveryPlanCard';
-import InlineStepTimer from '@/shared/components/InlineStepTimer';
 import { Heading, Subheading } from '@/shared/components/Heading';
 import { getRepository } from '@/core/storage';
 import { buildSessionKey } from './WorkoutDaySession';
@@ -60,15 +58,6 @@ function DayCard({
 }) {
   const router = useRouter();
   const setLogs = useAppStore(selectSetLogs);
-  const [showWarmup, setShowWarmup] = useState(false);
-
-  // Tied specifically to what this day trains — a lower-body day gets
-  // the lower-body warm-up, not a generic one. Deliberately separate
-  // from Recovery/stretching (which lives on rest days below): warming
-  // up is prep for today's session, recovery is a different concern
-  // for a different kind of day, and the two shouldn't route to the
-  // same place.
-  const warmup = useMemo(() => getWarmupForGroups(day.muscleGroups), [day.muscleGroups]);
 
   if (day.isRestDay) {
     return (
@@ -119,17 +108,7 @@ function DayCard({
         >
           <Text className="text-slate-700 text-xs dark:text-slate-300">🩺 Body Check-in</Text>
         </Pressable>
-        <Pressable onPress={() => setShowWarmup(!showWarmup)} className="flex-1 border-2 border-stone-300 rounded-xl py-3 items-center dark:border-slate-700">
-          <Text className="text-slate-700 text-xs dark:text-slate-300">🔥 {showWarmup ? 'Hide Warm-Up' : 'Warm-Up'}</Text>
-        </Pressable>
       </View>
-
-      {showWarmup && (
-        <View className="bg-stone-50 dark:bg-slate-800 rounded-xl p-3 mb-3">
-          <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-2">{warmup.title} — for today's {day.muscleGroups.join(' & ')} session</Text>
-          <InlineStepTimer steps={warmup.steps} />
-        </View>
-      )}
 
       {isResumable && (
         <View className="bg-indigo-400/10 border border-indigo-400 rounded-xl p-3 mb-3">
@@ -158,6 +137,8 @@ export default function WorkoutsHome() {
   const gyms = useAppStore(selectGyms);
   const activeGymId = useAppStore(selectActiveGymId);
   const weekdayAssignment = useAppStore(selectWeekdayAssignment);
+  const recentDayExerciseHistory = useAppStore(selectRecentDayExerciseHistory);
+  const recordUsedExerciseCombo = useAppStore((s) => s.recordUsedExerciseCombo);
   const sessionsCompletedInProgram = useAppStore((s) => s.sessionsCompletedInProgram);
   const autoAssignDefaultProgram = useAppStore((s) => s.autoAssignDefaultProgram);
 
@@ -233,11 +214,31 @@ export default function WorkoutsHome() {
     // list, not the energy-adjusted one below — "which day this is"
     // shouldn't change just because today's energy differs from
     // whenever an in-progress draft for it was last saved.
-    const sessionKey = buildSessionKey(activeProgram?.id, day.title, day.exerciseIds);
+    const sessionKey = buildSessionKey(activeProgram?.id, day.title);
     const matchingDraft = inProgressDraft?.sessionKey === sessionKey ? inProgressDraft : null;
-    const effectiveExerciseIds = matchingDraft
-      ? day.exerciseIds // resuming an existing draft: its own saved exercise list takes over on the next screen, not a fresh energy-adjusted one
-      : getEnergyAdjustedExerciseIds(day.exerciseIds, day.muscleGroups, energyLevel);
+
+    let effectiveExerciseIds: string[];
+    if (matchingDraft) {
+      effectiveExerciseIds = day.exerciseIds; // resuming an existing draft: its own saved exercise list takes over on the next screen, not a fresh energy-adjusted one
+    } else {
+      // A fresh session for this day gets a varied combo instead of the
+      // same static exercises every time — rotated across the full
+      // eligible pool for these muscle groups, seeded by today's date
+      // (stable through re-renders today, different next time) and
+      // excluding the last few combos actually used for this exact day.
+      const seed = Number(new Date().toISOString().slice(0, 10).replace(/-/g, ''));
+      const variedIds = getVariedExerciseSelection(
+        day.muscleGroups,
+        day.exerciseIds.length,
+        activeGym?.equipment,
+        recentDayExerciseHistory[day.title] || [],
+        seed
+      );
+      const baseIds = variedIds.length ? variedIds : day.exerciseIds;
+      effectiveExerciseIds = getEnergyAdjustedExerciseIds(baseIds, day.muscleGroups, energyLevel);
+      recordUsedExerciseCombo(day.title, baseIds);
+    }
+
     router?.push?.({
       pathname: '/workout/day-session',
       params: {
@@ -323,7 +324,7 @@ export default function WorkoutsHome() {
                 onStart={() => handleStartDay(day)}
                 onLayout={(y) => { cardOffsets.current[index] = y; }}
                 programId={activeProgram?.id}
-                isResumable={!!inProgressDraft && inProgressDraft.sessionKey === buildSessionKey(activeProgram?.id, day.title, day.exerciseIds)}
+                isResumable={!!inProgressDraft && inProgressDraft.sessionKey === buildSessionKey(activeProgram?.id, day.title)}
               />
             ))}
           </View>

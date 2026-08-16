@@ -6,6 +6,7 @@ import { Heading } from '@/shared/components/Heading';
 import { calculateGPA } from './gpaCalculations';
 import { getCourseStatus, type CourseStatus } from '@/store/slices/schoolSlice';
 import SchoolProgramSetupCard from './SchoolProgramSetupCard';
+import SyllabusUploadCard from './SyllabusUploadCard';
 
 const COURSE_EMOJIS = ['📖', '🧮', '🧪', '🎨', '🌍', '💻'];
 
@@ -92,6 +93,8 @@ export default function SchoolScreen() {
         <Text className="text-slate-500 text-sm mb-4">What should I study next?</Text>
 
         <SchoolProgramSetupCard />
+
+        <SyllabusUploadCard />
 
         {gpa !== null && (
           <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 flex-row items-center justify-between">

@@ -63,6 +63,14 @@ export interface WorkoutState {
   activeGymId: string | null;
   weekdayAssignment: (string | null)[]; // length 7, index=weekday (0=Sun), value=day letter or null for rest
   recoveryLogs: RecoveryLogEntry[];
+  // Keyed by day title (e.g. "Quads B", the stable identity of a
+  // lettered day's muscle-group content — see buildWeeklySplit.ts).
+  // Each entry holds the last few exercise-id combos actually started
+  // for that day, most recent last, so a fresh session can be rotated
+  // away from repeating what was just done. Bounded to a handful of
+  // entries per day (see recordUsedExerciseCombo) rather than growing
+  // forever.
+  recentDayExerciseHistory: Record<string, string[][]>;
 }
 
 export interface WorkoutSlice extends WorkoutState {
@@ -74,6 +82,7 @@ export interface WorkoutSlice extends WorkoutState {
   setActiveGym: (gymId: string | null) => Promise<void>;
   setWeekdayAssignment: (weekdayIndex: number, dayLetter: string | null) => Promise<void>;
   logRecoveryUpdate: (date: string, updates: Partial<Omit<RecoveryLogEntry, 'date'>>) => Promise<void>;
+  recordUsedExerciseCombo: (dayTitle: string, exerciseIds: string[]) => Promise<void>;
 }
 
 const DEFAULT_STATE: WorkoutState = {
@@ -85,6 +94,7 @@ const DEFAULT_STATE: WorkoutState = {
   activeGymId: null,
   weekdayAssignment: [null, 'A', 'B', 'C', 'D', 'E', 'F'], // default: Sun rest, Mon–Sat A–F
   recoveryLogs: [],
+  recentDayExerciseHistory: {},
 };
 
 const persist = createWriteGuard(async (state: WorkoutState) => {
@@ -101,6 +111,7 @@ function currentState(get: () => WorkoutState): WorkoutState {
     activeGymId: get().activeGymId ?? null,
     weekdayAssignment: get().weekdayAssignment || DEFAULT_STATE.weekdayAssignment,
     recoveryLogs: get().recoveryLogs || [],
+    recentDayExerciseHistory: get().recentDayExerciseHistory || {},
   };
 }
 
@@ -203,6 +214,25 @@ export const createWorkoutSlice: StateCreator<WorkoutSlice> = (set, get) => ({
       ? existing.map((r) => (r.date === date ? { ...r, ...updates } : r))
       : [...existing, { date, ...updates }];
     const nextState = { ...currentState(get), recoveryLogs: next };
+    set(nextState);
+    await persist(nextState);
+  },
+
+  // Records what was actually used for a day, so the next time that
+  // day is started, getVariedExerciseSelection (buildWeeklySplit.ts)
+  // can rotate away from repeating it. Bounded to the last 3 per day —
+  // enough to stop the immediate "same as last time" repeat and most
+  // near-term repeats, without growing forever or making rotation so
+  // constrained it runs out of eligible combinations on a small pool.
+  recordUsedExerciseCombo: async (dayTitle, exerciseIds) => {
+    if (!dayTitle || !exerciseIds?.length) return;
+    const existing = get().recentDayExerciseHistory || {};
+    const historyForDay = existing[dayTitle] || [];
+    const nextHistoryForDay = [...historyForDay, exerciseIds].slice(-3);
+    const nextState = {
+      ...currentState(get),
+      recentDayExerciseHistory: { ...existing, [dayTitle]: nextHistoryForDay },
+    };
     set(nextState);
     await persist(nextState);
   },

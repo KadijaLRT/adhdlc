@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAppStore, selectAdhdFocusModeEnabled, selectSetLogs } from '@/store/index';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
+import { getWarmupForGroups } from '@/content/warmupContent';
 import InlineStepTimer from '@/shared/components/InlineStepTimer';
 import { Heading } from '@/shared/components/Heading';
 import { getRepository } from '@/core/storage';
@@ -14,14 +15,20 @@ type SetRow = WorkoutSessionSetRow;
 
 /**
  * Identifies which in-progress session a saved draft belongs to. Built
- * from what's actually stable for a given day (program + day title + the
- * original exercise set), not from sessionStartedAt — sessionStartedAt is
- * *restored from* the matching draft, so it can't also be part of the key
- * used to find it. Sorting the exercise ids means the key doesn't change
- * just because a route re-serialized the list in a different order.
+ * from program + day title only — day titles are already unique per
+ * program (e.g. "Quads B" only ever refers to one lettered day), so
+ * that alone is a stable, sufficient identity. This deliberately does
+ * NOT include the actual exercise list: which exercises are in a
+ * session can now vary intentionally (see getVariedExerciseSelection)
+ * and gets adjusted further by today's energy level, so two calls for
+ * the "same" day can legitimately have different exercise lists —
+ * keying on them would make WorkoutsHome's structural lookup and this
+ * component's own lookup disagree on whether a draft matches, exactly
+ * the kind of mismatch that made "Resume Day X" silently fail to
+ * detect an in-progress session.
  */
-export function buildSessionKey(programId: string | undefined, dayTitle: string | undefined, exerciseIds: string[]): string {
-  return `${programId || ''}|${dayTitle || ''}|${[...exerciseIds].sort().join(',')}`;
+export function buildSessionKey(programId: string | undefined, dayTitle: string | undefined, _exerciseIds?: string[]): string {
+  return `${programId || ''}|${dayTitle || ''}`;
 }
 
 function formatElapsed(totalSeconds: number): string {
@@ -81,6 +88,19 @@ export default function WorkoutDaySession({
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState('');
   const [swappingId, setSwappingId] = useState<string | null>(null);
+  const [showWarmup, setShowWarmup] = useState(false);
+
+  // Derived from the session's own exercises rather than passed in as a
+  // prop — WorkoutDaySession only ever receives exerciseIds/programId/
+  // dayTitle via route params, not the day's structural muscleGroups.
+  // Same warm-up content this used to show on the pre-workout setup
+  // screen (getWarmupForGroups, same collapsible format) — just
+  // relocated to live inside the actual workout day instead.
+  const sessionMuscleGroups = useMemo(
+    () => Array.from(new Set(sessionExerciseIds.map((id) => WORKOUT_EXERCISES?.[id]?.group).filter((g): g is string => !!g))),
+    [sessionExerciseIds]
+  );
+  const warmup = useMemo(() => getWarmupForGroups(sessionMuscleGroups), [sessionMuscleGroups]);
 
   // The session's real start time — normally seeded from the
   // sessionStartedAt route param, but overwritten with the original
@@ -89,7 +109,7 @@ export default function WorkoutDaySession({
   // screen happened to remount.
   const [startedAtMs, setStartedAtMs] = useState<number>(() => (sessionStartedAt ? new Date(sessionStartedAt).getTime() : Date.now()));
 
-  const sessionKey = useMemo(() => buildSessionKey(programId, dayTitle, exerciseIds), [programId, dayTitle, exerciseIds]);
+  const sessionKey = useMemo(() => buildSessionKey(programId, dayTitle), [programId, dayTitle]);
   const [isDraftChecked, setIsDraftChecked] = useState(false);
   const persistDraft = useRef(createWriteGuard(async (draft: WorkoutSessionDraft | null) => {
     const repo = await getRepository();
@@ -330,6 +350,16 @@ export default function WorkoutDaySession({
           {recordBanner && (
             <View className="bg-amber-400/10 border border-amber-400 rounded-xl p-3 mb-4">
               <Text className="text-amber-600 dark:text-amber-400 text-center text-sm font-medium">{recordBanner}</Text>
+            </View>
+          )}
+
+          <Pressable onPress={() => setShowWarmup(!showWarmup)} className="border-2 border-stone-300 dark:border-slate-700 rounded-xl py-3 items-center mb-3">
+            <Text className="text-slate-700 text-xs dark:text-slate-300">🔥 {showWarmup ? 'Hide Warm-Up' : 'Warm-Up'}</Text>
+          </Pressable>
+          {showWarmup && (
+            <View className="bg-stone-50 dark:bg-slate-800 rounded-xl p-3 mb-3">
+              <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-2">{warmup.title} — for today's {sessionMuscleGroups.join(' & ')} session</Text>
+              <InlineStepTimer steps={warmup.steps} />
             </View>
           )}
 

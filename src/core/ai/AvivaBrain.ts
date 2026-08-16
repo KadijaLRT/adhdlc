@@ -38,6 +38,19 @@ const FlashcardSchema = z.object({ front: z.string(), back: z.string() });
 const FlashcardSetSchema = z.object({ cards: z.array(FlashcardSchema) });
 export type FlashcardSet = z.infer<typeof FlashcardSetSchema>;
 
+const SyllabusAssignmentSchema = z.object({
+  id: z.string(),
+  title: z.string(),
+  dueDate: z.string(), // best-effort ISO date (YYYY-MM-DD) — the model resolves bare "Oct 15"-style dates using the current date passed in the prompt
+  type: z.enum(['homework', 'exam', 'quiz', 'project', 'paper', 'reading', 'other']),
+});
+const SyllabusParseResultSchema = z.object({
+  courseName: z.string().nullable(),
+  assignments: z.array(SyllabusAssignmentSchema),
+  reasoning: z.string(),
+});
+export type SyllabusParseResult = z.infer<typeof SyllabusParseResultSchema>;
+
 /**
  * Wraps all calls to the Groq API used by "Aviva." Every method sanitizes
  * inputs before they leave the device and validates responses against a
@@ -149,6 +162,49 @@ Respond with ONLY valid JSON, no markdown fences:
       return validated.data;
     } catch (error) {
       console.error('AvivaBrain: generateFlashcards failed', error);
+      return null;
+    }
+  }
+
+  /**
+   * Extracts assignments/exams/due dates from raw syllabus text. This
+   * never writes anything on its own — callers get back a proposed
+   * list for the person to review, edit, and explicitly confirm before
+   * anything is added to their real courses/assignments, the same way
+   * a brain dump is reviewed before becoming tasks. Syllabus text
+   * routinely exceeds the sanitizer's MAX_PAYLOAD_LENGTH (8000 chars);
+   * sanitizeString already truncates rather than erroring, so a very
+   * long syllabus still gets a best-effort partial extraction instead
+   * of failing outright — the caller surfaces that truncation to the
+   * person rather than silently losing the tail of their document.
+   */
+  async parseSyllabus(syllabusText: string, todayIsoDate: string): Promise<SyllabusParseResult | null> {
+    const cleanText = sanitizeString(syllabusText);
+    if (!cleanText) return null;
+
+    const systemPrompt = `You extract assignments, exams, quizzes, and due dates from a pasted college/school syllabus.
+Only extract items that have or clearly imply an actual due date somewhere in the text — never invent one.
+Resolve bare or relative dates (like "Oct 15", "Week 6", "the Friday before finals") into a real ISO date (YYYY-MM-DD) using the current date provided. If a date genuinely cannot be resolved to a real calendar date, do not invent one — omit that item instead of guessing.
+Keep titles short and student-facing (e.g. "Midterm Exam", "Problem Set 3", "Research Paper Draft"), not the full syllabus sentence.
+Respond with ONLY valid JSON, no markdown fences:
+{"courseName": string|null, "assignments": [{"id": string, "title": string, "dueDate": string, "type": "homework"|"exam"|"quiz"|"project"|"paper"|"reading"|"other"}], "reasoning": string}`;
+
+    const userPrompt = `Today's date: ${todayIsoDate}\n\nSyllabus text:\n"${cleanText}"`;
+
+    try {
+      const raw = await callGroqCompletion(
+        [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
+        0.2 // lower temperature — this is extraction, not generation, and dates need to be read faithfully rather than creatively
+      );
+      if (!raw) return null;
+      const validated = SyllabusParseResultSchema.safeParse(JSON.parse(raw));
+      if (!validated.success) {
+        console.error('AvivaBrain: parseSyllabus schema validation failed', validated.error.flatten());
+        return null;
+      }
+      return validated.data;
+    } catch (error) {
+      console.error('AvivaBrain: parseSyllabus failed', error);
       return null;
     }
   }

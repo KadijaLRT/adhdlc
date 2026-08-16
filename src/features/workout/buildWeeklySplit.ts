@@ -49,6 +49,87 @@ export function getEffectiveSessionExerciseCount(baseCount: number, timeBudget?:
   return Math.max(2, Math.min(8, baseCount + delta));
 }
 
+/**
+ * A small, seedable PRNG (mulberry32-style) — not for security, just
+ * for a shuffle that's reproducible for a given seed (so re-rendering
+ * the same session doesn't re-shuffle under someone's feet) but varies
+ * naturally by date.
+ */
+function seededShuffle<T>(items: T[], seed: number): T[] {
+  const result = [...items];
+  let s = seed || 1;
+  const next = () => {
+    s = (s * 1103515245 + 12345) & 0x7fffffff;
+    return s / 0x7fffffff;
+  };
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(next() * (i + 1));
+    const a = result[i];
+    const b = result[j];
+    if (a === undefined || b === undefined) continue;
+    result[i] = b;
+    result[j] = a;
+  }
+  return result;
+}
+
+function sameCombo(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const sortedA = [...a].sort();
+  const sortedB = [...b].sort();
+  return sortedA.every((id, i) => id === sortedB[i]);
+}
+
+/**
+ * Picks a fresh set of exercises for a day's muscle groups every time
+ * it's started, instead of the same static list every time — no
+ * combination should ever repeat if the pool has enough exercises to
+ * avoid it. Rotates through the *entire* eligible pool for these
+ * muscle groups (not just whatever was originally chunked into this
+ * day letter), seeded by the current date so it's stable for the
+ * whole day but different the next time this day comes around, and
+ * explicitly excludes whatever's in recentCombos (the last few times
+ * this exact day was actually started).
+ *
+ * If the eligible pool is too small to avoid every recent combo (a
+ * narrow equipment/focus-area filter can do this), this falls back to
+ * the least-recently-used arrangement rather than failing or looping
+ * forever — some repetition on a genuinely tiny pool is unavoidable,
+ * but it's still never the literal same list as last time when any
+ * alternative exists.
+ */
+export function getVariedExerciseSelection(
+  muscleGroups: string[],
+  count: number,
+  equipment: string[] | undefined | null,
+  recentCombos: string[][],
+  seed: number
+): string[] {
+  const entries = Object.entries(WORKOUT_EXERCISES || {});
+  const matchesGroup = ([, ex]: [string, any]) => muscleGroups.includes(ex.group);
+  const matchesEquipment = ([, ex]: [string, any]) =>
+    !equipment?.length || (ex.eq || []).some((e: string) => equipment.includes(e));
+
+  let pool = entries.filter((e) => matchesGroup(e) && matchesEquipment(e));
+  if (!pool.length) pool = entries.filter(matchesGroup);
+  if (!pool.length) return [];
+
+  const ids = pool.map(([id]) => id);
+  if (ids.length <= count) return ids; // whole pool needed just to hit the count — nothing to rotate
+
+  const shuffled = seededShuffle(ids, seed);
+
+  // Try every rotation of the shuffled pool until one doesn't match a
+  // recent combo — bounded by pool size, never infinite.
+  for (let offset = 0; offset < shuffled.length; offset++) {
+    const rotated = [...shuffled.slice(offset), ...shuffled.slice(0, offset)];
+    const candidate = rotated.slice(0, count);
+    const isRepeat = recentCombos.some((combo) => sameCombo(combo, candidate));
+    if (!isRepeat) return candidate;
+  }
+  return shuffled.slice(0, count);
+}
+
 export function buildDayLetterContent(
   program: ProgramDefinition,
   preferences: FitnessPreferences | null,

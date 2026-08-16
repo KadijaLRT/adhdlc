@@ -6,6 +6,7 @@ import { getCourseStatus } from '@/store/slices/schoolSlice';
 import { formatDate } from '@/shared/formatDate';
 import { avivaBrain, type FlashcardSet } from '@/core/ai/AvivaBrain';
 import { Heading } from '@/shared/components/Heading';
+import SyllabusUploadCard from './SyllabusUploadCard';
 
 const COURSE_EMOJIS = ['📖', '🧮', '🧪', '🎨', '🌍', '💻'];
 
@@ -245,6 +246,8 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
             </View>
           ) : null}
         </View>
+
+        <SyllabusUploadCard fixedCourseId={courseId} />
 
         <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
           <Text className="text-slate-700 text-sm font-medium mb-2 dark:text-slate-300">New assignment</Text>

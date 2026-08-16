@@ -14,25 +14,24 @@
     "target": "ESNext",
     "strict": true,
     "noUncheckedIndexedAccess": true,
-    "baseUrl": ".",
     "paths": {
       "@/core/*": [
-        "src/core/*"
+        "./src/core/*"
       ],
       "@/store/*": [
-        "src/store/*"
+        "./src/store/*"
       ],
       "@/features/*": [
-        "src/features/*"
+        "./src/features/*"
       ],
       "@/content/*": [
-        "src/content/*"
+        "./src/content/*"
       ],
       "@/shared/*": [
-        "src/shared/*"
+        "./src/shared/*"
       ],
       "@/app/*": [
-        "app/*"
+        "./app/*"
       ]
     }
   },
