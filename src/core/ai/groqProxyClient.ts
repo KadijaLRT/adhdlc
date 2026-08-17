@@ -16,9 +16,18 @@
 
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || '';
 
+export interface GroqTextContentBlock {
+  type: 'text';
+  text: string;
+}
+export interface GroqImageContentBlock {
+  type: 'image_url';
+  image_url: { url: string };
+}
+
 export interface GroqMessage {
   role: 'system' | 'user' | 'assistant';
-  content: string;
+  content: string | (GroqTextContentBlock | GroqImageContentBlock)[];
 }
 
 export class GroqProxyError extends Error {}

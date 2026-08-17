@@ -19,6 +19,14 @@
 
 const GROQ_BASE_URL = process.env.AI_BASE_URL || 'https://api.groq.com/openai/v1';
 const DEFAULT_MODEL = process.env.AI_MODEL || 'llama-3.3-70b-versatile';
+// Verified against Groq's own vision docs (console.groq.com/docs/vision)
+// at the time this was added — qwen/qwen3.6-27b is Groq's current
+// multimodal model, using the same OpenAI-compatible image_url content
+// block shape as every other vision API. Hardcoded rather than
+// client-suppliable: the client picks between "text" and "vision" via
+// a boolean, never a raw model string, so this endpoint can't be used
+// to route to an arbitrary/expensive model this app doesn't intend to pay for.
+const VISION_MODEL = process.env.AI_VISION_MODEL || 'qwen/qwen3.6-27b';
 const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
 // Defensive caps — this endpoint is public (any client can call it), so
@@ -26,20 +34,51 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 // own sanitizer, even though every legitimate caller already sanitizes
 // before it gets here.
 const MAX_MESSAGES = 10;
-const MAX_CONTENT_LENGTH = 8000;
+const MAX_TEXT_CONTENT_LENGTH = 8000;
+// A base64-encoded photo is routinely a few MB — this is the only
+// content type allowed to exceed MAX_TEXT_CONTENT_LENGTH, and even
+// this is capped well below Groq's own upstream limit so an oversized
+// request fails fast here with a clear reason rather than opaquely at
+// Groq.
+const MAX_IMAGE_DATA_URL_LENGTH = 7_000_000; // ~5MB of actual image data after base64's ~33% overhead
 const ALLOWED_ROLES = new Set(['system', 'user', 'assistant']);
+
+function isValidTextContent(content) {
+  return typeof content === 'string' && content.length > 0 && content.length <= MAX_TEXT_CONTENT_LENGTH;
+}
+
+function isValidContentBlock(block) {
+  if (!block || typeof block !== 'object') return false;
+  if (block.type === 'text') {
+    return isValidTextContent(block.text);
+  }
+  if (block.type === 'image_url') {
+    const url = block.image_url && block.image_url.url;
+    return (
+      typeof url === 'string' &&
+      url.length > 0 &&
+      url.length <= MAX_IMAGE_DATA_URL_LENGTH &&
+      // Only a data URL or https URL — anything else (file://, javascript:, etc.) is rejected outright.
+      (url.startsWith('data:image/') || url.startsWith('https://'))
+    );
+  }
+  return false;
+}
 
 function isValidMessages(messages) {
   if (!Array.isArray(messages) || messages.length === 0 || messages.length > MAX_MESSAGES) return false;
-  return messages.every(
-    (m) =>
-      m &&
-      typeof m === 'object' &&
-      ALLOWED_ROLES.has(m.role) &&
-      typeof m.content === 'string' &&
-      m.content.length > 0 &&
-      m.content.length <= MAX_CONTENT_LENGTH
-  );
+  return messages.every((m) => {
+    if (!m || typeof m !== 'object' || !ALLOWED_ROLES.has(m.role)) return false;
+    if (isValidTextContent(m.content)) return true;
+    if (Array.isArray(m.content) && m.content.length > 0) {
+      return m.content.every(isValidContentBlock);
+    }
+    return false;
+  });
+}
+
+function messagesContainImage(messages) {
+  return messages.some((m) => Array.isArray(m.content) && m.content.some((b) => b.type === 'image_url'));
 }
 
 module.exports = async function handler(req, res) {
@@ -63,6 +102,7 @@ module.exports = async function handler(req, res) {
   }
 
   const safeTemperature = typeof temperature === 'number' && temperature >= 0 && temperature <= 2 ? temperature : 0.5;
+  const model = messagesContainImage(messages) ? VISION_MODEL : DEFAULT_MODEL;
 
   try {
     const groqResponse = await fetch(`${GROQ_BASE_URL}/chat/completions`, {
@@ -72,7 +112,7 @@ module.exports = async function handler(req, res) {
         Authorization: `Bearer ${GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: DEFAULT_MODEL,
+        model,
         messages,
         temperature: safeTemperature,
         response_format: { type: 'json_object' },

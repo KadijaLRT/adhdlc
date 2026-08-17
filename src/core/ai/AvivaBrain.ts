@@ -1,7 +1,7 @@
 import { z } from 'zod';
 // @ts-ignore - plain JS by design, see file header.
 import { sanitizeString, sanitizePayload } from './groqSanitizer';
-import { callGroqCompletion } from './groqProxyClient';
+import { callGroqCompletion, type GroqMessage } from './groqProxyClient';
 
 export interface AvivaContext {
   currentEnergyLevel: 'low' | 'medium' | 'high';
@@ -205,6 +205,52 @@ Respond with ONLY valid JSON, no markdown fences:
       return validated.data;
     } catch (error) {
       console.error('AvivaBrain: parseSyllabus failed', error);
+      return null;
+    }
+  }
+
+  /**
+   * Same extraction as parseSyllabus, but from a photo/screenshot of a
+   * syllabus instead of pasted text — routed automatically to Groq's
+   * vision model by api/groq.js (which selects the model based on
+   * whether the request actually contains an image, not from anything
+   * the client specifies). Returns the identical SyllabusParseResult
+   * shape, so the review/confirm UI already built for the text path
+   * works unchanged regardless of which one produced it.
+   */
+  async parseSyllabusImage(imageDataUrl: string, todayIsoDate: string): Promise<SyllabusParseResult | null> {
+    if (!imageDataUrl?.startsWith('data:image/')) return null;
+
+    const systemPrompt = `You extract assignments, exams, quizzes, and due dates from a photo or screenshot of a school/college syllabus.
+Only extract items that have or clearly imply an actual due date visible in the image — never invent one.
+Resolve bare or relative dates (like "Oct 15", "Week 6") into a real ISO date (YYYY-MM-DD) using the current date provided. If a date genuinely cannot be resolved to a real calendar date, omit that item instead of guessing.
+Keep titles short and student-facing (e.g. "Midterm Exam", "Problem Set 3"), not a full sentence copied from the page.
+If the image is blurry, cut off, or you can't confidently read it, still return whatever you genuinely can read, and say so plainly in "reasoning".
+Respond with ONLY valid JSON, no markdown fences:
+{"courseName": string|null, "assignments": [{"id": string, "title": string, "dueDate": string, "type": "homework"|"exam"|"quiz"|"project"|"paper"|"reading"|"other"}], "reasoning": string}`;
+
+    const messages: GroqMessage[] = [
+      { role: 'system', content: systemPrompt },
+      {
+        role: 'user',
+        content: [
+          { type: 'text', text: `Today's date: ${todayIsoDate}. Extract the assignments and due dates from this syllabus image.` },
+          { type: 'image_url', image_url: { url: imageDataUrl } },
+        ],
+      },
+    ];
+
+    try {
+      const raw = await callGroqCompletion(messages, 0.2);
+      if (!raw) return null;
+      const validated = SyllabusParseResultSchema.safeParse(JSON.parse(raw));
+      if (!validated.success) {
+        console.error('AvivaBrain: parseSyllabusImage schema validation failed', validated.error.flatten());
+        return null;
+      }
+      return validated.data;
+    } catch (error) {
+      console.error('AvivaBrain: parseSyllabusImage failed', error);
       return null;
     }
   }

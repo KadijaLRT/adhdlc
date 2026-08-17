@@ -1,8 +1,10 @@
 import { useState } from 'react';
-import { View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, TextInput, ActivityIndicator, Platform, Image } from 'react-native';
 import { useAppStore, selectCourses } from '@/store/index';
 import { avivaBrain, type SyllabusParseResult } from '@/core/ai/AvivaBrain';
 import { pickAndReadTextFile } from './syllabusImport';
+import { pickAndExtractPdfText } from './syllabusPdfImport';
+import { pickSyllabusImageFromLibrary, captureSyllabusPhoto } from './syllabusImageImport';
 // @ts-ignore - plain JS by design, see groqSanitizer.js header.
 import { MAX_PAYLOAD_LENGTH } from '@/core/ai/groqSanitizer';
 
@@ -42,6 +44,7 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
   const [fileError, setFileError] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
   const [extractError, setExtractError] = useState<string | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [result, setResult] = useState<{ courseName: string | null; reasoning: string } | null>(null);
   const [proposed, setProposed] = useState<ProposedAssignment[]>([]);
   const [targetCourseId, setTargetCourseId] = useState<string>(fixedCourseId || '');
@@ -53,6 +56,7 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
 
   const handlePickFile = async () => {
     setFileError(null);
+    setImagePreviewUrl(null);
     try {
       const picked = await pickAndReadTextFile();
       if (!picked) return;
@@ -60,11 +64,67 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
       setSyllabusText(picked.text);
     } catch (error: any) {
       if (error?.message === 'NOT_TXT') {
-        setFileError("That's not a .txt file — PDFs and Word docs can look completely different once copied out depending on formatting, so paste the text directly below instead (select all in your PDF/Word viewer, copy, paste here).");
+        setFileError("That's not a .txt file — use \"Upload PDF\" below for a PDF, or paste the text directly.");
       } else {
         setFileError("Couldn't read that file. Try pasting the text directly instead.");
       }
     }
+  };
+
+  const handlePickPdf = async () => {
+    setFileError(null);
+    setImagePreviewUrl(null);
+    try {
+      const picked = await pickAndExtractPdfText();
+      if (!picked) return;
+      if (picked.looksScanned) {
+        setFileError(`"${picked.name}" doesn't seem to have real text in it — it's probably a scanned page or photo saved as a PDF. Use "Upload screenshot" below instead, which reads the page visually.`);
+        return;
+      }
+      setFileName(picked.name);
+      setSyllabusText(picked.text);
+    } catch (error) {
+      setFileError("Couldn't read that PDF. If it's a scanned document, try \"Upload screenshot\" instead — otherwise, paste the text directly.");
+    }
+  };
+
+  const runImageExtract = async (picker: () => Promise<{ dataUrl: string } | null>) => {
+    setFileError(null);
+    setExtractError(null);
+    setResult(null);
+    setSyllabusText('');
+    setFileName(null);
+    try {
+      const picked = await picker();
+      if (!picked) return;
+      setImagePreviewUrl(picked.dataUrl);
+      setExtracting(true);
+      const today = new Date().toISOString().slice(0, 10);
+      const parsed = await avivaBrain.parseSyllabusImage(picked.dataUrl, today);
+      setExtracting(false);
+      applyParsedResult(parsed);
+    } catch (error: any) {
+      setExtracting(false);
+      if (error?.message === 'PERMISSION_DENIED') {
+        setFileError('Photo access was denied — you can allow it from your device settings, or paste the text instead.');
+      } else {
+        setFileError("Couldn't read that image. Try a clearer photo, or paste the text directly instead.");
+      }
+    }
+  };
+
+  const applyParsedResult = (parsed: SyllabusParseResult | null) => {
+    if (!parsed) {
+      setExtractError("Couldn't extract assignments just now — try again in a moment, or add them manually below instead.");
+      return;
+    }
+    if (!parsed.assignments.length) {
+      setExtractError("Didn't find any assignments with clear due dates. If your syllabus has due dates, make sure they're visible in what you uploaded.");
+      return;
+    }
+    setResult({ courseName: parsed.courseName, reasoning: parsed.reasoning });
+    setProposed(parsed.assignments.map((a) => ({ ...a, included: true })));
+    if (!fixedCourseId && parsed.courseName) setNewCourseName(parsed.courseName);
   };
 
   const handleExtract = async () => {
@@ -76,17 +136,7 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
     const today = new Date().toISOString().slice(0, 10);
     const parsed = await avivaBrain.parseSyllabus(syllabusText, today);
     setExtracting(false);
-    if (!parsed) {
-      setExtractError("Couldn't extract assignments just now — try again in a moment, or add them manually below instead.");
-      return;
-    }
-    if (!parsed.assignments.length) {
-      setExtractError("Didn't find any assignments with clear due dates in that text. If your syllabus has due dates, try pasting a larger section that includes them.");
-      return;
-    }
-    setResult({ courseName: parsed.courseName, reasoning: parsed.reasoning });
-    setProposed(parsed.assignments.map((a) => ({ ...a, included: true })));
-    if (!fixedCourseId && parsed.courseName) setNewCourseName(parsed.courseName);
+    applyParsedResult(parsed);
   };
 
   const toggleIncluded = (id: string) => {
@@ -125,6 +175,7 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
     setResult(null);
     setSyllabusText('');
     setFileName(null);
+    setImagePreviewUrl(null);
     onDone?.();
   };
 
@@ -152,44 +203,74 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
 
       {!result && (
         <>
-          <Text className="text-slate-500 text-xs mb-2">
-            Paste the syllabus text below (works for anything — PDF, Word, a course website, just copy and paste), or upload a plain .txt file.
+          <Text className="text-slate-500 text-xs mb-3">
+            Upload a PDF or a screenshot/photo, or paste the text directly below — whatever's easiest.
           </Text>
-          <TextInput
-            value={syllabusText}
-            onChangeText={setSyllabusText}
-            placeholder="Paste your syllabus text here…"
-            placeholderTextColor="#64748b"
-            multiline
-            numberOfLines={6}
-            className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-2"
-            style={{ minHeight: 120, textAlignVertical: 'top' }}
-          />
-          {wasTruncated && (
-            <Text className="text-amber-600 dark:text-amber-400 text-[11px] mb-2">
-              That's long — only the first ~{MAX_PAYLOAD_LENGTH.toLocaleString()} characters will be read. If your due dates are further down, paste just that section instead.
-            </Text>
-          )}
-          <Pressable onPress={handlePickFile} className="py-2 mb-2">
-            <Text className="text-indigo-500 text-xs">📎 {fileName ? `Using ${fileName} — choose a different file` : 'Or upload a .txt file'}</Text>
-          </Pressable>
-          {fileError && <Text className="text-amber-600 dark:text-amber-400 text-xs mb-2">{fileError}</Text>}
 
-          <Pressable
-            onPress={handleExtract}
-            disabled={!syllabusText.trim() || extracting}
-            className={!syllabusText.trim() || extracting ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center' : 'bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500'}
-          >
-            {extracting ? (
-              <View className="flex-row items-center gap-2">
-                <ActivityIndicator color="#fff" size="small" />
-                <Text className="text-white text-sm font-semibold">Reading…</Text>
-              </View>
-            ) : (
-              <Text className="text-white text-sm font-semibold">✨ Extract assignments</Text>
+          <View className="flex-row flex-wrap gap-2 mb-3">
+            <Pressable onPress={handlePickPdf} className="flex-1 border-2 border-stone-300 dark:border-slate-700 rounded-xl py-2.5 items-center min-w-[100px]">
+              <Text className="text-slate-700 dark:text-slate-300 text-xs font-medium">📄 Upload PDF</Text>
+            </Pressable>
+            <Pressable onPress={() => runImageExtract(pickSyllabusImageFromLibrary)} className="flex-1 border-2 border-stone-300 dark:border-slate-700 rounded-xl py-2.5 items-center min-w-[100px]">
+              <Text className="text-slate-700 dark:text-slate-300 text-xs font-medium">🖼️ Upload screenshot</Text>
+            </Pressable>
+            {Platform.OS !== 'web' && (
+              <Pressable onPress={() => runImageExtract(captureSyllabusPhoto)} className="flex-1 border-2 border-stone-300 dark:border-slate-700 rounded-xl py-2.5 items-center min-w-[100px]">
+                <Text className="text-slate-700 dark:text-slate-300 text-xs font-medium">📷 Take photo</Text>
+              </Pressable>
             )}
-          </Pressable>
-          {extractError && <Text className="text-red-500 text-xs mt-2">{extractError}</Text>}
+          </View>
+
+          {imagePreviewUrl && (
+            <View className="mb-3 flex-row items-center gap-2">
+              <Image source={{ uri: imagePreviewUrl }} style={{ width: 48, height: 48, borderRadius: 8 }} />
+              {extracting && (
+                <View className="flex-row items-center gap-2">
+                  <ActivityIndicator size="small" />
+                  <Text className="text-slate-500 text-xs">Reading the image…</Text>
+                </View>
+              )}
+            </View>
+          )}
+          {fileError && <Text className="text-amber-600 dark:text-amber-400 text-xs mb-3">{fileError}</Text>}
+          {extractError && <Text className="text-red-500 text-xs mb-3">{extractError}</Text>}
+
+          <View className="border-t border-stone-100 dark:border-slate-800 pt-3">
+            <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-2">Or paste text</Text>
+            <TextInput
+              value={syllabusText}
+              onChangeText={setSyllabusText}
+              placeholder="Paste your syllabus text here…"
+              placeholderTextColor="#64748b"
+              multiline
+              numberOfLines={6}
+              className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-2"
+              style={{ minHeight: 100, textAlignVertical: 'top' }}
+            />
+            {wasTruncated && (
+              <Text className="text-amber-600 dark:text-amber-400 text-[11px] mb-2">
+                That's long — only the first ~{MAX_PAYLOAD_LENGTH.toLocaleString()} characters will be read. If your due dates are further down, paste just that section instead.
+              </Text>
+            )}
+            <Pressable onPress={handlePickFile} className="py-2 mb-2">
+              <Text className="text-indigo-500 text-xs">📎 {fileName ? `Using ${fileName} — choose a different file` : 'Or upload a .txt file'}</Text>
+            </Pressable>
+
+            <Pressable
+              onPress={handleExtract}
+              disabled={!syllabusText.trim() || extracting}
+              className={!syllabusText.trim() || extracting ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center' : 'bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500'}
+            >
+              {extracting && !imagePreviewUrl ? (
+                <View className="flex-row items-center gap-2">
+                  <ActivityIndicator color="#fff" size="small" />
+                  <Text className="text-white text-sm font-semibold">Reading…</Text>
+                </View>
+              ) : (
+                <Text className="text-white text-sm font-semibold">✨ Extract assignments</Text>
+              )}
+            </Pressable>
+          </View>
         </>
       )}
 
