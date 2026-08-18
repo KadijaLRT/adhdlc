@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, ScrollView } from 'react-native';
+import { useRouter } from 'expo-router';
 import { useAppStore, selectAssignments, selectEnergyLevel, selectIsOverwhelmed, selectDateFormat } from '@/store/index';
 import { avivaBrain } from '@/core/ai/AvivaBrain';
 import { spreadStepsAcrossDays, groupStepsByDate } from './spreadWorkload';
@@ -7,6 +8,7 @@ import { Heading } from '@/shared/components/Heading';
 import { formatDate } from '@/shared/formatDate';
 
 export default function AssignmentDetailScreen({ assignmentId }: { assignmentId: string }) {
+  const router = useRouter();
   const assignments = useAppStore(selectAssignments);
   const energyLevel = useAppStore(selectEnergyLevel);
   const isOverwhelmed = useAppStore(selectIsOverwhelmed);
@@ -14,7 +16,10 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
   const toggleAssignmentComplete = useAppStore((s) => s.toggleAssignmentComplete);
   const toggleAssignmentSubStep = useAppStore((s) => s.toggleAssignmentSubStep);
   const updateAssignment = useAppStore((s) => s.updateAssignment);
+  const removeAssignment = useAppStore((s) => s.removeAssignment);
   const [breakingDown, setBreakingDown] = useState(false);
+  const [breakDownError, setBreakDownError] = useState<string | null>(null);
+  const [confirmingRemove, setConfirmingRemove] = useState(false);
 
   const assignment = (assignments || []).find((a) => a.id === assignmentId);
 
@@ -28,6 +33,7 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
 
   const handleBreakDown = async () => {
     setBreakingDown(true);
+    setBreakDownError(null);
     const hour = new Date().getHours();
     const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';
 
@@ -44,8 +50,20 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
         subSteps: spreadSteps,
         estimatedMinutes: decomposition.estimatedIdealMinutes,
       });
+    } else {
+      // avivaBrain.breakDownAssignment already logs the real cause to
+      // the console — this was previously a silent no-op with zero
+      // feedback whenever the AI call failed for any reason (a dead
+      // model, a network hiccup, rate limiting), which read exactly
+      // like a broken button rather than a failed request.
+      setBreakDownError("Couldn't break this down just now — try again in a moment.");
     }
     setBreakingDown(false);
+  };
+
+  const handleRemove = async () => {
+    await removeAssignment(assignment.id);
+    router?.back?.();
   };
 
   return (
@@ -64,9 +82,12 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
         </Pressable>
 
         {(assignment.subSteps?.length || 0) === 0 ? (
-          <Pressable onPress={handleBreakDown} disabled={breakingDown} className="border-2 border-indigo-500 rounded-full py-4 mb-6 items-center">
-            {breakingDown ? <ActivityIndicator color="#818cf8" /> : <Text className="text-indigo-700 font-semibold dark:text-indigo-300">Break this into steps</Text>}
-          </Pressable>
+          <>
+            <Pressable onPress={handleBreakDown} disabled={breakingDown} className="border-2 border-indigo-500 rounded-full py-4 mb-2 items-center">
+              {breakingDown ? <ActivityIndicator color="#818cf8" /> : <Text className="text-indigo-700 font-semibold dark:text-indigo-300">Break this into steps</Text>}
+            </Pressable>
+            {breakDownError && <Text className="text-red-500 text-xs text-center mb-6">{breakDownError}</Text>}
+          </>
         ) : (
           <View className="gap-4 mb-6">
             {groupStepsByDate(assignment.subSteps || []).map((group) => (
@@ -87,6 +108,24 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
               </View>
             ))}
           </View>
+        )}
+
+        {confirmingRemove ? (
+          <View className="border-2 border-red-400 bg-red-400/10 rounded-2xl p-4">
+            <Text className="text-red-500 text-sm font-medium mb-3">Remove "{assignment.title}"? This can't be undone.</Text>
+            <View className="flex-row gap-2">
+              <Pressable onPress={handleRemove} className="flex-1 bg-red-500 rounded-xl py-2.5 items-center active:bg-red-400">
+                <Text className="text-white text-sm font-semibold">Remove</Text>
+              </Pressable>
+              <Pressable onPress={() => setConfirmingRemove(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center">
+                <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Cancel</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <Pressable onPress={() => setConfirmingRemove(true)} className="py-2">
+            <Text className="text-red-500 text-center text-xs">Remove this assignment</Text>
+          </Pressable>
         )}
       </View>
     </ScrollView>

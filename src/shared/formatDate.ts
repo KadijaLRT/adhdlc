@@ -42,11 +42,11 @@ export function formatDate(input: string | Date, format: DateFormat = 'MM-DD-YYY
 
   switch (format) {
     case 'DD-MM-YYYY':
-      return `${dd}-${mm}-${yyyy}`;
+      return `${dd}/${mm}/${yyyy}`;
     case 'YYYY-MM-DD':
       return `${yyyy}-${mm}-${dd}`;
     case 'MM-DD-YYYY':
     default:
-      return `${mm}-${dd}-${yyyy}`;
+      return `${mm}/${dd}/${yyyy}`;
   }
 }

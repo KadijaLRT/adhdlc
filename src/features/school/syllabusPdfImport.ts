@@ -4,16 +4,23 @@ import * as DocumentPicker from 'expo-document-picker';
 // The legacy build (not the default /build entry) is the one meant for
 // bundlers/environments without full native browser API support edge
 // cases — matches what's actually been verified to work in this
-// project's sandbox. Deliberately never configures
-// GlobalWorkerOptions.workerSrc: pdf.js falls back to running on the
-// main thread when no worker is configured, which was verified working
-// directly against this exact import path. Getting Metro (Expo's web
-// bundler, not Webpack) to correctly resolve and serve pdf.js's
-// separate worker + standard-fonts assets is a real, unverified risk
-// this sidesteps entirely — the tradeoff is that parsing briefly blocks
-// the main thread, which is a non-issue for a syllabus-sized document
-// (a handful of pages), not a real book.
+// project's sandbox.
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+
+// pdf.js requires an explicit worker — it throws synchronously
+// ("No GlobalWorkerOptions.workerSrc specified") without one, in a
+// real browser, regardless of the useWorkerFetch flag below. This was
+// missed in earlier testing because a plain Node.js script has no
+// browser worker model at all, so it never exercised this code path —
+// only a real browser reproduction with the actual uploaded file
+// caught it. pdf.worker.min.mjs is copied into public/ (see
+// package.json's "postinstall"), so it's served from this app's own
+// origin — no external CDN dependency, which matters since campus
+// networks routinely block CDNs a student would otherwise need this
+// to reach.
+if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  (pdfjsLib as any).GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+}
 
 export interface PdfExtractResult {
   name: string;

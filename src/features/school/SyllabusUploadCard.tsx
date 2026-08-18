@@ -5,6 +5,7 @@ import { avivaBrain, type SyllabusParseResult } from '@/core/ai/AvivaBrain';
 import { pickAndReadTextFile } from './syllabusImport';
 import { pickAndExtractPdfText } from './syllabusPdfImport';
 import { pickSyllabusImageFromLibrary, captureSyllabusPhoto } from './syllabusImageImport';
+import { DateInput } from '@/shared/components/DateInput';
 // @ts-ignore - plain JS by design, see groqSanitizer.js header.
 import { MAX_PAYLOAD_LENGTH } from '@/core/ai/groqSanitizer';
 
@@ -63,6 +64,7 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
       setFileName(picked.name);
       setSyllabusText(picked.text);
     } catch (error: any) {
+      console.error('SyllabusUploadCard: failed to read .txt file', error);
       if (error?.message === 'NOT_TXT') {
         setFileError("That's not a .txt file — use \"Upload PDF\" below for a PDF, or paste the text directly.");
       } else {
@@ -84,6 +86,7 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
       setFileName(picked.name);
       setSyllabusText(picked.text);
     } catch (error) {
+      console.error('SyllabusUploadCard: failed to extract PDF text', error);
       setFileError("Couldn't read that PDF. If it's a scanned document, try \"Upload screenshot\" instead — otherwise, paste the text directly.");
     }
   };
@@ -105,6 +108,7 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
       applyParsedResult(parsed);
     } catch (error: any) {
       setExtracting(false);
+      console.error('SyllabusUploadCard: failed to extract from image', error);
       if (error?.message === 'PERMISSION_DENIED') {
         setFileError('Photo access was denied — you can allow it from your device settings, or paste the text instead.');
       } else {
@@ -320,14 +324,11 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
                     className="flex-1 text-slate-900 dark:text-slate-100 text-sm"
                   />
                 </View>
-                <TextInput
-                  value={a.dueDate}
-                  onChangeText={(v) => updateProposed(a.id, { dueDate: v })}
-                  editable={a.included}
-                  placeholder="YYYY-MM-DD"
-                  placeholderTextColor="#64748b"
-                  className="text-slate-500 text-xs ml-7"
-                />
+                {a.included ? (
+                  <DateInput value={a.dueDate} onChange={(v) => updateProposed(a.id, { dueDate: v })} dark={false} />
+                ) : (
+                  <Text className="text-slate-500 text-xs ml-7">{a.dueDate}</Text>
+                )}
               </View>
             ))}
           </View>

@@ -18,7 +18,14 @@
  */
 
 const GROQ_BASE_URL = process.env.AI_BASE_URL || 'https://api.groq.com/openai/v1';
-const DEFAULT_MODEL = process.env.AI_MODEL || 'llama-3.3-70b-versatile';
+// llama-3.3-70b-versatile was deprecated by Groq on June 17, 2026 and
+// their own docs state requests stop being served by August 2026 —
+// which has now passed. openai/gpt-oss-120b is Groq's current
+// production-tier general-purpose replacement (confirmed against
+// their own docs: console.groq.com/docs/model/openai/gpt-oss-120b),
+// using the identical chat-completions + response_format:json_object
+// shape already in use here, so no other change was needed.
+const DEFAULT_MODEL = process.env.AI_MODEL || 'openai/gpt-oss-120b';
 // Verified against Groq's own vision docs (console.groq.com/docs/vision)
 // at the time this was added — qwen/qwen3.6-27b is Groq's current
 // multimodal model, using the same OpenAI-compatible image_url content

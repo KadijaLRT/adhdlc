@@ -6,6 +6,7 @@ import { getCourseStatus } from '@/store/slices/schoolSlice';
 import { formatDate } from '@/shared/formatDate';
 import { avivaBrain, type FlashcardSet } from '@/core/ai/AvivaBrain';
 import { Heading } from '@/shared/components/Heading';
+import { DateInput } from '@/shared/components/DateInput';
 import SyllabusUploadCard from './SyllabusUploadCard';
 
 const COURSE_EMOJIS = ['📖', '🧮', '🧪', '🎨', '🌍', '💻'];
@@ -16,6 +17,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
   const dateFormat = useAppStore(selectDateFormat);
   const assignments = useAppStore(selectAssignments);
   const addAssignment = useAppStore((s) => s.addAssignment);
+  const removeAssignment = useAppStore((s) => s.removeAssignment);
   const updateCourse = useAppStore((s) => s.updateCourse);
   const removeCourse = useAppStore((s) => s.removeCourse);
 
@@ -31,6 +33,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
   const [nameInput, setNameInput] = useState('');
   const [emojiInput, setEmojiInput] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
+  const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(null);
   const [gradeSaved, setGradeSaved] = useState(false);
 
   const course = (courses || []).find((c) => c.id === courseId);
@@ -258,28 +261,45 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
             placeholderTextColor="#64748b"
             className="bg-stone-100 text-slate-900 rounded-xl px-4 py-3 mb-2 dark:text-slate-100 dark:bg-slate-800"
           />
-          <View className="flex-row gap-2">
-            <TextInput
-              value={newDueDate}
-              onChangeText={setNewDueDate}
-              placeholder="YYYY-MM-DD"
-              placeholderTextColor="#64748b"
-              onSubmitEditing={handleAdd}
-              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-4 py-3 dark:text-slate-100 dark:bg-slate-800"
-            />
-            <Pressable onPress={handleAdd} className="bg-indigo-600 rounded-xl px-5 justify-center">
-              <Text className="text-white font-semibold">Add</Text>
-            </Pressable>
+          <View className="mb-2">
+            <DateInput value={newDueDate} onChange={setNewDueDate} dark={false} />
           </View>
+          <Pressable onPress={handleAdd} className="bg-indigo-600 rounded-xl py-3 items-center">
+            <Text className="text-white font-semibold">Add</Text>
+          </Pressable>
         </View>
 
         <View className="gap-2 mb-8">
           {courseAssignments.length === 0 && <Text className="text-slate-500 text-center mt-4">No assignments yet.</Text>}
           {courseAssignments.map((a) => (
-            <Pressable key={a.id} onPress={() => router?.push?.(`/school/assignment/${a.id}`)} className="bg-white rounded-xl p-4 flex-row items-center justify-between dark:bg-slate-900">
-              <Text className={a.isComplete ? 'text-slate-500 line-through flex-1' : 'text-slate-900 flex-1'}>{a.title}</Text>
-              <Text className="text-slate-500 text-xs">{formatDate(a.dueDate, dateFormat)}</Text>
-            </Pressable>
+            <View key={a.id} className="bg-white rounded-xl dark:bg-slate-900">
+              {confirmingRemoveId === a.id ? (
+                <View className="p-4">
+                  <Text className="text-red-500 text-xs font-medium mb-2">Remove "{a.title}"?</Text>
+                  <View className="flex-row gap-2">
+                    <Pressable
+                      onPress={async () => { await removeAssignment(a.id); setConfirmingRemoveId(null); }}
+                      className="flex-1 bg-red-500 rounded-lg py-2 items-center active:bg-red-400"
+                    >
+                      <Text className="text-white text-xs font-semibold">Remove</Text>
+                    </Pressable>
+                    <Pressable onPress={() => setConfirmingRemoveId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center">
+                      <Text className="text-slate-600 dark:text-slate-300 text-xs font-semibold">Cancel</Text>
+                    </Pressable>
+                  </View>
+                </View>
+              ) : (
+                <View className="flex-row items-center">
+                  <Pressable onPress={() => router?.push?.(`/school/assignment/${a.id}`)} className="flex-1 p-4 flex-row items-center justify-between">
+                    <Text className={a.isComplete ? 'text-slate-500 line-through flex-1' : 'text-slate-900 dark:text-slate-100 flex-1'}>{a.title}</Text>
+                    <Text className="text-slate-500 text-xs">{formatDate(a.dueDate, dateFormat)}</Text>
+                  </Pressable>
+                  <Pressable onPress={() => setConfirmingRemoveId(a.id)} accessibilityLabel={`Remove ${a.title}`} className="px-3 py-4">
+                    <Text className="text-slate-300 dark:text-slate-600 text-base">✕</Text>
+                  </Pressable>
+                </View>
+              )}
+            </View>
           ))}
         </View>
 
