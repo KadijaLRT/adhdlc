@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import { getRepository } from '@/core/storage';
+import { createWriteGuard } from '@/core/storage/writeGuard';
 import type { UserProfile } from './types';
 
 export interface ProfileSlice {
@@ -7,6 +8,11 @@ export interface ProfileSlice {
   setProfile: (profile: UserProfile) => Promise<void>;
   clearProfile: () => Promise<void>;
 }
+
+const persist = createWriteGuard(async (profile: UserProfile | null) => {
+  const repo = await getRepository();
+  await repo.saveProfile(profile as UserProfile);
+});
 
 // The app never requires an account. This is always the real, immediate,
 // fully-offline source of truth; cloud sync (core/supabase) is a
@@ -16,8 +22,7 @@ export const createProfileSlice: StateCreator<ProfileSlice> = (set) => ({
 
   setProfile: async (profile) => {
     set({ profile });
-    const repo = await getRepository();
-    await repo.saveProfile(profile);
+    await persist(profile);
   },
 
   // Lets someone re-run onboarding intentionally (e.g. to update answers
@@ -26,7 +31,6 @@ export const createProfileSlice: StateCreator<ProfileSlice> = (set) => ({
   // built up in the app stay exactly as they were.
   clearProfile: async () => {
     set({ profile: null });
-    const repo = await getRepository();
-    await repo.saveProfile(null as unknown as UserProfile);
+    await persist(null);
   },
 });

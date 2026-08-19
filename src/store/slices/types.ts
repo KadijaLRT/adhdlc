@@ -16,13 +16,28 @@ export interface Task {
   estimatedMinutes?: number; realMinutes?: number; energyRequired: EnergyLevel;
   createdAt: string; scheduledFor?: string; subSteps: SubStep[];
   priority?: TaskPriority; category?: TaskCategory; motivators?: MotivatorTag[];
+  // Set the first time this task is marked complete and XP/milestone
+  // credit is actually given — checked before awarding again, so
+  // toggling complete -> incomplete -> complete repeatedly can't farm
+  // XP for the same task over and over. Uncompleting a task never
+  // clears this: the credit already given isn't retracted (there's no
+  // "take back XP" mechanic anywhere in this app), it just isn't given
+  // again.
+  rewardedAt?: string;
 }
 export interface RoutineStreak {
   routineId: string; count: number; lastCompletedDate: string | null;
   freezesAvailable: number; isFrozen: boolean;
 }
 export type MilestoneEvent = 'task_completed' | 'stuck_flow_used' | 'body_doubling_session' | 'routine_completed' | 'focus_session_completed' | 'critical_tasks_cleared_today';
-export interface MilestoneProgress { trackedEvent: MilestoneEvent; count: number; }
+// lastTriggeredDate is optional and only meaningful for events that
+// are supposed to be date-scoped (currently just
+// critical_tasks_cleared_today, whose own name promises "today" but
+// had nothing tracking what day it last fired — uncompleting then
+// re-completing the last critical task could trigger it repeatedly in
+// the same day). Events like task_completed/routine_completed are
+// meant to increment every single time and never set this field.
+export interface MilestoneProgress { trackedEvent: MilestoneEvent; count: number; lastTriggeredDate?: string; }
 export interface EnergyLogEntry { date: string; energyLevel: EnergyLevel; note?: string; }
 export interface StressLogEntry { date: string; stressLevel: EnergyLevel; }
 export interface CycleLogEntry {

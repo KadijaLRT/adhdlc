@@ -37,8 +37,13 @@ export default function Root({ children }: { children: React.ReactNode }) {
         <meta name="apple-mobile-web-app-title" content="Aviva" />
         <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
 
-        {/* Standard favicon */}
-        <link rel="icon" href="/favicon.ico" />
+        {/* Standard favicon — public/favicon.ico was never actually
+            generated for this project; icon-192.png/icon-512.png
+            already exist and every modern browser supports PNG
+            favicons directly via the type attribute, so this points
+            at real, existing assets instead of a 404. */}
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
 
         {/* Prevents the bounce/scroll-chrome look that reads as "a
             webpage" rather than a native-feeling app. */}

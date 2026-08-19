@@ -38,6 +38,10 @@
     "plugins": [
       "expo-router",
       ["expo-camera", { "cameraPermission": "Used only to scan a food barcode when logging what you ate — nothing is recorded or stored." }],
+      ["expo-image-picker", {
+        "photosPermission": "Used to select a syllabus screenshot or photo to extract assignments and due dates — nothing is uploaded except the one image you choose.",
+        "cameraPermission": "Used to take a photo of a syllabus to extract assignments and due dates — nothing is uploaded except the one photo you take."
+      }],
       ["expo-notifications", {
         "icon": "./assets/icon.png",
         "color": "#4f46e5"

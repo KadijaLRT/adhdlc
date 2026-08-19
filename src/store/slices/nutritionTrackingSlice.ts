@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import { getRepository } from '@/core/storage';
 import { createWriteGuard } from '@/core/storage/writeGuard';
+import { generateId } from '@/shared/generateId';
 
 export type MealType = 'breakfast' | 'lunch' | 'dinner' | 'snack';
 
@@ -84,7 +85,7 @@ export const createNutritionTrackingSlice: StateCreator<NutritionTrackingSlice> 
   ...DEFAULT_STATE,
 
   logFood: async (entry) => {
-    const next = [...(get().foodLog || []), { ...entry, id: `food-${Date.now()}` }];
+    const next = [...(get().foodLog || []), { ...entry, id: generateId('food') }];
     const nextState = { ...currentState(get), foodLog: next };
     set(nextState);
     await persist(nextState);
@@ -114,7 +115,7 @@ export const createNutritionTrackingSlice: StateCreator<NutritionTrackingSlice> 
   },
 
   saveCustomMeal: async (meal) => {
-    const newMeal: CustomMeal = { ...meal, id: `meal-${Date.now()}` };
+    const newMeal: CustomMeal = { ...meal, id: generateId('meal') };
     const next = [...(get().customMeals || []), newMeal];
     const nextState = { ...currentState(get), customMeals: next };
     set(nextState);

@@ -5,6 +5,7 @@ import { useAppStore, selectCountdownEvents, selectDateFormat } from '@/store/in
 import { formatDate, parseLocalDate, toLocalDateString } from '@/shared/formatDate';
 import { Heading } from '@/shared/components/Heading';
 import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
+import { generateId } from '@/shared/generateId';
 
 const EMOJI_OPTIONS = ['🎂', '💰', '🎉', '🎁', '💍', '✈️', '🎓', '📅'];
 
@@ -54,7 +55,7 @@ export default function CountdownScreen() {
     const parsed = parseLocalDate(dateInput.trim());
     if (isNaN(parsed.getTime())) return;
     await addCountdownEvent({
-      id: `countdown-${Date.now()}`,
+      id: generateId('countdown'),
       label: label.trim(),
       emoji,
       date: toLocalDateString(parsed),

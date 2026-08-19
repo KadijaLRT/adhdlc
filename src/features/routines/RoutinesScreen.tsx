@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { useAppStore, selectRoutines, selectStreaks } from '@/store/index';
 import { ROUTINE_TEMPLATES } from '@/content/routineTemplates';
 import { Heading } from '@/shared/components/Heading';
+import { generateId } from '@/shared/generateId';
 
 const EMOJI_OPTIONS = ['🧘', '💊', '🍽️', '🛏️', '📚', '🚿'];
 
@@ -28,7 +29,7 @@ export default function RoutinesScreen() {
 
   const handleAddTemplate = async (template: (typeof ROUTINE_TEMPLATES)[number]) => {
     await addRoutine({
-      id: `routine-${Date.now()}`,
+      id: generateId('routine'),
       title: template.title,
       emoji: template.emoji,
       createdAt: new Date().toISOString(),
@@ -38,7 +39,7 @@ export default function RoutinesScreen() {
 
   const handleAddCustom = async () => {
     if (!newTitle?.trim()) return;
-    await addRoutine({ id: `routine-${Date.now()}`, title: newTitle.trim(), emoji: newEmoji, createdAt: new Date().toISOString() });
+    await addRoutine({ id: generateId('routine'), title: newTitle.trim(), emoji: newEmoji, createdAt: new Date().toISOString() });
     setNewTitle('');
     setShowCustomForm(false);
   };

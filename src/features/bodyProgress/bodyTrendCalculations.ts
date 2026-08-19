@@ -9,8 +9,12 @@ import { toLocalDateString } from '@/shared/formatDate';
  * raw figure alone, so those are what the UI leads with.
  */
 export function getSevenDayAverage(weightLog: WeightEntry[]): number | null {
-  const sorted = [...(weightLog || [])].sort((a, b) => b.date.localeCompare(a.date));
-  const recent = sorted.slice(0, 7);
+  const now = new Date();
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(now.getDate() - 7);
+  const cutoff = toLocalDateString(sevenDaysAgo);
+
+  const recent = (weightLog || []).filter((e) => e.date >= cutoff);
   if (!recent.length) return null;
   return recent.reduce((sum, e) => sum + e.weightLbs, 0) / recent.length;
 }
@@ -23,9 +27,16 @@ export function getThirtyDayChange(weightLog: WeightEntry[]): number | null {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const cutoff = toLocalDateString(thirtyDaysAgo);
 
-  const oldEntry = sorted.find((e) => e.date >= cutoff) || sorted[0];
+  // No entry within the actual 30-day window means there's genuinely
+  // no 30-day change to report — falling back to the oldest entry
+  // ever logged (which this used to do) could present a multi-year
+  // difference as a "30-day change," and that number fed straight
+  // into projectGoalDate below, contaminating the projected date too.
+  const oldEntry = sorted.find((e) => e.date >= cutoff);
+  if (!oldEntry) return null;
+
   const latestEntry = sorted[sorted.length - 1];
-  if (!oldEntry || !latestEntry) return null;
+  if (!latestEntry) return null;
   return latestEntry.weightLbs - oldEntry.weightLbs;
 }
 

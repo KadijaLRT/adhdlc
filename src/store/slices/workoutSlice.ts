@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import { getRepository } from '@/core/storage';
 import { createWriteGuard } from '@/core/storage/writeGuard';
+import { generateId } from '@/shared/generateId';
 
 export interface SetLogEntry {
   exerciseId: string;
@@ -121,20 +122,27 @@ export const createWorkoutSlice: StateCreator<WorkoutSlice> = (set, get) => ({
   ...DEFAULT_STATE,
 
   logSet: async (exerciseId, weight, reps) => {
-    const nextLogs = [...(get().setLogs || []), { exerciseId, weight, reps, date: new Date().toISOString() }];
+    // Defensive floor at the actual boundary, not just relying on the
+    // one current UI call site (WorkoutDaySession.tsx) to have already
+    // clamped — the same reasoning as the write-guards elsewhere in
+    // this store: validate where untrusted input actually enters, not
+    // just at today's one caller.
+    const safeWeight = Math.max(0, Number.isFinite(weight) ? weight : 0);
+    const safeReps = Math.max(0, Number.isFinite(reps) ? reps : 0);
+    const nextLogs = [...(get().setLogs || []), { exerciseId, weight: safeWeight, reps: safeReps, date: new Date().toISOString() }];
     const existingRecord = (get().personalRecords || []).find((r) => r.exerciseId === exerciseId);
 
     let isNewRecord = false;
     let nextRecords = get().personalRecords || [];
 
     if (!existingRecord) {
-      isNewRecord = weight > 0 || reps > 0;
-      nextRecords = [...nextRecords, { exerciseId, bestWeight: weight, bestReps: reps, achievedAt: new Date().toISOString() }];
-    } else if (weight > existingRecord.bestWeight || (weight === existingRecord.bestWeight && reps > existingRecord.bestReps)) {
+      isNewRecord = safeWeight > 0 || safeReps > 0;
+      nextRecords = [...nextRecords, { exerciseId, bestWeight: safeWeight, bestReps: safeReps, achievedAt: new Date().toISOString() }];
+    } else if (safeWeight > existingRecord.bestWeight || (safeWeight === existingRecord.bestWeight && safeReps > existingRecord.bestReps)) {
       isNewRecord = true;
       nextRecords = nextRecords.map((r) =>
         r.exerciseId === exerciseId
-          ? { exerciseId, bestWeight: Math.max(weight, r.bestWeight), bestReps: reps > existingRecord.bestReps ? reps : r.bestReps, achievedAt: new Date().toISOString() }
+          ? { exerciseId, bestWeight: Math.max(safeWeight, r.bestWeight), bestReps: safeReps > existingRecord.bestReps ? safeReps : r.bestReps, achievedAt: new Date().toISOString() }
           : r
       );
     }
@@ -157,7 +165,7 @@ export const createWorkoutSlice: StateCreator<WorkoutSlice> = (set, get) => ({
   // doesn't have configured. Flagging that honestly rather than faking
   // a location picker that doesn't actually search anything.
   addGym: async (name, equipment) => {
-    const newGym = { id: `gym-${Date.now()}`, name: name.trim(), equipment };
+    const newGym = { id: generateId('gym'), name: name.trim(), equipment };
     const nextGyms = [...(get().gyms || []), newGym];
     const nextState = { ...currentState(get), gyms: nextGyms, activeGymId: newGym.id };
     set(nextState);

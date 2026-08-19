@@ -30,6 +30,8 @@ export default function SupportScreen() {
   const supportMethods = useOnboardingStore((s) => s.supportMethods);
   const ageBracket = useOnboardingStore((s) => s.ageBracket);
   const toggleInList = useOnboardingStore((s) => s.toggleInList);
+  const getStepInfo = useOnboardingStore((s) => s.getStepInfo);
+  const { step, total } = getStepInfo('/onboarding/support');
 
   const goToNextModuleScreen = useOnboardingStore((s) => s.goToNextModuleScreen);
 
@@ -40,10 +42,10 @@ export default function SupportScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
-      <OnboardingProgressBar step={4} total={7} />
+      <OnboardingProgressBar step={step} total={total} />
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         <View className="w-full max-w-md self-center">
-          <OnboardingStepHeader step={4} total={7} />
+          <OnboardingStepHeader step={step} total={total} />
           <Text className="text-slate-100 text-2xl font-semibold mb-2">How do you support yourself?</Text>
           <Text className="text-slate-400 text-sm mb-6">Whatever works for you counts. No judgment here.</Text>
 

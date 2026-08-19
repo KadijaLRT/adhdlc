@@ -5,6 +5,7 @@ import { useAppStore, selectScheduleItems, selectTasks, selectRoutines, selectSt
 import { suggestNextTask } from '@/features/tasks/suggestNextTask';
 import { Heading } from '@/shared/components/Heading';
 import { parseLocalDate, toLocalDateString } from '@/shared/formatDate';
+import { generateId } from '@/shared/generateId';
 
 const SHIFT_OPTIONS = [15, 30, 60];
 const WEEKDAY_LABELS = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
@@ -88,13 +89,17 @@ export default function ScheduleScreen() {
 
   const now = currentTimeString();
   const timedItems = itemsForSelectedDay.filter((i) => i.time);
+  // .find() alone walks storage order, not chronological order — sort
+  // by time first so "next up" is genuinely the next thing chronologically,
+  // not just whichever matching item happens to be stored first.
+  const sortedTimedItems = [...timedItems].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
   const nextUp = isToday
-    ? (timedItems.find((i) => !i.isDone && (i.time || '') >= now) || itemsForSelectedDay.find((i) => !i.isDone))
+    ? (sortedTimedItems.find((i) => !i.isDone && (i.time || '') >= now) || itemsForSelectedDay.find((i) => !i.isDone))
     : null;
 
   const handleAdd = () => {
     if (!newLabel.trim()) return;
-    addScheduleItem({ id: `sched-${Date.now()}`, label: newLabel.trim(), time: newTime.trim() || undefined, date: selectedDate, refKind: 'freeform' });
+    addScheduleItem({ id: generateId('sched'), label: newLabel.trim(), time: newTime.trim() || undefined, date: selectedDate, refKind: 'freeform' });
     setNewLabel('');
     setNewTime('');
   };

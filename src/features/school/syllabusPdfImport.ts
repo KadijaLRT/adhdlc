@@ -31,6 +31,26 @@ export interface PdfExtractResult {
 
 const MIN_MEANINGFUL_TEXT_LENGTH = 40;
 
+/**
+ * Known limitation, tested and left as-is deliberately: PDF text items
+ * come back in the underlying content stream's write order, which
+ * isn't guaranteed to match visual reading order — a genuinely
+ * multi-column or oddly-authored PDF can produce scrambled text. A
+ * position-based reading-order reconstruction (grouping by y-position,
+ * sorting left-to-right within a row) was tried and tested against
+ * three real cases: it fixed a synthetic adversarial scrambled-order
+ * PDF, left a simple 2-column table unchanged, but made an actual real
+ * syllabus WORSE — its table has multi-line cell headers ("Due" / "Day"
+ * stacked as two lines of one cell) at y-coordinates close enough to a
+ * neighboring row's text that no single row-grouping tolerance is
+ * correct for both cases at once. Rather than gamble a heuristic that
+ * demonstrably breaks some real documents to partially fix a different
+ * theoretical class of document, this keeps the simpler, predictable
+ * stream-order concatenation — which, in practice, is correct for most
+ * real syllabi (most are authored in standard word processors that
+ * write in visual order already), and leaves paste-text/screenshot as
+ * the reliable fallback for whatever it isn't.
+ */
 async function extractTextFromPdfBytes(bytes: Uint8Array): Promise<string> {
   const loadingTask = pdfjsLib.getDocument({ data: bytes, useWorkerFetch: false });
   const pdf = await loadingTask.promise;

@@ -20,6 +20,8 @@ export default function CalibrationScreen() {
   const displayName = useOnboardingStore((s) => s.displayName);
   const ageBracket = useOnboardingStore((s) => s.ageBracket);
   const setField = useOnboardingStore((s) => s.setField);
+  const getStepInfo = useOnboardingStore((s) => s.getStepInfo);
+  const { step, total } = getStepInfo('/onboarding/calibration');
 
   const handleContinue = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -28,10 +30,10 @@ export default function CalibrationScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
-      <OnboardingProgressBar step={1} total={7} />
+      <OnboardingProgressBar step={step} total={total} />
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         <View className="w-full max-w-md self-center">
-          <OnboardingStepHeader step={1} total={7} />
+          <OnboardingStepHeader step={step} total={total} />
           <Text className="text-slate-100 text-2xl font-semibold mb-2">What should I call you?</Text>
           <TextInput
             value={displayName}

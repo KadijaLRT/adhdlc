@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { useAppStore } from '@/store/index';
 import { avivaBrain } from '@/core/ai/AvivaBrain';
+import { generateId } from '@/shared/generateId';
 
 /**
  * Moved here from onboarding on purpose — "what's your biggest hurdle"
@@ -33,7 +34,7 @@ export default function BiggestHurdleCard() {
 
     if (decomposition) {
       await addTask({
-        id: `hurdle-${Date.now()}`,
+        id: generateId('hurdle'),
         title: decomposition.originalTask || text,
         isComplete: false,
         energyRequired: decomposition.suggestedEnergyLevel,
@@ -46,7 +47,7 @@ export default function BiggestHurdleCard() {
       });
     } else {
       await addTask({
-        id: `hurdle-${Date.now()}`,
+        id: generateId('hurdle'),
         title: text,
         isComplete: false,
         energyRequired: energyLevel,

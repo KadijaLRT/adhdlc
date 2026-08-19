@@ -4,6 +4,7 @@ import {
   useAppStore, selectProfile, selectGradeLevel, selectProgramName, selectUniversityName, selectCourses,
 } from '@/store/index';
 import { generateStarterCourses, buildOfficialCatalogSearchUrl } from './courseGeneration';
+import { generateId } from '@/shared/generateId';
 
 const GRADE_LEVELS = ['6th', '7th', '8th', '9th', '10th', '11th', '12th'];
 const STANDARD_SUBJECTS = [
@@ -43,7 +44,7 @@ export default function SchoolProgramSetupCard() {
 
   const handleAddSubject = async (subject: { name: string; emoji: string }) => {
     if (courses.some((c) => c.name === subject.name)) return;
-    await addCourse({ id: `course-${Date.now()}-${subject.name}`, name: subject.name, emoji: subject.emoji });
+    await addCourse({ id: generateId('course'), name: subject.name, emoji: subject.emoji });
   };
 
   const handleSaveProgram = async () => {
@@ -61,9 +62,13 @@ export default function SchoolProgramSetupCard() {
       setGenError("Couldn't generate a course list just now — try again in a moment, or just add courses manually below.");
       return;
     }
+    // Previously appended every generated course with no duplicate
+    // check at all — pressing Generate twice (a real, easy-to-do
+    // accident, not an edge case) created duplicate courses outright.
     for (const course of suggestions) {
+      if (courses.some((c) => c.name === course.name)) continue;
       await addCourse({
-        id: `course-${Date.now()}-${course.name.replace(/\s+/g, '-')}`,
+        id: generateId('course'),
         name: course.name,
         emoji: '📘',
         credits: course.suggestedCredits,

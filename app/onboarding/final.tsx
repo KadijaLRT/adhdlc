@@ -49,6 +49,15 @@ export default function FinalScreen() {
   const o = useOnboardingStore();
   const setField = useOnboardingStore((s) => s.setField);
   const resetOnboarding = useOnboardingStore((s) => s.reset);
+  // Default, not a hard gate — matches WellnessHub's same reasoning:
+  // showing this by default to every man is irrelevant noise for the
+  // overwhelming majority, but a rigid "hide for male" rule would
+  // assume biology from a gender label, which is its own dignity
+  // problem for a trans man who does menstruate. Once explicitly
+  // enabled it stays visible regardless of what's selected for gender.
+  const showCycleTracking = o.gender !== 'male' || o.cycleTrackingEnabled;
+  const getStepInfo = useOnboardingStore((s) => s.getStepInfo);
+  const { step, total } = getStepInfo('/onboarding/final');
 
   const setEnergyLevel = useAppStore((s) => s.setEnergyLevel);
   const setProfile = useAppStore((s) => s.setProfile);
@@ -212,13 +221,14 @@ export default function FinalScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
-      <OnboardingProgressBar step={7} total={7} />
+      <OnboardingProgressBar step={step} total={total} />
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         <View className="w-full max-w-md self-center">
-          <OnboardingStepHeader step={7} total={7} />
+          <OnboardingStepHeader step={step} total={total} />
           <Text className="text-slate-100 text-2xl font-semibold mb-2">Almost there 🎉</Text>
-          <Text className="text-slate-400 text-sm mb-6">Two last things. These help your reminders feel right for how your brain works.</Text>
+          <Text className="text-slate-400 text-sm mb-6">A few last things. These help your reminders feel right for how your brain works.</Text>
 
+          {showCycleTracking && (
           <View className="bg-purple-400/10 border-2 border-purple-400 rounded-2xl p-4 mb-6">
             <Text className="text-purple-300 font-medium mb-1">🌸 Cycle & Wellness Tracking</Text>
             <Text className="text-slate-400 text-xs mb-3">Track how your cycle affects your mood, energy, and ADHD symptoms. Optional and off by default.</Text>
@@ -231,6 +241,7 @@ export default function FinalScreen() {
               </Text>
             </Pressable>
           </View>
+          )}
 
           <CloudBackupCard />
 

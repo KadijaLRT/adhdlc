@@ -1,6 +1,6 @@
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAppStore, selectProfile, type EnergyLevel } from '@/store/index';
+import { useAppStore, selectProfile, selectFitnessPreferences, type EnergyLevel } from '@/store/index';
 import { Heading } from '@/shared/components/Heading';
 
 const MOOD_OPTIONS: { level: EnergyLevel; emoji: string; label: string }[] = [
@@ -15,13 +15,25 @@ const MOOD_OPTIONS: { level: EnergyLevel; emoji: string; label: string }[] = [
  * Meals, since that's what it actually affects. Strain Explorer only
  * shows if the person indicated cannabis as a support method during
  * onboarding — it's not offered to everyone by default.
+ *
+ * Cycle tracking's visibility here is a default based on the gender
+ * selected during onboarding, not a hard gate — someone who selected
+ * "male" but does want the feature can still turn it on directly from
+ * cycleTrackingEnabled in Fitness preferences, which re-surfaces this
+ * link once enabled. This avoids showing every man an irrelevant
+ * feature by default, without assuming anyone's actual biology from a
+ * gender label — a rigid "hide for male" gate would itself be a
+ * dignity problem for a trans man who does menstruate.
  */
 export default function WellnessHub() {
   const router = useRouter();
   const energyLevel = useAppStore((s) => s.energyLevel);
   const logEnergyForToday = useAppStore((s) => s.logEnergyForToday);
   const profile = useAppStore(selectProfile);
+  const fitnessPreferences = useAppStore(selectFitnessPreferences);
+  const cycleTrackingEnabled = useAppStore((s) => s.cycleTrackingEnabled);
   const showStrainExplorer = (profile?.supportMethods || []).includes('cannabis');
+  const showCycleTracking = fitnessPreferences?.gender !== 'male' || cycleTrackingEnabled;
 
   return (
     <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
@@ -50,10 +62,12 @@ export default function WellnessHub() {
             <Text className="text-slate-900 dark:text-slate-100 text-sm">💬 Chat with Aviva</Text>
             <Text className="text-slate-500 text-xs">→</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/settings/cycle-tracking')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
-            <Text className="text-slate-900 dark:text-slate-100 text-sm">🌙 Cycle tracking</Text>
-            <Text className="text-slate-500 text-xs">→</Text>
-          </Pressable>
+          {showCycleTracking && (
+            <Pressable onPress={() => router?.push?.('/settings/cycle-tracking')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+              <Text className="text-slate-900 dark:text-slate-100 text-sm">🌙 Cycle tracking</Text>
+              <Text className="text-slate-500 text-xs">→</Text>
+            </Pressable>
+          )}
           <Pressable onPress={() => router?.push?.('/wellness/learn')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
             <Text className="text-slate-900 dark:text-slate-100 text-sm">📚 Learn</Text>
             <Text className="text-slate-500 text-xs">→</Text>

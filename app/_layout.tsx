@@ -11,7 +11,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import AvivaFloatingButton from '@/features/aviva/AvivaFloatingButton';
 import NotificationsSync from '@/features/notifications/NotificationsSync';
-import { completeNativeSessionFromUrl } from '@/core/supabase/client';
+import { completeNativeSessionFromUrl, subscribeToAuthChanges, syncProfileIfSignedIn } from '@/core/supabase/client';
 
 export default function RootLayout() {
   const [queryClient] = useState(() => new QueryClient());
@@ -51,6 +51,24 @@ export default function RootLayout() {
     Linking.getInitialURL().then((url) => { if (url) completeNativeSessionFromUrl(url); });
     const subscription = Linking.addEventListener('url', ({ url }) => { completeNativeSessionFromUrl(url); });
     return () => subscription.remove();
+  }, []);
+
+  // The actual fix for cloud backup silently syncing nothing: this is
+  // the one place that fires syncProfileIfSignedIn whenever Supabase
+  // reports a session appearing, regardless of *how* it appeared (web's
+  // automatic magic-link handling, native's explicit setSession call
+  // above, or a token refresh on relaunch) — not just the one moment
+  // during onboarding when a session almost certainly doesn't exist yet
+  // (the person hasn't clicked the email link at that point). Reads the
+  // current profile fresh from the store at the moment a session
+  // actually appears, not a stale closure from mount time.
+  useEffect(() => {
+    let unsubscribe: (() => void) | null = null;
+    subscribeToAuthChanges(() => {
+      const profile = useAppStore.getState().profile;
+      if (profile) syncProfileIfSignedIn(profile as any);
+    }).then((unsub) => { unsubscribe = unsub; });
+    return () => unsubscribe?.();
   }, []);
 
   // Drives NativeWind's actual dark-mode class toggling from the

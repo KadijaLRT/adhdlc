@@ -116,6 +116,34 @@ export async function completeNativeSessionFromUrl(url: string | null): Promise<
   }
 }
 
+/**
+ * Fires `onSignedIn` any time Supabase reports a session appearing —
+ * covers every real path a session can show up through: web's
+ * automatic detectSessionInUrl finishing after the magic-link redirect
+ * lands, native's completeNativeSessionFromUrl calling setSession
+ * explicitly, or a token silently refreshing on an app relaunch. This
+ * is what was actually missing before: syncProfileIfSignedIn existed
+ * and correctly no-ops with no session, but nothing ever *re-called*
+ * it once a session showed up after the point it was first tried
+ * during onboarding (before the magic link had been clicked at all).
+ * Returns an unsubscribe function; safe to call multiple times, each
+ * call sets up its own independent listener.
+ */
+export async function subscribeToAuthChanges(onSignedIn: () => void): Promise<() => void> {
+  try {
+    const supabase = await getSupabaseClient();
+    const { data } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user?.id && (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED' || event === 'INITIAL_SESSION')) {
+        onSignedIn();
+      }
+    });
+    return () => data.subscription.unsubscribe();
+  } catch (error) {
+    console.error('supabase: failed to subscribe to auth changes', error);
+    return () => {};
+  }
+}
+
 /** Whether there's currently a signed-in Supabase session on this device. */
 export async function hasCloudSession(): Promise<boolean> {
   try {

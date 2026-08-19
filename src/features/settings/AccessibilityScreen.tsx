@@ -113,11 +113,11 @@ export default function AccessibilityScreen() {
           </View>
         </View>
 
-        <View className="bg-white border border-stone-200 rounded-2xl p-4 mb-4">
+        <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-4 mb-4">
           <View className="flex-row items-center gap-2 mb-1">
             <Text className="text-indigo-600 text-xs font-bold uppercase tracking-wider">🗓️ Calendar Export</Text>
           </View>
-          <Text className="text-slate-900 text-base font-semibold mb-1">Send your schedule to any calendar app</Text>
+          <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold mb-1">Send your schedule to any calendar app</Text>
           <Text className="text-slate-500 text-xs mb-4">
             Downloads a .ics file with your open tasks and school assignments that have a due date. Import it into Google Calendar, Outlook, or Apple Calendar. Tasks show as all-day events since exact times aren't tracked yet. On iOS/Android, this opens your device's share sheet so you can save or send it.
           </Text>
@@ -127,10 +127,10 @@ export default function AccessibilityScreen() {
           {exportError && <Text className="text-red-500 text-xs mt-2">{exportError}</Text>}
         </View>
 
-        <View className="bg-white border border-stone-200 rounded-2xl p-4">
+        <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-4">
           <Text className="text-indigo-600 text-xs font-bold uppercase tracking-wider mb-4">♿ Accessibility</Text>
 
-          <Text className="text-slate-900 text-base font-semibold mb-3">Text Size</Text>
+          <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold mb-3">Text Size</Text>
           <Text className="text-slate-500 text-xs mb-2">Affects headings and section titles app-wide. Not every screen uses these shared text styles yet.</Text>
           <View className="flex-row gap-2 mb-4">
             {TEXT_SIZES.map((option) => {

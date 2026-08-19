@@ -93,6 +93,7 @@ export const createHydrationSlice: StateCreator<FullState, [], [], HydrationSlic
         colorScheme: settingsState?.colorScheme ?? state.colorScheme,
         dateFormat: settingsState?.dateFormat ?? state.dateFormat,
         unitSystem: settingsState?.unitSystem ?? state.unitSystem,
+        notificationsEnabled: settingsState?.notificationsEnabled ?? state.notificationsEnabled,
         reflections: reflectionState?.reflections ?? state.reflections,
         scheduleItems: scheduleState?.scheduleItems ?? state.scheduleItems,
         runningBehindMinutes: scheduleState?.runningBehindMinutes ?? state.runningBehindMinutes,
@@ -124,6 +125,7 @@ export const createHydrationSlice: StateCreator<FullState, [], [], HydrationSlic
         activeGymId: workoutState?.activeGymId ?? state.activeGymId,
         weekdayAssignment: workoutState?.weekdayAssignment ?? state.weekdayAssignment,
         recoveryLogs: workoutState?.recoveryLogs ?? state.recoveryLogs,
+        recentDayExerciseHistory: workoutState?.recentDayExerciseHistory ?? state.recentDayExerciseHistory,
 
         activeProgramId: programState?.activeProgramId ?? state.activeProgramId,
         programStartedAt: programState?.programStartedAt ?? state.programStartedAt,

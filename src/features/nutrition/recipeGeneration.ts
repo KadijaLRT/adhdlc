@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { callGroqJSON } from '@/core/ai/simpleGroqCall';
 import type { Recipe } from '@/content/recipes';
+import { generateId } from '@/shared/generateId';
 
 const GeneratedRecipeSchema = z.object({
   name: z.string(),
@@ -63,7 +64,7 @@ export async function generateRecipeWithAI(query: string): Promise<Recipe | null
   if (!result) return null;
 
   return {
-    id: `ai-${slugify(result.name)}-${Date.now()}`,
+    id: `ai-${slugify(result.name)}-${generateId('r')}`,
     n: result.name,
     c: (result.cuisine || 'american').toLowerCase(),
     t: result.mealType,

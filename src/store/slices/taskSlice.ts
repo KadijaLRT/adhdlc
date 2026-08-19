@@ -61,15 +61,26 @@ export const createTaskSlice: StateCreator<
     const currentTasks = get().tasks || [];
     const task = currentTasks.find((t) => t.id === id);
     const willBeComplete = !task?.isComplete;
+    // Previously fired on every complete transition, so
+    // complete -> uncomplete -> complete awarded XP twice for the same
+    // task. rewardedAt is set the first time credit is actually given
+    // and checked here before giving it again — un-completing a task
+    // never clears it, since there's no "take back XP" mechanic to
+    // pair with that, it just prevents giving it a second time.
+    const alreadyRewarded = !!task?.rewardedAt;
 
     const criticalBefore = currentTasks.filter((t) => t.priority === 'critical');
     const wasAllClearedBefore = criticalBefore.length > 0 && criticalBefore.every((t) => t.isComplete);
 
-    const next = currentTasks.map((t) => (t.id === id ? { ...t, isComplete: willBeComplete } : t));
+    const next = currentTasks.map((t) =>
+      t.id === id
+        ? { ...t, isComplete: willBeComplete, rewardedAt: willBeComplete && !alreadyRewarded ? new Date().toISOString() : t.rewardedAt }
+        : t
+    );
     set({ tasks: next });
     await persist(next);
 
-    if (willBeComplete) {
+    if (willBeComplete && !alreadyRewarded) {
       await get().incrementMilestone('task_completed');
       await get().awardProgress('organization', 10, 5);
     }
@@ -80,7 +91,7 @@ export const createTaskSlice: StateCreator<
     const criticalAfter = next.filter((t) => t.priority === 'critical');
     const isAllClearedAfter = criticalAfter.length > 0 && criticalAfter.every((t) => t.isComplete);
     if (isAllClearedAfter && !wasAllClearedBefore) {
-      await get().incrementMilestone('critical_tasks_cleared_today');
+      await get().incrementMilestoneOnce('critical_tasks_cleared_today');
     }
   },
 

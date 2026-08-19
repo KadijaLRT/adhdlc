@@ -88,9 +88,51 @@ function messagesContainImage(messages) {
   return messages.some((m) => Array.isArray(m.content) && m.content.some((b) => b.type === 'image_url'));
 }
 
+// Per-IP rate limiting. This is deliberately simple in-memory state,
+// not a database or Redis: this project has no other backend
+// infrastructure, and adding one just for this would be a much bigger
+// change than the actual risk warrants. The real limitation this
+// carries — a serverless cold start resets the counter, and traffic
+// spread across multiple warm instances isn't shared — means this is
+// a genuine deterrent against casual/accidental abuse (a stray retry
+// loop, a scraping bot hammering the endpoint), not a hard guarantee
+// against a determined, distributed attacker. That's an honest
+// tradeoff given this app has no user-account system to rate-limit
+// against instead.
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX_REQUESTS = 20;
+const requestLog = new Map(); // ip -> array of request timestamps
+
+function isRateLimited(ip) {
+  const now = Date.now();
+  const timestamps = (requestLog.get(ip) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
+  timestamps.push(now);
+  requestLog.set(ip, timestamps);
+  // Bound total memory: drop the oldest-tracked IP once we're tracking
+  // an unreasonable number of distinct callers in one warm instance's
+  // lifetime, rather than letting this map grow without limit.
+  if (requestLog.size > 5000) {
+    const oldestKey = requestLog.keys().next().value;
+    requestLog.delete(oldestKey);
+  }
+  return timestamps.length > RATE_LIMIT_MAX_REQUESTS;
+}
+
+function getClientIp(req) {
+  const forwarded = req.headers['x-forwarded-for'];
+  if (typeof forwarded === 'string' && forwarded.length) return forwarded.split(',')[0].trim();
+  return req.socket?.remoteAddress || 'unknown';
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
+    return;
+  }
+
+  const clientIp = getClientIp(req);
+  if (isRateLimited(clientIp)) {
+    res.status(429).json({ error: 'Too many requests. Try again in a moment.' });
     return;
   }
 

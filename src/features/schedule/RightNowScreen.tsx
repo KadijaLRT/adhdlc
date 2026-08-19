@@ -19,7 +19,16 @@ export default function RightNowScreen() {
   const toggleScheduleItemDone = useAppStore((s) => s.toggleScheduleItemDone);
 
   const now = currentTimeString();
-  const current = (items || []).find((i) => !i.isDone && i.time && i.time >= now) || (items || []).find((i) => !i.isDone);
+  const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
+  // Absent date means "today" (see ScheduleItem's own comment), so
+  // only exclude items with an explicit date that isn't today's — a
+  // future day's item was previously eligible to show here at all,
+  // which is a "Right Now" screen showing something that isn't now.
+  const todaysItems = (items || []).filter((i) => !i.date || i.date === todayStr);
+  // Same fix as ScheduleScreen: .find() alone walks storage order, not
+  // chronological order, so this could show the wrong "current" item.
+  const sortedTimedItems = [...todaysItems].filter((i) => i.time).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  const current = sortedTimedItems.find((i) => !i.isDone && (i.time || '') >= now) || todaysItems.find((i) => !i.isDone);
 
   const handleComplete = () => {
     if (current) toggleScheduleItemDone(current.id);

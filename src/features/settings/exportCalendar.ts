@@ -13,6 +13,33 @@ function formatIcsDate(dateStr: string): string {
   return clean.length === 8 ? clean : toLocalDateString(parseLocalDate(dateStr)).replace(/-/g, '');
 }
 
+/**
+ * Per the iCalendar spec (RFC 5545), DTEND for a DATE-valued (all-day)
+ * event is exclusive — an event meant to occupy just Aug 18 needs
+ * DTEND set to Aug 19, not Aug 18 again. Setting DTSTART and DTEND to
+ * the same day (what this used to do) produces a technically
+ * zero-duration event, which real calendar apps can render
+ * incorrectly or inconsistently.
+ */
+function nextDayIcsDate(dateStr: string): string {
+  const date = parseLocalDate(dateStr);
+  date.setDate(date.getDate() + 1);
+  return toLocalDateString(date).replace(/-/g, '');
+}
+
+/**
+ * Escapes the iCalendar-reserved characters (RFC 5545 §3.3.11) — a
+ * title containing a comma, semicolon, or backslash would otherwise
+ * corrupt the surrounding ICS structure for whatever's reading it.
+ * Newlines are replaced outright (a real newline inside a single ICS
+ * text line is invalid), not escaped, since a literal "\n" escape
+ * sequence would just show up as visible backslash-n text in most
+ * calendar apps.
+ */
+function escapeIcsText(text: string): string {
+  return (text || '').replace(/\n/g, ' ').replace(/[,;\\]/g, (match) => `\\${match}`);
+}
+
 export function buildIcsContent(tasks: Task[], assignments: Assignment[]): string {
   const lines = ['BEGIN:VCALENDAR', 'VERSION:2.0', 'PRODID:-//ADHD Life Coach//EN'];
 
@@ -23,8 +50,8 @@ export function buildIcsContent(tasks: Task[], assignments: Assignment[]): strin
       'BEGIN:VEVENT',
       `UID:task-${task.id}@adhdlifecoach`,
       `DTSTART;VALUE=DATE:${date}`,
-      `DTEND;VALUE=DATE:${date}`,
-      `SUMMARY:${(task.title || 'Task').replace(/\n/g, ' ')}`,
+      `DTEND;VALUE=DATE:${nextDayIcsDate(task.scheduledFor)}`,
+      `SUMMARY:${escapeIcsText(task.title || 'Task')}`,
       'END:VEVENT'
     );
   }
@@ -36,8 +63,8 @@ export function buildIcsContent(tasks: Task[], assignments: Assignment[]): strin
       'BEGIN:VEVENT',
       `UID:assignment-${assignment.id}@adhdlifecoach`,
       `DTSTART;VALUE=DATE:${date}`,
-      `DTEND;VALUE=DATE:${date}`,
-      `SUMMARY:${(assignment.title || 'Assignment').replace(/\n/g, ' ')}`,
+      `DTEND;VALUE=DATE:${nextDayIcsDate(assignment.dueDate)}`,
+      `SUMMARY:${escapeIcsText(assignment.title || 'Assignment')}`,
       'END:VEVENT'
     );
   }

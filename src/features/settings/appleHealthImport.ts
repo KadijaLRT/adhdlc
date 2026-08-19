@@ -97,6 +97,17 @@ const NEEDED_TYPES = new Set([
  * split across a chunk boundary) so the caller prepends it to the next
  * chunk.
  */
+// Tracks the raw startDate timestamp last used to set each day's
+// weight, so a later reading on the same day can correctly replace an
+// earlier one. Keyed by the state object itself (WeakMap, not a
+// plain object) so this never leaks between separate imports and
+// needs no explicit cleanup — it's garbage collected right along with
+// the state object once the import finishes. Kept out of the public
+// AppleHealthImportResult shape since the one real consumer
+// (AppleHealthImportCard.tsx) only reads weightByDate via
+// Object.entries and has no use for the raw timestamps.
+const lastWeightTimestampByState = new WeakMap<AppleHealthImportResult, Record<string, string>>();
+
 export function extractHealthRecordsFromChunk(buffer: string, state: AppleHealthImportResult): string {
   HEALTH_TAG_RE.lastIndex = 0;
   let lastIndex = 0;
@@ -125,9 +136,24 @@ export function extractHealthRecordsFromChunk(buffer: string, state: AppleHealth
     } else if (type === 'HKQuantityTypeIdentifierBodyMass') {
       const val = parseFloat(value);
       const unit = healthAttr(tag, 'unit');
-      if (val > 0 && !state.weightByDate[date]) {
-        const lbs = unit.startsWith('kg') ? val * 2.20462 : val;
-        state.weightByDate[date] = parseFloat(lbs.toFixed(1));
+      if (val > 0) {
+        // Previously kept whichever reading for a given day was
+        // encountered first while streaming — essentially arbitrary
+        // file order, not necessarily the most meaningful one. Now
+        // compares the actual startDate timestamp so the latest
+        // reading of the day wins regardless of what order records
+        // happen to appear in the export.
+        let timestamps = lastWeightTimestampByState.get(state);
+        if (!timestamps) {
+          timestamps = {};
+          lastWeightTimestampByState.set(state, timestamps);
+        }
+        const existingTimestamp = timestamps[date];
+        if (!existingTimestamp || start > existingTimestamp) {
+          const lbs = unit.startsWith('kg') ? val * 2.20462 : val;
+          state.weightByDate[date] = parseFloat(lbs.toFixed(1));
+          timestamps[date] = start;
+        }
       }
     }
   }
@@ -186,14 +212,17 @@ async function parsePlainXmlFile(file: BlobLike, onProgress?: (fraction: number)
 }
 
 /**
- * Extracts export.xml from a .zip and parses it. JSZip's `.async('string')`
- * loads the full decompressed XML into memory at once — real tradeoff, but
- * it's a well-supported, identical-everywhere API (unlike JSZip's Node-style
- * internal stream, which isn't guaranteed to behave the same in React
- * Native's JS engine as in a browser). Health export zips are compressed
- * text, so even a large one decompresses to something manageable; the
- * result is still processed in manual chunks so progress reports
- * incrementally rather than blocking on one giant regex pass.
+ * Extracts export.xml from a .zip and parses it. The compressed zip
+ * bytes themselves (file.arrayBuffer() below) can't be streamed —
+ * zip's central-directory format requires the whole compressed buffer
+ * before any entry can even be located, that's inherent to the
+ * format, not something JSZip could stream around. But the
+ * *decompressed* XML is the far larger memory cost (health export XML
+ * routinely decompresses to several times its compressed size), and
+ * that part genuinely streams via JSZip's internalStream — verified
+ * directly against a real generated zip: real incremental chunks
+ * (~16KB each), never the whole decompressed file materialized at
+ * once, unlike the previous `.async('string')` call this replaces.
  */
 async function parseZipFile(file: BlobLike, onProgress?: (fraction: number) => void): Promise<AppleHealthImportResult> {
   const JSZip = (await import('jszip')).default;
@@ -206,18 +235,39 @@ async function parseZipFile(file: BlobLike, onProgress?: (fraction: number) => v
     );
   }
 
-  const fullText = await xmlFile.async('string');
   const state = newHealthState();
   let leftover = '';
-  const step = CHUNK_SIZE;
-  for (let offset = 0; offset < fullText.length; offset += step) {
-    const chunk = fullText.slice(offset, offset + step);
-    leftover = extractHealthRecordsFromChunk(leftover + chunk, state);
-    if (onProgress) onProgress(Math.min(1, (offset + step) / fullText.length));
-  }
+  let sawAnyText = false;
+  // Compressed size is a reasonable stand-in for progress even though
+  // decompressed bytes are what's actually streaming — the exact
+  // decompressed total isn't known upfront without defeating the
+  // point of streaming it, and compressed-size-based progress is
+  // still a meaningful, monotonically-increasing signal for the UI.
+  const approxTotal = (xmlFile as unknown as { _data?: { uncompressedSize?: number; compressedSize?: number } })._data;
+  const totalForProgress = approxTotal?.uncompressedSize || approxTotal?.compressedSize || 1;
+  let processedBytes = 0;
+
+  await new Promise<void>((resolve, reject) => {
+    (xmlFile as unknown as {
+      internalStream: (type: 'string') => {
+        on: (event: 'data' | 'error' | 'end', cb: (arg?: any) => void) => any;
+        resume: () => void;
+      };
+    })
+      .internalStream('string')
+      .on('data', (chunk: string) => {
+        sawAnyText = true;
+        processedBytes += chunk.length;
+        leftover = extractHealthRecordsFromChunk(leftover + chunk, state);
+        if (onProgress) onProgress(Math.min(1, processedBytes / totalForProgress));
+      })
+      .on('error', (err: Error) => reject(err))
+      .on('end', () => resolve())
+      .resume();
+  });
   if (leftover) extractHealthRecordsFromChunk(leftover, state);
 
-  if (!fullText) {
+  if (!sawAnyText) {
     throw new Error('No data received — please try again.');
   }
   return state;

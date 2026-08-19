@@ -45,6 +45,13 @@ export const createRpgSlice: StateCreator<RpgSlice> = (set, get) => ({
   },
 
   purchaseUnlockable: async (id, cost) => {
+    // The current catalog only ever passes a positive cost, but this
+    // guards the action itself rather than relying on that staying
+    // true forever — a negative cost would otherwise pass the balance
+    // check below unconditionally (any real balance is >= a negative
+    // number) and coins - cost would add coins instead of spending
+    // them.
+    if (!Number.isFinite(cost) || cost < 0) return false;
     const owned = get().ownedUnlockables || [];
     if (owned.includes(id)) return true;
     if ((get().coins || 0) < cost) return false;

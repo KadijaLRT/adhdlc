@@ -76,9 +76,19 @@ export const createScheduleSlice: StateCreator<ScheduleSlice> = (set, get) => ({
   // mean anything for something that was never tied to a time.
   // Completed items are never touched either.
   shiftRemainingSchedule: async (minutes) => {
-    const next = (get().scheduleItems || []).map((i) =>
-      i.isDone || !i.time ? i : { ...i, time: addMinutesToTime(i.time, minutes) }
-    ).sort((a, b) => (a.time || '99:99').localeCompare(b.time || '99:99'));
+    const todayStr = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
+    // Absent date means "today" (see ScheduleItem's own comment) — both
+    // cases need to match here, or an item saved before `date` existed
+    // would be silently excluded from "I'm running behind today."
+    const isToday = (i: ScheduleItem) => !i.date || i.date === todayStr;
+    const next = (get().scheduleItems || [])
+      .map((i) => (i.isDone || !i.time || !isToday(i) ? i : { ...i, time: addMinutesToTime(i.time, minutes) }))
+      // Sort by date then time, matching addScheduleItem's own
+      // ordering — sorting by time alone previously dropped the date
+      // comparison entirely and could scramble multi-day ordering
+      // (e.g. a shifted 23:30 today sorting after an unrelated 08:00
+      // three days from now).
+      .sort((a, b) => (a.date || '').localeCompare(b.date || '') || (a.time || '99:99').localeCompare(b.time || '99:99'));
     const nextState = { scheduleItems: next, runningBehindMinutes: (get().runningBehindMinutes || 0) + minutes };
     set(nextState);
     await persist(nextState);

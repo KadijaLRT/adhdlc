@@ -24,6 +24,8 @@ export default function ModulesScreen() {
   const router = useRouter();
   const selectedModules = useOnboardingStore((s) => s.selectedModules);
   const toggleInList = useOnboardingStore((s) => s.toggleInList);
+  const getStepInfo = useOnboardingStore((s) => s.getStepInfo);
+  const { step, total } = getStepInfo('/onboarding/modules');
 
   const buildModuleScreenQueue = useOnboardingStore((s) => s.buildModuleScreenQueue);
 
@@ -34,10 +36,10 @@ export default function ModulesScreen() {
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
-      <OnboardingProgressBar step={2} total={7} />
+      <OnboardingProgressBar step={step} total={total} />
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         <View className="w-full max-w-md self-center">
-          <OnboardingStepHeader step={2} total={7} />
+          <OnboardingStepHeader step={step} total={total} />
           <Text className="text-slate-100 text-2xl font-semibold mb-2">What would you like help with?</Text>
           <Text className="text-slate-400 text-sm mb-6">Select all that apply. This decides which questions we ask next — nothing more than that.</Text>
 

@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import { getRepository } from '@/core/storage';
+import { createWriteGuard } from '@/core/storage/writeGuard';
 import type { CycleLogEntry } from './types';
 
 export interface CycleSlice {
@@ -20,6 +21,20 @@ function upsertLog(existing: CycleLogEntry[], date: string, phase: CycleLogEntry
     : [...existing, { date, phase, note }];
 }
 
+// Two independent keys are persisted here (the toggle and the logs),
+// so each needs its own write-ordering guard — a race between two
+// fast log writes is a separate concern from a race involving the
+// toggle, and chaining them onto one shared guard would make an
+// unrelated toggle-write block on (or get dropped by) a log-write.
+const persistToggle = createWriteGuard(async (enabled: boolean) => {
+  const repo = await getRepository();
+  await repo.saveCycleTrackingEnabled(enabled);
+});
+const persistLogs = createWriteGuard(async (logs: CycleLogEntry[]) => {
+  const repo = await getRepository();
+  await repo.saveCycleLogs(logs);
+});
+
 // Opt-in, off by default. Never assumed or forced on any user.
 export const createCycleSlice: StateCreator<CycleSlice> = (set, get) => ({
   cycleTrackingEnabled: false,
@@ -31,15 +46,13 @@ export const createCycleSlice: StateCreator<CycleSlice> = (set, get) => ({
   // pattern every other action in this slice already uses.
   setCycleTrackingEnabled: async (cycleTrackingEnabled) => {
     set({ cycleTrackingEnabled });
-    const repo = await getRepository();
-    await repo.saveCycleTrackingEnabled(cycleTrackingEnabled);
+    await persistToggle(cycleTrackingEnabled);
   },
 
   logCycleForToday: async (phase, note) => {
     const next = upsertLog(get().cycleLogs || [], today(), phase, note);
     set({ cycleLogs: next });
-    const repo = await getRepository();
-    await repo.saveCycleLogs(next);
+    await persistLogs(next);
   },
 
   // Separate from logCycleForToday specifically because that action
@@ -50,8 +63,7 @@ export const createCycleSlice: StateCreator<CycleSlice> = (set, get) => ({
   logCycleForDate: async (date, phase, note) => {
     const next = upsertLog(get().cycleLogs || [], date, phase, note);
     set({ cycleLogs: next });
-    const repo = await getRepository();
-    await repo.saveCycleLogs(next);
+    await persistLogs(next);
   },
 
   // For bulk historical import (Apple Health). One merge, one write —
@@ -65,7 +77,6 @@ export const createCycleSlice: StateCreator<CycleSlice> = (set, get) => ({
     }
     const next = Array.from(existingByDate.values()).sort((a, b) => a.date.localeCompare(b.date));
     set({ cycleLogs: next });
-    const repo = await getRepository();
-    await repo.saveCycleLogs(next);
+    await persistLogs(next);
   },
 });

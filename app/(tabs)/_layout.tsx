@@ -1,5 +1,6 @@
 import { Tabs } from 'expo-router';
 import { Text } from 'react-native';
+import { useColorScheme } from 'nativewind';
 
 function TabIcon({ emoji }: { emoji: string }) {
   return <Text style={{ fontSize: 20 }}>{emoji}</Text>;
@@ -12,13 +13,25 @@ function TabIcon({ emoji }: { emoji: string }) {
 // launches from one of these hubs rather than competing for its own
 // permanent tab.
 export default function TabsLayout() {
+  // React Navigation's own tab bar (not a NativeWind-styled component
+  // like everything else in this app) — tabBarStyle takes a plain
+  // style object, so it needs its own explicit light/dark colors
+  // rather than a className. Previously hardcoded to the light
+  // palette only, so the tab bar stayed light even with dark mode on
+  // everywhere else.
+  const { colorScheme } = useColorScheme();
+  const isDark = colorScheme === 'dark';
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarActiveTintColor: '#818cf8',
-        tabBarInactiveTintColor: '#94a3b8',
-        tabBarStyle: { backgroundColor: '#fafaf9', borderTopColor: '#e7e5e4' },
+        tabBarInactiveTintColor: isDark ? '#64748b' : '#94a3b8',
+        tabBarStyle: {
+          backgroundColor: isDark ? '#020617' : '#fafaf9',
+          borderTopColor: isDark ? '#1e293b' : '#e7e5e4',
+        },
       }}
     >
       <Tabs.Screen name="home" options={{ title: 'Home', tabBarIcon: () => <TabIcon emoji="🏠" /> }} />

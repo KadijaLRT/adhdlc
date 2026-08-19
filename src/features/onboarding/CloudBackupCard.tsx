@@ -36,9 +36,9 @@ export default function CloudBackupCard() {
 
   return (
     <View className="bg-indigo-400/10 border-2 border-indigo-400 rounded-2xl p-4 mb-6">
-      <Text className="text-indigo-300 font-medium mb-1">🔒 Back Up Your Data (optional)</Text>
+      <Text className="text-indigo-300 font-medium mb-1">🔒 Back Up Your Profile (optional)</Text>
       <Text className="text-slate-400 text-xs mb-3">
-        Everything's saved on this device already. Adding an email backup means a lost phone or a cleared browser doesn't mean starting over.
+        Backs up your onboarding setup — energy baseline, coaching style, and preferences — so a lost phone or cleared browser doesn't mean redoing setup from scratch. Your tasks, logs, and everything else you build up over time stay local to this device only, for now.
       </Text>
 
       {status === 'sent' ? (

@@ -30,8 +30,16 @@ export function DateInput({ value, onChange, dark = true }: DateInputProps) {
 
   const emitIfComplete = (nextMm: string, nextDd: string, nextYyyy: string) => {
     if (nextMm.length === 2 && nextDd.length === 2 && nextYyyy.length === 4) {
+      const year = parseInt(nextYyyy, 10) || new Date().getFullYear();
       const month = Math.min(Math.max(parseInt(nextMm, 10) || 1, 1), 12);
-      const day = Math.min(Math.max(parseInt(nextDd, 10) || 1, 1), 31);
+      // A flat 1-31 clamp let "02/31/2026" through as a literal
+      // malformed stored string — new Date(0, month, 0).getDate()
+      // gives the real last day of the given month (correctly
+      // accounting for leap years via the year), so the day clamp is
+      // actually valid for the month that was entered, not just "some
+      // month or other."
+      const daysInMonth = new Date(year, month, 0).getDate();
+      const day = Math.min(Math.max(parseInt(nextDd, 10) || 1, 1), daysInMonth);
       onChange(`${nextYyyy}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`);
     } else if (!nextMm && !nextDd && !nextYyyy) {
       onChange('');

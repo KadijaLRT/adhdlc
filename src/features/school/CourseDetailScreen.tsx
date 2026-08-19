@@ -6,6 +6,7 @@ import { getCourseStatus } from '@/store/slices/schoolSlice';
 import { formatDate } from '@/shared/formatDate';
 import { avivaBrain, type FlashcardSet } from '@/core/ai/AvivaBrain';
 import { Heading } from '@/shared/components/Heading';
+import { generateId } from '@/shared/generateId';
 import { DateInput } from '@/shared/components/DateInput';
 import SyllabusUploadCard from './SyllabusUploadCard';
 
@@ -40,13 +41,29 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
   const courseAssignments = (assignments || []).filter((a) => a.courseId === courseId);
 
   const handleSaveGrade = () => {
-    const grade = Number(gradeInput);
-    const goal = Number(goalInput);
-    const credits = Number(creditsInput);
+    // Number('') is 0, not NaN — gradeInput's own truthiness check
+    // below already handles "field left blank," so this only needs to
+    // guard against what someone actually typed being nonsensical.
+    // Clamped to 0-100 for grade/goal (a percentage can't sensibly be
+    // outside that range) and to >= 0 for credits (a negative credit
+    // count would corrupt weighted GPA and degree-progress math the
+    // same way NaN would).
+    const parseGradeValue = (raw: string, current: number | undefined): number | undefined => {
+      if (!raw) return current;
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed)) return current;
+      return Math.min(100, Math.max(0, parsed));
+    };
+    const parseCreditsValue = (raw: string, current: number | undefined): number | undefined => {
+      if (!raw) return current;
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed) || parsed < 0) return current;
+      return parsed;
+    };
     updateCourse(courseId, {
-      currentGrade: gradeInput ? grade : course?.currentGrade,
-      gradeGoal: goalInput ? goal : course?.gradeGoal,
-      credits: creditsInput ? credits : course?.credits,
+      currentGrade: parseGradeValue(gradeInput, course?.currentGrade),
+      gradeGoal: parseGradeValue(goalInput, course?.gradeGoal),
+      credits: parseCreditsValue(creditsInput, course?.credits),
     });
     setGradeSaved(true);
     setTimeout(() => setGradeSaved(false), 2000);
@@ -81,7 +98,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
   const handleAdd = async () => {
     if (!newTitle.trim() || !newDueDate.trim()) return;
     await addAssignment({
-      id: `assignment-${Date.now()}`,
+      id: generateId('assignment'),
       courseId,
       title: newTitle.trim(),
       dueDate: newDueDate.trim(),

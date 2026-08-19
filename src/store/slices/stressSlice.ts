@@ -1,5 +1,6 @@
 import type { StateCreator } from 'zustand';
 import { getRepository } from '@/core/storage';
+import { createWriteGuard } from '@/core/storage/writeGuard';
 import type { EnergyLevel, StressLogEntry } from './types';
 
 export interface StressSlice {
@@ -8,6 +9,11 @@ export interface StressSlice {
 }
 
 function today(): string { return (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })(); }
+
+const persist = createWriteGuard(async (logs: StressLogEntry[]) => {
+  const repo = await getRepository();
+  await repo.saveStressLogs(logs);
+});
 
 export const createStressSlice: StateCreator<StressSlice> = (set, get) => ({
   stressLogs: [],
@@ -20,7 +26,6 @@ export const createStressSlice: StateCreator<StressSlice> = (set, get) => ({
       ? existing.map((l) => (l.date === t ? { date: t, stressLevel: level } : l))
       : [...existing, { date: t, stressLevel: level }];
     set({ stressLogs: next });
-    const repo = await getRepository();
-    await repo.saveStressLogs(next);
+    await persist(next);
   },
 });

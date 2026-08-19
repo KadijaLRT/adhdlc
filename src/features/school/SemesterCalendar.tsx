@@ -1,7 +1,7 @@
 import { View, Text, ScrollView } from 'react-native';
 import { useAppStore, selectCourses, selectAssignments, selectDateFormat } from '@/store/index';
 import { Heading } from '@/shared/components/Heading';
-import { formatDate } from '@/shared/formatDate';
+import { formatDate, parseLocalDate } from '@/shared/formatDate';
 
 /**
  * Groups every assignment by month and due date, color-coded by course,
@@ -41,7 +41,7 @@ export default function SemesterCalendar() {
         {Array.from(grouped.entries()).map(([month, items]) => (
           <View key={month} className="mb-5">
             <Text className="text-slate-500 text-xs font-medium mb-2">
-              {new Date(`${month}-01`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
+              {parseLocalDate(`${month}-01`).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}
             </Text>
             <View className="gap-2">
               {items.map((a) => {

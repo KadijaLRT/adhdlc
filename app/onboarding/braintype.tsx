@@ -28,15 +28,17 @@ export default function BrainTypeScreen() {
   const router = useRouter();
   const brainTypes = useOnboardingStore((s) => s.brainTypes);
   const toggleInList = useOnboardingStore((s) => s.toggleInList);
+  const getStepInfo = useOnboardingStore((s) => s.getStepInfo);
+  const { step, total } = getStepInfo('/onboarding/braintype');
 
   const handleContinue = () => router?.push?.('/onboarding/support');
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
-      <OnboardingProgressBar step={3} total={7} />
+      <OnboardingProgressBar step={step} total={total} />
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         <View className="w-full max-w-md self-center">
-          <OnboardingStepHeader step={3} total={7} />
+          <OnboardingStepHeader step={step} total={total} />
           <Text className="text-slate-100 text-2xl font-semibold mb-2">Which ones sound like your brain?</Text>
           <Text className="text-slate-400 text-sm mb-6">Most people are a mix. Pick as many as feel right. These are relatable descriptions, not clinical categories.</Text>
 

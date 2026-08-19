@@ -6,6 +6,8 @@ import { pickAndReadTextFile } from './syllabusImport';
 import { pickAndExtractPdfText } from './syllabusPdfImport';
 import { pickSyllabusImageFromLibrary, captureSyllabusPhoto } from './syllabusImageImport';
 import { DateInput } from '@/shared/components/DateInput';
+import { toLocalDateString } from '@/shared/formatDate';
+import { generateId } from '@/shared/generateId';
 // @ts-ignore - plain JS by design, see groqSanitizer.js header.
 import { MAX_PAYLOAD_LENGTH } from '@/core/ai/groqSanitizer';
 
@@ -102,7 +104,7 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
       if (!picked) return;
       setImagePreviewUrl(picked.dataUrl);
       setExtracting(true);
-      const today = new Date().toISOString().slice(0, 10);
+      const today = toLocalDateString(new Date());
       const parsed = await avivaBrain.parseSyllabusImage(picked.dataUrl, today);
       setExtracting(false);
       applyParsedResult(parsed);
@@ -137,7 +139,7 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
     setExtractError(null);
     setResult(null);
     setProposed([]);
-    const today = new Date().toISOString().slice(0, 10);
+    const today = toLocalDateString(new Date());
     const parsed = await avivaBrain.parseSyllabus(syllabusText, today);
     setExtracting(false);
     applyParsedResult(parsed);
@@ -165,7 +167,7 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
       if (!a.included) continue;
       // eslint-disable-next-line no-await-in-loop -- small, bounded list from one syllabus; sequential keeps ids simple and avoids any write-ordering surprise
       await addAssignment({
-        id: `assignment-${Date.now()}-${a.id}`,
+        id: `${generateId('assignment')}-${a.id}`,
         courseId,
         title: a.title,
         dueDate: a.dueDate,

@@ -1,3 +1,5 @@
+import { parseLocalDate } from '@/shared/formatDate';
+
 /**
  * Cross-references the goal against the calendar: given a starting
  * weight, goal weight, and goal date, computes the weekly rate of
@@ -17,7 +19,11 @@ export function calculateRequiredRate(
   goalWeightLbs: number,
   goalDateIso: string
 ): RequiredRateResult | null {
-  const goalDate = new Date(goalDateIso);
+  // new Date(goalDateIso) on a date-only "YYYY-MM-DD" string parses as
+  // UTC midnight — comparing that against a real local "now" below can
+  // be off by up to a day depending on timezone, exactly what
+  // parseLocalDate exists elsewhere in this app to prevent.
+  const goalDate = parseLocalDate(goalDateIso);
   if (isNaN(goalDate.getTime())) return null;
 
   const now = new Date();

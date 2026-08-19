@@ -3,6 +3,8 @@ import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAppStore, selectCourses, selectAssignments, selectEnergyLevel, selectProfile, selectTotalCreditsRequired } from '@/store/index';
 import { Heading } from '@/shared/components/Heading';
+import { parseLocalDate } from '@/shared/formatDate';
+import { generateId } from '@/shared/generateId';
 import { calculateGPA } from './gpaCalculations';
 import { getCourseStatus, type CourseStatus } from '@/store/slices/schoolSlice';
 import SchoolProgramSetupCard from './SchoolProgramSetupCard';
@@ -11,7 +13,7 @@ import SyllabusUploadCard from './SyllabusUploadCard';
 const COURSE_EMOJIS = ['📖', '🧮', '🧪', '🎨', '🌍', '💻'];
 
 function daysUntil(dueDate: string): number {
-  const due = new Date(dueDate);
+  const due = parseLocalDate(dueDate);
   const now = new Date();
   due.setHours(0, 0, 0, 0);
   now.setHours(0, 0, 0, 0);
@@ -82,7 +84,7 @@ export default function SchoolScreen() {
 
   const handleAddCourse = async () => {
     if (!newCourseName.trim()) return;
-    await addCourse({ id: `course-${Date.now()}`, name: newCourseName.trim(), emoji: newCourseEmoji });
+    await addCourse({ id: generateId('course'), name: newCourseName.trim(), emoji: newCourseEmoji });
     setNewCourseName('');
   };
 

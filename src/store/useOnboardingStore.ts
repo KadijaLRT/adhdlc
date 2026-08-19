@@ -42,10 +42,12 @@ interface OnboardingState {
   medicationTimes: string;
   emotionalRegulationHelpers: string[];
   moduleScreenQueue: string[];
+  moduleScreenCount: number;
 
   setField: <K extends string>(key: K, value: any) => void;
   toggleInList: (key: 'adhdSymptoms' | 'brainTypes' | 'supportMethods' | 'priorities' | 'exerciseGoals' | 'focusAreas' | 'selectedModules' | 'sleepStruggles' | 'emotionalRegulationHelpers', value: string) => void;
   buildModuleScreenQueue: () => void;
+  getStepInfo: (screenPath: string) => { step: number; total: number };
   goToNextModuleScreen: (router: { push: (href: string) => void; replace?: (href: string) => void }) => void;
   reset: () => void;
 }
@@ -80,6 +82,13 @@ const DEFAULTS = {
   medicationCount: '', medicationTimes: '',
   emotionalRegulationHelpers: [] as string[],
   moduleScreenQueue: [] as string[],
+  // Set once alongside moduleScreenQueue and never changed afterward —
+  // moduleScreenQueue itself needs to shrink as the person progresses
+  // (goToNextModuleScreen pops it to know what screen is next), but the
+  // total step count shown to the person shouldn't visibly shrink
+  // along with it; that would read as a confusing "total keeps
+  // changing" experience.
+  moduleScreenCount: 0,
 };
 
 // Transient draft state for the whole onboarding flow — not persisted
@@ -105,7 +114,37 @@ export const useOnboardingStore = create<OnboardingState>()((set, get) => ({
     const queue = Object.entries(MODULE_SCREEN_MAP)
       .filter(([moduleId]) => selected.includes(moduleId))
       .map(([, screen]) => screen);
-    set({ moduleScreenQueue: queue });
+    set({ moduleScreenQueue: queue, moduleScreenCount: queue.length });
+  },
+
+  // Real step count, computed from the actual navigable sequence
+  // instead of a hardcoded literal per screen. Fixed screens are
+  // always steps 1-5 (calibration, modules, symptoms, braintype,
+  // support); after that, each remaining entry in moduleScreenQueue is
+  // one more step, then the final screen is the last one. This is the
+  // single source of truth for step numbering — previously every
+  // conditional screen hardcoded its own `total={7}`, which was wrong
+  // both for the fixed screens (symptoms through support were each one
+  // step behind their real position, unrelated to module selection at
+  // all) and for the conditional total (always claimed 7 regardless of
+  // how many optional modules were actually selected).
+  getStepInfo: (screenPath: string): { step: number; total: number } => {
+    const FIXED_SCREENS = ['/onboarding/calibration', '/onboarding/modules', '/onboarding/symptoms', '/onboarding/braintype', '/onboarding/support'];
+    const queue = get().moduleScreenQueue || [];
+    const total = FIXED_SCREENS.length + (get().moduleScreenCount || 0) + 1; // +1 for /onboarding/final
+
+    const fixedIndex = FIXED_SCREENS.indexOf(screenPath);
+    if (fixedIndex >= 0) return { step: fixedIndex + 1, total };
+
+    if (screenPath === '/onboarding/final') return { step: total, total };
+
+    // A conditional module screen's position: how many have already
+    // been completed (moduleScreenCount minus what's still left in the
+    // live queue, since it pops one entry per screen visited) plus
+    // this screen's own step.
+    const completedCount = (get().moduleScreenCount || 0) - queue.length;
+    const step = FIXED_SCREENS.length + completedCount + 1;
+    return { step: Math.min(step, total), total };
   },
 
   // Every conditional screen calls this on Continue instead of hardcoding

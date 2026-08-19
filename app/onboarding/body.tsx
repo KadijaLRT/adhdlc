@@ -54,16 +54,18 @@ export default function BodyScreen() {
   const o = useOnboardingStore();
   const setField = useOnboardingStore((s) => s.setField);
   const toggleInList = useOnboardingStore((s) => s.toggleInList);
+  const getStepInfo = useOnboardingStore((s) => s.getStepInfo);
+  const { step, total } = getStepInfo('/onboarding/body');
 
   const goToNextModuleScreen = useOnboardingStore((s) => s.goToNextModuleScreen);
   const handleContinue = () => goToNextModuleScreen(router);
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
-      <OnboardingProgressBar step={5} total={7} />
+      <OnboardingProgressBar step={step} total={total} />
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         <View className="w-full max-w-md self-center">
-          <OnboardingStepHeader step={5} total={7} />
+          <OnboardingStepHeader step={step} total={total} />
           <Text className="text-slate-100 text-2xl font-semibold mb-1">A little about your body</Text>
           <Text className="text-slate-400 text-sm mb-1">Used to personalize workouts, macro targets, and which features show up for you.</Text>
           <Text className="text-slate-600 text-xs mb-6">🔒 Stays on your device. Never shared.</Text>

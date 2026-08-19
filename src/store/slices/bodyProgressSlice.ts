@@ -78,7 +78,12 @@ export const createBodyProgressSlice: StateCreator<BodyProgressSlice> = (set, ge
   },
 
   setWeightGoal: async (weightGoalLbs, goalDate) => {
-    const nextState = { ...currentState(get), weightGoalLbs, weightGoalDate: goalDate ?? currentState(get).weightGoalDate };
+    // Clearing the goal weight (null) also clears its date — otherwise
+    // the old date silently survives in storage and reappears attached
+    // to whatever goal weight gets set next, which is exactly the
+    // "unrelated stale date reappears" bug this is fixing.
+    const nextWeightGoalDate = weightGoalLbs === null ? null : (goalDate ?? currentState(get).weightGoalDate);
+    const nextState = { ...currentState(get), weightGoalLbs, weightGoalDate: nextWeightGoalDate };
     set(nextState);
     await persist(nextState);
   },

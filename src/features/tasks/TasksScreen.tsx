@@ -5,6 +5,7 @@ import { useAppStore, selectTasks, selectEnergyLevel, type TaskCategory, type Ta
 import { MOTIVATOR_OPTIONS } from '@/content/toolkitContent';
 import { suggestNextTask } from './suggestNextTask';
 import { Heading } from '@/shared/components/Heading';
+import { generateId } from '@/shared/generateId';
 import { useSafeTopInset } from '@/shared/hooks/useSafeTopInset';
 
 const CATEGORY_OPTIONS: { id: TaskCategory; label: string; emoji: string }[] = [
@@ -144,7 +145,7 @@ export default function TasksScreen() {
   const handleAdd = async () => {
     if (!newTaskTitle?.trim()) return;
     await addTask({
-      id: `task-${Date.now()}`,
+      id: generateId('task'),
       title: newTaskTitle.trim(),
       isComplete: false,
       energyRequired: energyLevel,

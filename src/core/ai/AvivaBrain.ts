@@ -38,10 +38,22 @@ const FlashcardSchema = z.object({ front: z.string(), back: z.string() });
 const FlashcardSetSchema = z.object({ cards: z.array(FlashcardSchema) });
 export type FlashcardSet = z.infer<typeof FlashcardSetSchema>;
 
+const isoDateSchema = z.string().refine((val) => {
+  // A regex alone (e.g. \d{4}-\d{2}-\d{2}) would pass "2026-13-45" —
+  // this actually re-derives the date and checks it round-trips
+  // exactly, which real invalid dates never do (JS Date silently
+  // normalizes them into a different date instead of erroring).
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(val)) return false;
+  const [y, m, d] = val.split('-').map(Number);
+  if (y === undefined || m === undefined || d === undefined) return false;
+  const date = new Date(y, m - 1, d);
+  return date.getFullYear() === y && date.getMonth() === m - 1 && date.getDate() === d;
+}, { message: 'Not a valid calendar date' });
+
 const SyllabusAssignmentSchema = z.object({
   id: z.string(),
   title: z.string(),
-  dueDate: z.string(), // best-effort ISO date (YYYY-MM-DD) — the model resolves bare "Oct 15"-style dates using the current date passed in the prompt
+  dueDate: isoDateSchema, // the model resolves bare "Oct 15"-style dates using the current date passed in the prompt
   type: z.enum(['homework', 'exam', 'quiz', 'project', 'paper', 'reading', 'other']),
 });
 const SyllabusParseResultSchema = z.object({
@@ -50,6 +62,41 @@ const SyllabusParseResultSchema = z.object({
   reasoning: z.string(),
 });
 export type SyllabusParseResult = z.infer<typeof SyllabusParseResultSchema>;
+
+const LenientSyllabusParseResultSchema = z.object({
+  courseName: z.string().nullable(),
+  assignments: z.array(z.any()),
+  reasoning: z.string(),
+});
+
+/**
+ * Validates the overall response shape leniently, then validates each
+ * assignment individually — a single assignment with a malformed date
+ * (or any other bad field) previously failed validation for the whole
+ * batch via a single safeParse on the strict schema, discarding every
+ * other correctly-extracted assignment along with it. This keeps
+ * whatever validates and silently drops only what doesn't, logging how
+ * many were dropped so it's visible in the console without being
+ * surfaced as a hard failure to the person reviewing the results.
+ */
+function parseSyllabusResultLeniently(raw: string, context: string): SyllabusParseResult | null {
+  const outer = LenientSyllabusParseResultSchema.safeParse(JSON.parse(raw));
+  if (!outer.success) {
+    console.error(`AvivaBrain: ${context} schema validation failed`, outer.error.flatten());
+    return null;
+  }
+  const validAssignments: SyllabusParseResult['assignments'] = [];
+  let droppedCount = 0;
+  for (const candidate of outer.data.assignments) {
+    const result = SyllabusAssignmentSchema.safeParse(candidate);
+    if (result.success) validAssignments.push(result.data);
+    else droppedCount++;
+  }
+  if (droppedCount > 0) {
+    console.error(`AvivaBrain: ${context} dropped ${droppedCount} invalid assignment(s) out of ${outer.data.assignments.length}`);
+  }
+  return { courseName: outer.data.courseName, assignments: validAssignments, reasoning: outer.data.reasoning };
+}
 
 /**
  * Wraps all calls to the Groq API used by "Aviva." Every method sanitizes
@@ -197,12 +244,7 @@ Respond with ONLY valid JSON, no markdown fences:
         0.2 // lower temperature — this is extraction, not generation, and dates need to be read faithfully rather than creatively
       );
       if (!raw) return null;
-      const validated = SyllabusParseResultSchema.safeParse(JSON.parse(raw));
-      if (!validated.success) {
-        console.error('AvivaBrain: parseSyllabus schema validation failed', validated.error.flatten());
-        return null;
-      }
-      return validated.data;
+      return parseSyllabusResultLeniently(raw, 'parseSyllabus');
     } catch (error) {
       console.error('AvivaBrain: parseSyllabus failed', error);
       return null;
@@ -243,12 +285,7 @@ Respond with ONLY valid JSON, no markdown fences:
     try {
       const raw = await callGroqCompletion(messages, 0.2);
       if (!raw) return null;
-      const validated = SyllabusParseResultSchema.safeParse(JSON.parse(raw));
-      if (!validated.success) {
-        console.error('AvivaBrain: parseSyllabusImage schema validation failed', validated.error.flatten());
-        return null;
-      }
-      return validated.data;
+      return parseSyllabusResultLeniently(raw, 'parseSyllabusImage');
     } catch (error) {
       console.error('AvivaBrain: parseSyllabusImage failed', error);
       return null;

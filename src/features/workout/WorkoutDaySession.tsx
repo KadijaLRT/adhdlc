@@ -255,7 +255,15 @@ export default function WorkoutDaySession({
       updateRow(exerciseId, index, { done: false });
       return;
     }
-    const { isNewRecord } = await logSet(exerciseId, Number(row.weight) || 0, Number(row.reps) || 0);
+    // `Number(x) || 0` only catches 0/NaN/empty — a genuinely negative
+    // typed value like -20 is truthy and passed straight through,
+    // corrupting PR/volume stats downstream. 0 needs to stay valid
+    // (a real, common case for bodyweight exercises), so this can't
+    // just check truthiness; it specifically clamps negative values
+    // to 0 while still allowing a legitimate 0 through untouched.
+    const safeWeight = Math.max(0, Number(row.weight) || 0);
+    const safeReps = Math.max(0, Number(row.reps) || 0);
+    const { isNewRecord } = await logSet(exerciseId, safeWeight, safeReps);
     updateRow(exerciseId, index, { done: true });
     if (isNewRecord) {
       setRecordBanner(`🏆 New personal record — ${WORKOUT_EXERCISES?.[exerciseId]?.name || 'nice lift'}`);

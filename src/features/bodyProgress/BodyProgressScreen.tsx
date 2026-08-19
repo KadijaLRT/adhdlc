@@ -20,7 +20,7 @@ import {
 import { calculateRequiredRate, describeRigor } from './requiredRate';
 import AppleHealthImportCard from '@/features/settings/AppleHealthImportCard';
 import { convertWeightForDisplay, parseWeightToLbs, weightUnitLabel, convertLengthForDisplay, parseLengthToInches, lengthUnitLabel } from '@/shared/formatUnits';
-import { formatDate } from '@/shared/formatDate';
+import { formatDate, toLocalDateString } from '@/shared/formatDate';
 
 const MEASUREMENT_SITES: { id: MeasurementSite; label: string }[] = [
   { id: 'chest', label: 'Chest' },
@@ -51,6 +51,7 @@ export default function BodyProgressScreen() {
   const [measurementInput, setMeasurementInput] = useState('');
 
   const latest = getLatestWeight(weightLog);
+  const latestEntryDate = [...(weightLog || [])].sort((a, b) => b.date.localeCompare(a.date))[0]?.date;
   const sevenDayAvg = getSevenDayAverage(weightLog);
   const thirtyDayChange = getThirtyDayChange(weightLog);
   const goalDate = projectGoalDate(weightLog, weightGoalLbs);
@@ -62,21 +63,28 @@ export default function BodyProgressScreen() {
 
   const handleLogWeight = () => {
     const val = Number(weightInput);
-    if (!val) return;
+    // `if (!val) return` let a negative number through outright
+    // (-20 is truthy in JS) — a body weight is never zero or negative,
+    // so this checks the actual numeric range, not just falsiness.
+    if (!Number.isFinite(val) || val <= 0) return;
     logWeight(parseWeightToLbs(val, unitSystem));
     setWeightInput('');
   };
 
   const handleLogMeasurement = () => {
     const val = Number(measurementInput);
-    if (!val) return;
+    if (!Number.isFinite(val) || val <= 0) return;
     logMeasurement(selectedSite, parseLengthToInches(val, unitSystem));
     setMeasurementInput('');
   };
 
   const handleSaveGoal = () => {
     const val = Number(goalInput);
-    setWeightGoal(val ? parseWeightToLbs(val, unitSystem) : null);
+    // Same fix as above — an empty field should still clear the goal
+    // (setWeightGoal(null)), but a genuinely negative or non-finite
+    // typed value shouldn't silently become a valid goal weight.
+    const isValidPositive = Number.isFinite(val) && val > 0;
+    setWeightGoal(isValidPositive ? parseWeightToLbs(val, unitSystem) : null);
   };
 
   return (
@@ -92,7 +100,9 @@ export default function BodyProgressScreen() {
           <View className="flex-row flex-wrap gap-3 mb-3">
             <View className="flex-1 min-w-[45%]">
               <Text className="text-amber-700 text-xl font-bold dark:text-amber-400">{latest !== null ? `${convertWeightForDisplay(latest, unitSystem)} ${wUnit}` : '—'}</Text>
-              <Text className="text-slate-500 text-xs">Today</Text>
+              <Text className="text-slate-500 text-xs">
+                {latestEntryDate === toLocalDateString(new Date()) ? 'Today' : latestEntryDate ? formatDate(latestEntryDate, dateFormat) : '—'}
+              </Text>
             </View>
             <View className="flex-1 min-w-[45%]">
               <Text className="text-amber-700 text-xl font-bold dark:text-amber-400">{sevenDayAvg !== null ? convertWeightForDisplay(sevenDayAvg, unitSystem).toFixed(1) : '—'}</Text>
