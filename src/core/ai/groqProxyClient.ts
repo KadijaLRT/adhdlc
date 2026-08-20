@@ -30,7 +30,23 @@ export interface GroqMessage {
   content: string | (GroqTextContentBlock | GroqImageContentBlock)[];
 }
 
-export class GroqProxyError extends Error {}
+export class GroqProxyError extends Error {
+  /** A stable, machine-checkable reason (not just prose) so callers can distinguish "not configured" from "rate limited" from "network error" without parsing message text. */
+  reason: 'not_configured' | 'rate_limited' | 'network_error' | 'upstream_error' | 'invalid_request' | 'unknown';
+
+  constructor(message: string, reason: GroqProxyError['reason']) {
+    super(message);
+    this.reason = reason;
+  }
+}
+
+function reasonForStatus(status: number): GroqProxyError['reason'] {
+  if (status === 500) return 'not_configured'; // api/groq.js only ever 500s for a missing GROQ_API_KEY
+  if (status === 429) return 'rate_limited';
+  if (status === 400) return 'invalid_request';
+  if (status === 502) return 'upstream_error'; // Groq itself failed/timed out
+  return 'unknown';
+}
 
 /**
  * Sends already-sanitized messages to the /api/groq proxy and returns
@@ -47,11 +63,19 @@ export async function callGroqCompletion(messages: GroqMessage[], temperature = 
       body: JSON.stringify({ messages, temperature }),
     });
   } catch (error) {
-    throw new GroqProxyError(`Could not reach the AI service: ${(error as Error)?.message || 'network error'}`);
+    throw new GroqProxyError(`Could not reach the AI service: ${(error as Error)?.message || 'network error'}`, 'network_error');
   }
 
   if (!response.ok) {
-    throw new GroqProxyError(`AI service responded with ${response.status}`);
+    // api/groq.js already sends a specific, useful message in its
+    // response body ("AI service is not configured.", "Too many
+    // requests...", etc.) — previously discarded in favor of just the
+    // bare HTTP status, which is what made every failure reason look
+    // identical to whoever's reading the error afterward.
+    const errorBody = await response.json().catch(() => null);
+    const serverMessage = errorBody?.error;
+    const reason = reasonForStatus(response.status);
+    throw new GroqProxyError(serverMessage || `AI service responded with ${response.status}`, reason);
   }
 
   const data = await response.json().catch(() => null);

@@ -27,6 +27,9 @@ export interface PdfExtractResult {
   text: string;
   /** True when almost no text was found — most likely a scanned/image-only PDF with no real text layer, not a parsing failure. */
   looksScanned: boolean;
+  totalPages: number;
+  /** Echoes back the actual (clamped) range that was read, so the caller can tell the person if it differs from what a screenshot originally said (e.g. "page 200" on a 50-page document). */
+  rangeUsed: { startPage: number; endPage: number } | null;
 }
 
 const MIN_MEANINGFUL_TEXT_LENGTH = 40;
@@ -51,18 +54,28 @@ const MIN_MEANINGFUL_TEXT_LENGTH = 40;
  * write in visual order already), and leaves paste-text/screenshot as
  * the reliable fallback for whatever it isn't.
  */
-async function extractTextFromPdfBytes(bytes: Uint8Array): Promise<string> {
+async function extractTextFromPdfBytes(bytes: Uint8Array, range?: { startPage: number; endPage: number }): Promise<{ text: string; totalPages: number }> {
   const loadingTask = pdfjsLib.getDocument({ data: bytes, useWorkerFetch: false });
   const pdf = await loadingTask.promise;
+  const totalPages = pdf.numPages;
+  // Real page numbers map directly onto pdf.js's own page indices —
+  // unlike DOCX/EPUB, a PDF genuinely has fixed pages, so this is a
+  // reliable, exact scope rather than a best-effort heuristic. Clamped
+  // to the document's actual bounds in case a screenshot's page
+  // numbers don't match this particular PDF (a different edition, a
+  // typo, or a range that assumed front-matter pages weren't counted).
+  const startPage = range ? Math.max(1, Math.min(range.startPage, totalPages)) : 1;
+  const endPage = range ? Math.max(startPage, Math.min(range.endPage, totalPages)) : totalPages;
+
   let fullText = '';
-  for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+  for (let pageNum = startPage; pageNum <= endPage; pageNum++) {
     // eslint-disable-next-line no-await-in-loop -- pages must be read in order to assemble text in reading order; a small syllabus PDF is a handful of pages, not worth the complexity of parallelizing
     const page = await pdf.getPage(pageNum);
     const content = await page.getTextContent();
     const pageText = content.items.map((item: any) => item.str || '').join(' ');
     fullText += `${pageText}\n`;
   }
-  return fullText.trim();
+  return { text: fullText.trim(), totalPages };
 }
 
 /**
@@ -74,7 +87,7 @@ async function extractTextFromPdfBytes(bytes: Uint8Array): Promise<string> {
  * the screenshot/photo upload path instead, which reads the page
  * visually rather than needing embedded text.
  */
-export async function pickAndExtractPdfText(): Promise<PdfExtractResult | null> {
+export async function pickAndExtractPdfText(range?: { startPage: number; endPage: number }): Promise<PdfExtractResult | null> {
   const picked = await DocumentPicker.getDocumentAsync({
     type: ['application/pdf'],
     copyToCacheDirectory: true,
@@ -95,6 +108,9 @@ export async function pickAndExtractPdfText(): Promise<PdfExtractResult | null> 
     bytes = new Uint8Array(await nativeFile.arrayBuffer());
   }
 
-  const text = await extractTextFromPdfBytes(bytes);
-  return { name, text, looksScanned: text.length < MIN_MEANINGFUL_TEXT_LENGTH };
+  const { text, totalPages } = await extractTextFromPdfBytes(bytes, range);
+  const rangeUsed = range
+    ? { startPage: Math.max(1, Math.min(range.startPage, totalPages)), endPage: Math.max(1, Math.min(range.endPage, totalPages)) }
+    : null;
+  return { name, text, looksScanned: text.length < MIN_MEANINGFUL_TEXT_LENGTH, totalPages, rangeUsed };
 }

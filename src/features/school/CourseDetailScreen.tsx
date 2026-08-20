@@ -1,16 +1,29 @@
 import { useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAppStore, selectCourses, selectAssignments, selectDateFormat } from '@/store/index';
 import { getCourseStatus } from '@/store/slices/schoolSlice';
 import { formatDate } from '@/shared/formatDate';
-import { avivaBrain, type FlashcardSet } from '@/core/ai/AvivaBrain';
+import { avivaBrain, type FlashcardSet, type ReadingNotes } from '@/core/ai/AvivaBrain';
+import { describeAiFailure } from '@/core/ai/describeAiFailure';
 import { Heading } from '@/shared/components/Heading';
 import { generateId } from '@/shared/generateId';
 import { DateInput } from '@/shared/components/DateInput';
+import { pickAndReadTextFile } from './syllabusImport';
+import { pickAndExtractPdfText } from './syllabusPdfImport';
+import { pickSyllabusImageFromLibrary, captureSyllabusPhoto } from './syllabusImageImport';
+import { pickAndExtractDocxText } from './syllabusDocxImport';
+import { pickAndExtractEpubText } from './syllabusEpubImport';
+import { fetchAndExtractLinkText } from './syllabusLinkImport';
+import ReadingListMatcher from './ReadingListMatcher';
 import SyllabusUploadCard from './SyllabusUploadCard';
 
 const COURSE_EMOJIS = ['📖', '🧮', '🧪', '🎨', '🌍', '💻'];
+
+function describeSummarizeFailure(reason: Parameters<typeof describeAiFailure>[0]): string {
+  if (!reason) return "Couldn't turn that into notes just now — try again in a moment.";
+  return describeAiFailure(reason);
+}
 
 export default function CourseDetailScreen({ courseId }: { courseId: string }) {
   const router = useRouter();
@@ -30,6 +43,10 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
   const [notesText, setNotesText] = useState('');
   const [flashcards, setFlashcards] = useState<FlashcardSet | null>(null);
   const [generatingCards, setGeneratingCards] = useState(false);
+  const [readingUploadError, setReadingUploadError] = useState<string | null>(null);
+  const [readingUploading, setReadingUploading] = useState(false);
+  const [readingLinkInput, setReadingLinkInput] = useState('');
+  const [showLinkInput, setShowLinkInput] = useState(false);
   const [editingCourse, setEditingCourse] = useState(false);
   const [nameInput, setNameInput] = useState('');
   const [emojiInput, setEmojiInput] = useState('');
@@ -93,6 +110,145 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
     setFlashcards(result);
     setGeneratingCards(false);
     updateCourse(courseId, { notes: notesText });
+  };
+
+  const appendReadingNotes = (label: string, notes: ReadingNotes) => {
+    const heading = notes.title || label;
+    const bullets = notes.keyPoints.map((point) => `• ${point}`).join('\n');
+    const truncatedNote = notes.wasTruncated
+      ? '\n\n(This reading was long — these notes only cover the part that was read. Add the rest separately if you need it.)'
+      : '';
+    const block = `--- ${heading} ---\n${notes.summary}\n\n${bullets}${truncatedNote}`;
+    const separator = notesText.trim() ? '\n\n' : '';
+    const next = `${notesText}${separator}${block}`;
+    setNotesText(next);
+    updateCourse(courseId, { notes: next });
+  };
+
+  /**
+   * Shared by every reading-upload input method: takes whatever raw
+   * text was extracted (from a PDF, DOCX, EPUB, image, or link) and
+   * turns it into real study notes via the AI, rather than appending
+   * the raw transcript directly — a wall of unprocessed reading text
+   * dumped into the notes field isn't actually notes, and works
+   * against this app's own low-cognitive-load design principle.
+   */
+  const summarizeAndAppend = async (sourceLabel: string, rawText: string) => {
+    setReadingUploadError(null);
+    setReadingUploading(true);
+    const notes = await avivaBrain.summarizeReadingToNotes(rawText, sourceLabel);
+    setReadingUploading(false);
+    if (!notes) {
+      setReadingUploadError(describeSummarizeFailure(avivaBrain.lastErrorReason));
+      return;
+    }
+    appendReadingNotes(sourceLabel, notes);
+  };
+
+  const handleUploadReadingPdf = async () => {
+    setReadingUploadError(null);
+    try {
+      const picked = await pickAndExtractPdfText();
+      if (!picked) return;
+      if (picked.looksScanned) {
+        setReadingUploadError(`"${picked.name}" doesn't seem to have real text in it — it's probably a scanned page. Try "Upload photo" instead.`);
+        return;
+      }
+      await summarizeAndAppend(picked.name, picked.text);
+    } catch (error) {
+      console.error('CourseDetailScreen: failed to read reading PDF', error);
+      setReadingUploadError("Couldn't read that PDF. Try a .txt, .docx, or .epub file, or a photo instead.");
+    }
+  };
+
+  const handleUploadReadingDocx = async () => {
+    setReadingUploadError(null);
+    try {
+      const picked = await pickAndExtractDocxText();
+      if (!picked) return;
+      if (!picked.text) {
+        setReadingUploadError(`"${picked.name}" didn't have any readable text in it.`);
+        return;
+      }
+      await summarizeAndAppend(picked.name, picked.text);
+    } catch (error) {
+      console.error('CourseDetailScreen: failed to read reading docx', error);
+      setReadingUploadError("Couldn't read that file. Make sure it's a .docx (not the older .doc format).");
+    }
+  };
+
+  const handleUploadReadingEpub = async () => {
+    setReadingUploadError(null);
+    try {
+      const picked = await pickAndExtractEpubText();
+      if (!picked) return;
+      if (!picked.text) {
+        setReadingUploadError(`"${picked.name}" didn't have any readable text in it.`);
+        return;
+      }
+      await summarizeAndAppend(picked.title || picked.name, picked.text);
+    } catch (error: any) {
+      console.error('CourseDetailScreen: failed to read reading epub', error);
+      setReadingUploadError(error?.message === 'NOT_A_VALID_EPUB' ? "That doesn't look like a valid .epub file." : "Couldn't read that file.");
+    }
+  };
+
+  const handleUploadReadingTextFile = async () => {
+    setReadingUploadError(null);
+    try {
+      const picked = await pickAndReadTextFile();
+      if (!picked) return;
+      await summarizeAndAppend(picked.name, picked.text);
+    } catch (error: any) {
+      console.error('CourseDetailScreen: failed to read reading text file', error);
+      setReadingUploadError(error?.message === 'NOT_TXT' ? "That's not a .txt file — use \"Upload PDF\" instead." : "Couldn't read that file.");
+    }
+  };
+
+  const handleUploadReadingImage = async (picker: () => Promise<{ dataUrl: string } | null>) => {
+    setReadingUploadError(null);
+    try {
+      const picked = await picker();
+      if (!picked) return;
+      setReadingUploading(true);
+      const text = await avivaBrain.transcribeImageToText(picked.dataUrl);
+      setReadingUploading(false);
+      if (!text) {
+        setReadingUploadError(describeSummarizeFailure(avivaBrain.lastErrorReason) || "Couldn't read the text in that image — try a clearer photo.");
+        return;
+      }
+      await summarizeAndAppend('Photo', text);
+    } catch (error: any) {
+      setReadingUploading(false);
+      console.error('CourseDetailScreen: failed to transcribe reading image', error);
+      setReadingUploadError(error?.message === 'PERMISSION_DENIED' ? 'Photo access was denied — allow it from your device settings.' : "Couldn't read that image.");
+    }
+  };
+
+  const handleUploadReadingLink = async () => {
+    if (!readingLinkInput.trim()) return;
+    setReadingUploadError(null);
+    setReadingUploading(true);
+    try {
+      const result = await fetchAndExtractLinkText(readingLinkInput);
+      if (!result) { setReadingUploading(false); return; }
+      setReadingLinkInput('');
+      await summarizeAndAppend(result.title || result.url, result.text);
+    } catch (error: any) {
+      setReadingUploading(false);
+      console.error('CourseDetailScreen: failed to fetch reading link', error);
+      if (error?.message === 'INVALID_URL') {
+        setReadingUploadError('That needs to be a full link starting with http:// or https://.');
+      } else if (error?.message === 'NO_READABLE_TEXT') {
+        setReadingUploadError("Couldn't find real readable text on that page — try a screenshot instead.");
+      } else {
+        // The honest, unavoidable case: most course/university sites
+        // don't allow their pages to be read this way from a browser
+        // (CORS) — see syllabusLinkImport.ts's module comment. This is
+        // indistinguishable here from the site genuinely being down.
+        setReadingUploadError("Couldn't reach that page — many course sites don't allow this. Try a screenshot of the page instead.");
+      }
+    }
   };
 
   const handleAdd = async () => {
@@ -244,6 +400,69 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
 
         <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
           <Text className="text-slate-700 text-sm font-medium mb-2 dark:text-slate-300">Notes & flashcards</Text>
+          <Text className="text-slate-500 text-xs mb-2">Upload a weekly reading to turn it into notes below, or type/paste your own.</Text>
+
+          <ReadingListMatcher onMatched={summarizeAndAppend} />
+
+          <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-2 mt-1">Or upload one reading directly</Text>
+
+          <View className="flex-row flex-wrap gap-2 mb-2">
+            <Pressable onPress={handleUploadReadingPdf} disabled={readingUploading} className="flex-1 border-2 border-stone-300 dark:border-slate-700 rounded-xl py-2 items-center min-w-[80px]">
+              <Text className="text-slate-700 dark:text-slate-300 text-xs font-medium">📄 PDF</Text>
+            </Pressable>
+            <Pressable onPress={handleUploadReadingDocx} disabled={readingUploading} className="flex-1 border-2 border-stone-300 dark:border-slate-700 rounded-xl py-2 items-center min-w-[80px]">
+              <Text className="text-slate-700 dark:text-slate-300 text-xs font-medium">📃 Word</Text>
+            </Pressable>
+            <Pressable onPress={handleUploadReadingEpub} disabled={readingUploading} className="flex-1 border-2 border-stone-300 dark:border-slate-700 rounded-xl py-2 items-center min-w-[80px]">
+              <Text className="text-slate-700 dark:text-slate-300 text-xs font-medium">📚 ePub</Text>
+            </Pressable>
+          </View>
+          <View className="flex-row flex-wrap gap-2 mb-2">
+            <Pressable onPress={() => handleUploadReadingImage(pickSyllabusImageFromLibrary)} disabled={readingUploading} className="flex-1 border-2 border-stone-300 dark:border-slate-700 rounded-xl py-2 items-center min-w-[80px]">
+              <Text className="text-slate-700 dark:text-slate-300 text-xs font-medium">🖼️ Photo</Text>
+            </Pressable>
+            {Platform.OS !== 'web' && (
+              <Pressable onPress={() => handleUploadReadingImage(captureSyllabusPhoto)} disabled={readingUploading} className="flex-1 border-2 border-stone-300 dark:border-slate-700 rounded-xl py-2 items-center min-w-[80px]">
+                <Text className="text-slate-700 dark:text-slate-300 text-xs font-medium">📷 Take photo</Text>
+              </Pressable>
+            )}
+            <Pressable onPress={handleUploadReadingTextFile} disabled={readingUploading} className="flex-1 border-2 border-stone-300 dark:border-slate-700 rounded-xl py-2 items-center min-w-[80px]">
+              <Text className="text-slate-700 dark:text-slate-300 text-xs font-medium">📎 .txt</Text>
+            </Pressable>
+            <Pressable onPress={() => setShowLinkInput(!showLinkInput)} disabled={readingUploading} className="flex-1 border-2 border-stone-300 dark:border-slate-700 rounded-xl py-2 items-center min-w-[80px]">
+              <Text className="text-slate-700 dark:text-slate-300 text-xs font-medium">🔗 Link</Text>
+            </Pressable>
+          </View>
+          {showLinkInput && (
+            <View className="flex-row gap-2 mb-2">
+              <TextInput
+                value={readingLinkInput}
+                onChangeText={setReadingLinkInput}
+                placeholder="https://…"
+                placeholderTextColor="#64748b"
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+              />
+              <Pressable
+                onPress={handleUploadReadingLink}
+                disabled={readingUploading || !readingLinkInput.trim()}
+                className={readingUploading || !readingLinkInput.trim() ? 'bg-slate-300 dark:bg-slate-700 rounded-xl px-4 justify-center' : 'bg-indigo-600 rounded-xl px-4 justify-center active:bg-indigo-500'}
+              >
+                <Text className="text-white text-xs font-semibold">Go</Text>
+              </Pressable>
+            </View>
+          )}
+          {readingUploading && (
+            <View className="flex-row items-center gap-2 mb-2">
+              <ActivityIndicator size="small" />
+              <Text className="text-slate-500 text-xs">Reading and taking notes…</Text>
+            </View>
+          )}
+
+          {readingUploadError && <Text className="text-amber-600 dark:text-amber-400 text-xs mb-2">{readingUploadError}</Text>}
+
           <TextInput
             value={notesText}
             onChangeText={setNotesText}

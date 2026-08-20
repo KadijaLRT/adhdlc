@@ -2,18 +2,31 @@ import { useState } from 'react';
 import { View, Text, Pressable, TextInput, ActivityIndicator, Platform, Image } from 'react-native';
 import { useAppStore, selectCourses } from '@/store/index';
 import { avivaBrain, type SyllabusParseResult } from '@/core/ai/AvivaBrain';
+import { describeAiFailure } from '@/core/ai/describeAiFailure';
+import type { GroqProxyError } from '@/core/ai/groqProxyClient';
 import { pickAndReadTextFile } from './syllabusImport';
 import { pickAndExtractPdfText } from './syllabusPdfImport';
 import { pickSyllabusImageFromLibrary, captureSyllabusPhoto } from './syllabusImageImport';
 import { DateInput } from '@/shared/components/DateInput';
 import { toLocalDateString } from '@/shared/formatDate';
 import { generateId } from '@/shared/generateId';
-// @ts-ignore - plain JS by design, see groqSanitizer.js header.
-import { MAX_PAYLOAD_LENGTH } from '@/core/ai/groqSanitizer';
 
 const TYPE_ICON: Record<string, string> = {
   homework: '📝', exam: '📋', quiz: '❓', project: '🛠️', paper: '📄', reading: '📖', other: '🔖',
 };
+
+/**
+ * Every AI extraction failure previously showed the identical generic
+ * "couldn't extract" message regardless of cause — a missing
+ * GROQ_API_KEY on the deployment looked exactly the same as a
+ * transient network blip, which cost real debugging time to actually
+ * diagnose (see the conversation this was added from). Each reason
+ * now gets its own honest, specific, actionable message.
+ */
+function describeExtractionFailure(reason: GroqProxyError['reason'] | null): string {
+  if (!reason) return "Couldn't extract assignments just now — try again in a moment, or add them manually below instead.";
+  return describeAiFailure(reason);
+}
 
 type ProposedAssignment = SyllabusParseResult['assignments'][number] & { included: boolean };
 
@@ -24,13 +37,9 @@ interface SyllabusUploadCardProps {
 }
 
 /**
- * Paste-text is the primary path since it works identically everywhere
- * and handles any source (PDF, Word, an email, a course website) — the
- * person just copies the text out of whatever they're looking at. File
- * upload is offered as a convenience for an already-plain-text
- * syllabus specifically; anything else (PDF/Word) gets a direct,
- * upfront note to paste instead, rather than silently failing or
- * mangling a parse.
+ * Three ways in — PDF upload, screenshot/photo upload, or a plain .txt
+ * file — each extracts automatically the moment a file is picked, no
+ * separate "paste text then press Extract" staging step.
  *
  * Every extracted assignment is reviewable and individually
  * removable/editable before anything is actually added — this never
@@ -42,7 +51,6 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
   const addAssignment = useAppStore((s) => s.addAssignment);
 
   const [expanded, setExpanded] = useState(false);
-  const [syllabusText, setSyllabusText] = useState('');
   const [fileName, setFileName] = useState<string | null>(null);
   const [fileError, setFileError] = useState<string | null>(null);
   const [extracting, setExtracting] = useState(false);
@@ -55,7 +63,16 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
   const [saving, setSaving] = useState(false);
   const [savedCount, setSavedCount] = useState<number | null>(null);
 
-  const wasTruncated = syllabusText.length > MAX_PAYLOAD_LENGTH;
+  const runTextExtract = async (text: string) => {
+    setExtracting(true);
+    setExtractError(null);
+    setResult(null);
+    setProposed([]);
+    const today = toLocalDateString(new Date());
+    const parsed = await avivaBrain.parseSyllabus(text, today);
+    setExtracting(false);
+    applyParsedResult(parsed);
+  };
 
   const handlePickFile = async () => {
     setFileError(null);
@@ -64,11 +81,11 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
       const picked = await pickAndReadTextFile();
       if (!picked) return;
       setFileName(picked.name);
-      setSyllabusText(picked.text);
+      await runTextExtract(picked.text);
     } catch (error: any) {
       console.error('SyllabusUploadCard: failed to read .txt file', error);
       if (error?.message === 'NOT_TXT') {
-        setFileError("That's not a .txt file — use \"Upload PDF\" below for a PDF, or paste the text directly.");
+        setFileError("That's not a .txt file — use \"Upload PDF\" above for a PDF instead.");
       } else {
         setFileError("Couldn't read that file. Try pasting the text directly instead.");
       }
@@ -86,10 +103,10 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
         return;
       }
       setFileName(picked.name);
-      setSyllabusText(picked.text);
+      await runTextExtract(picked.text);
     } catch (error) {
       console.error('SyllabusUploadCard: failed to extract PDF text', error);
-      setFileError("Couldn't read that PDF. If it's a scanned document, try \"Upload screenshot\" instead — otherwise, paste the text directly.");
+      setFileError("Couldn't read that PDF. If it's a scanned document, try \"Upload screenshot\" instead — otherwise, try a .txt file.");
     }
   };
 
@@ -97,7 +114,6 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
     setFileError(null);
     setExtractError(null);
     setResult(null);
-    setSyllabusText('');
     setFileName(null);
     try {
       const picked = await picker();
@@ -112,16 +128,16 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
       setExtracting(false);
       console.error('SyllabusUploadCard: failed to extract from image', error);
       if (error?.message === 'PERMISSION_DENIED') {
-        setFileError('Photo access was denied — you can allow it from your device settings, or paste the text instead.');
+        setFileError('Photo access was denied — you can allow it from your device settings.');
       } else {
-        setFileError("Couldn't read that image. Try a clearer photo, or paste the text directly instead.");
+        setFileError("Couldn't read that image. Try a clearer photo, or upload a PDF or .txt file instead.");
       }
     }
   };
 
   const applyParsedResult = (parsed: SyllabusParseResult | null) => {
     if (!parsed) {
-      setExtractError("Couldn't extract assignments just now — try again in a moment, or add them manually below instead.");
+      setExtractError(describeExtractionFailure(avivaBrain.lastErrorReason));
       return;
     }
     if (!parsed.assignments.length) {
@@ -131,18 +147,6 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
     setResult({ courseName: parsed.courseName, reasoning: parsed.reasoning });
     setProposed(parsed.assignments.map((a) => ({ ...a, included: true })));
     if (!fixedCourseId && parsed.courseName) setNewCourseName(parsed.courseName);
-  };
-
-  const handleExtract = async () => {
-    if (!syllabusText.trim()) return;
-    setExtracting(true);
-    setExtractError(null);
-    setResult(null);
-    setProposed([]);
-    const today = toLocalDateString(new Date());
-    const parsed = await avivaBrain.parseSyllabus(syllabusText, today);
-    setExtracting(false);
-    applyParsedResult(parsed);
   };
 
   const toggleIncluded = (id: string) => {
@@ -179,7 +183,6 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
     setSavedCount(includedCount);
     setProposed([]);
     setResult(null);
-    setSyllabusText('');
     setFileName(null);
     setImagePreviewUrl(null);
     onDone?.();
@@ -210,7 +213,7 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
       {!result && (
         <>
           <Text className="text-slate-500 text-xs mb-3">
-            Upload a PDF or a screenshot/photo, or paste the text directly below — whatever's easiest.
+            Upload a PDF, a screenshot/photo, or a .txt file — assignments extract automatically.
           </Text>
 
           <View className="flex-row flex-wrap gap-2 mb-3">
@@ -227,56 +230,23 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
             )}
           </View>
 
+          <Pressable onPress={handlePickFile} className="py-1 mb-3">
+            <Text className="text-indigo-500 text-xs">📎 {fileName ? `Using ${fileName} — choose a different file` : 'Or upload a .txt file'}</Text>
+          </Pressable>
+
           {imagePreviewUrl && (
             <View className="mb-3 flex-row items-center gap-2">
               <Image source={{ uri: imagePreviewUrl }} style={{ width: 48, height: 48, borderRadius: 8 }} />
-              {extracting && (
-                <View className="flex-row items-center gap-2">
-                  <ActivityIndicator size="small" />
-                  <Text className="text-slate-500 text-xs">Reading the image…</Text>
-                </View>
-              )}
+            </View>
+          )}
+          {extracting && (
+            <View className="flex-row items-center gap-2 mb-3">
+              <ActivityIndicator size="small" />
+              <Text className="text-slate-500 text-xs">Reading{fileName ? ` ${fileName}` : ''}…</Text>
             </View>
           )}
           {fileError && <Text className="text-amber-600 dark:text-amber-400 text-xs mb-3">{fileError}</Text>}
           {extractError && <Text className="text-red-500 text-xs mb-3">{extractError}</Text>}
-
-          <View className="border-t border-stone-100 dark:border-slate-800 pt-3">
-            <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-2">Or paste text</Text>
-            <TextInput
-              value={syllabusText}
-              onChangeText={setSyllabusText}
-              placeholder="Paste your syllabus text here…"
-              placeholderTextColor="#64748b"
-              multiline
-              numberOfLines={6}
-              className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-2"
-              style={{ minHeight: 100, textAlignVertical: 'top' }}
-            />
-            {wasTruncated && (
-              <Text className="text-amber-600 dark:text-amber-400 text-[11px] mb-2">
-                That's long — only the first ~{MAX_PAYLOAD_LENGTH.toLocaleString()} characters will be read. If your due dates are further down, paste just that section instead.
-              </Text>
-            )}
-            <Pressable onPress={handlePickFile} className="py-2 mb-2">
-              <Text className="text-indigo-500 text-xs">📎 {fileName ? `Using ${fileName} — choose a different file` : 'Or upload a .txt file'}</Text>
-            </Pressable>
-
-            <Pressable
-              onPress={handleExtract}
-              disabled={!syllabusText.trim() || extracting}
-              className={!syllabusText.trim() || extracting ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center' : 'bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500'}
-            >
-              {extracting && !imagePreviewUrl ? (
-                <View className="flex-row items-center gap-2">
-                  <ActivityIndicator color="#fff" size="small" />
-                  <Text className="text-white text-sm font-semibold">Reading…</Text>
-                </View>
-              ) : (
-                <Text className="text-white text-sm font-semibold">✨ Extract assignments</Text>
-              )}
-            </Pressable>
-          </View>
         </>
       )}
 
