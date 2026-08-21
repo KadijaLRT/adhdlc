@@ -3,9 +3,9 @@ import { View, Text, Pressable, ScrollView, FlatList } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import {
   useAppStore, selectActiveProgramId, selectFitnessPreferences, selectFitnessCardDismissed, selectEnergyLevel,
-  selectGyms, selectActiveGymId, selectSetLogs, selectWeekdayAssignment, selectRecentDayExerciseHistory,
+  selectGyms, selectActiveGymId, selectSetLogs, selectWeekdayAssignment, selectRecentDayExerciseHistory, selectCustomPrograms,
 } from '@/store/index';
-import { PROGRAMS } from '@/content/programs';
+import { getProgramById } from '@/content/programs';
 import { getCurrentProgramWeek, getSessionsThisWeek } from './buildProgramSession';
 import { buildWeeklySplit, getEnergyAdjustedExerciseIds, getVariedExerciseSelection, type WeeklySplitDay } from './buildWeeklySplit';
 import { getWeightProgressLabel } from './weightProgress';
@@ -52,12 +52,20 @@ function DayStrip({
 }
 
 function DayCard({
-  day, onStart, onLayout, programId, isResumable,
+  day, onStart, onLayout, programId, isResumable, resumingExerciseIds,
 }: {
-  day: WeeklySplitDay; onStart: () => void; onLayout: (y: number) => void; programId?: string; isResumable?: boolean;
+  day: WeeklySplitDay; onStart: () => void; onLayout: (y: number) => void; programId?: string; isResumable?: boolean; resumingExerciseIds?: string[];
 }) {
   const router = useRouter();
   const setLogs = useAppStore(selectSetLogs);
+  // A resumed draft's own saved exercise list (post variety/energy
+  // adjustment, and reflecting any mid-session swaps) is what
+  // WorkoutDaySession.tsx actually restores and displays once this
+  // day is opened — previously this card kept showing the base,
+  // unadjusted day definition even when resuming, so the preview
+  // listed different exercises than the session the person actually
+  // landed on.
+  const displayedExerciseIds = isResumable && resumingExerciseIds?.length ? resumingExerciseIds : day.exerciseIds;
 
   if (day.isRestDay) {
     return (
@@ -83,10 +91,10 @@ function DayCard({
       </View>
       <Text className="text-slate-900 text-xl font-bold mb-1 dark:text-slate-100">{day.title}</Text>
       <Text className="text-slate-500 text-xs mb-1 capitalize">{day.muscleGroups.join(' & ')}</Text>
-      <Text className="text-slate-500 text-xs mb-4">~{day.estimatedMinutes} min (estimate) · {day.exerciseIds.length} exercises</Text>
+      <Text className="text-slate-500 text-xs mb-4">~{day.estimatedMinutes} min (estimate) · {displayedExerciseIds.length} exercises</Text>
 
       <View className="gap-2 mb-4">
-        {day.exerciseIds.map((id) => {
+        {displayedExerciseIds.map((id) => {
           const exercise = WORKOUT_EXERCISES?.[id];
           const progressLabel = getWeightProgressLabel(id, setLogs);
           return (
@@ -102,7 +110,7 @@ function DayCard({
         <Pressable
           onPress={() => router?.push?.({
             pathname: '/workout/checkin',
-            params: { exerciseIds: day.exerciseIds.join(','), programId: programId || '', dayTitle: day.title },
+            params: { exerciseIds: displayedExerciseIds.join(','), programId: programId || '', dayTitle: day.title },
           })}
           className="flex-1 border-2 border-stone-300 rounded-xl py-3 items-center dark:border-slate-700"
         >
@@ -130,6 +138,7 @@ function DayCard({
 export default function WorkoutsHome() {
   const router = useRouter();
   const activeProgramId = useAppStore(selectActiveProgramId);
+  const customPrograms = useAppStore(selectCustomPrograms);
   const fitnessPreferences = useAppStore(selectFitnessPreferences);
   const fitnessCardDismissed = useAppStore(selectFitnessCardDismissed);
   const energyLevel = useAppStore(selectEnergyLevel);
@@ -182,7 +191,7 @@ export default function WorkoutsHome() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const activeProgram = PROGRAMS.find((p) => p.id === activeProgramId) || null;
+  const activeProgram = getProgramById(activeProgramId, customPrograms || []);
   const activeGym = gyms.find((g) => g.id === activeGymId) || null;
 
   const weeklySplit = useMemo(
@@ -219,7 +228,13 @@ export default function WorkoutsHome() {
 
     let effectiveExerciseIds: string[];
     if (matchingDraft) {
-      effectiveExerciseIds = day.exerciseIds; // resuming an existing draft: its own saved exercise list takes over on the next screen, not a fresh energy-adjusted one
+      // The draft's own saved exercise list — reflects the actual
+      // variety/energy adjustment and any mid-session swaps from when
+      // this session was started, not the day's base definition.
+      // Falls back to day.exerciseIds only if the draft is somehow
+      // missing its own list (shouldn't happen, but never send an
+      // empty list to the next screen).
+      effectiveExerciseIds = matchingDraft.sessionExerciseIds?.length ? matchingDraft.sessionExerciseIds : day.exerciseIds;
     } else {
       // A fresh session for this day gets a varied combo instead of the
       // same static exercises every time — rotated across the full
@@ -317,16 +332,20 @@ export default function WorkoutsHome() {
               onEditDay={handleEditDay}
             />
 
-            {weeklySplit.map((day, index) => (
-              <DayCard
-                key={day.weekdayLabel}
-                day={day}
-                onStart={() => handleStartDay(day)}
-                onLayout={(y) => { cardOffsets.current[index] = y; }}
-                programId={activeProgram?.id}
-                isResumable={!!inProgressDraft && inProgressDraft.sessionKey === buildSessionKey(activeProgram?.id, day.title)}
-              />
-            ))}
+            {weeklySplit.map((day, index) => {
+              const matchingDraft = inProgressDraft?.sessionKey === buildSessionKey(activeProgram?.id, day.title) ? inProgressDraft : null;
+              return (
+                <DayCard
+                  key={day.weekdayLabel}
+                  day={day}
+                  onStart={() => handleStartDay(day)}
+                  onLayout={(y) => { cardOffsets.current[index] = y; }}
+                  programId={activeProgram?.id}
+                  isResumable={!!matchingDraft}
+                  resumingExerciseIds={matchingDraft?.sessionExerciseIds}
+                />
+              );
+            })}
           </View>
         )}
 

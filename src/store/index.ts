@@ -12,6 +12,7 @@ import { createHydrationSlice, type HydrationSlice } from './slices/hydrationSli
 import { createNutritionFitnessSlice, type NutritionFitnessSlice } from './slices/nutritionFitnessSlice';
 import { createWorkoutSlice, type WorkoutSlice } from './slices/workoutSlice';
 import { createProgramSlice, type ProgramSlice } from './slices/programSlice';
+import { createCustomProgramSlice, type CustomProgramSlice } from './slices/customProgramSlice';
 import { createGrocerySlice, type GrocerySlice } from './slices/grocerySlice';
 import { createRoutineSlice, type RoutineSlice } from './slices/routineSlice';
 import { createRpgSlice, type RpgSlice } from './slices/rpgSlice';
@@ -36,7 +37,7 @@ export type { CountdownEvent } from './slices/countdownSlice';
 export type { RecoveryLogEntry } from './slices/workoutSlice';
 
 export type AppState = UiSlice & TaskSlice & StreakSlice & MilestoneSlice &
-  EnergySlice & StressSlice & CycleSlice & WellnessSlice & ProfileSlice & HydrationSlice & NutritionFitnessSlice & WorkoutSlice & ProgramSlice & GrocerySlice & RoutineSlice & RpgSlice & SettingsSlice & ReflectionSlice & ScheduleSlice & SchoolSlice & BodyProgressSlice & MomentumSlice & NutritionTrackingSlice & CountdownSlice;
+  EnergySlice & StressSlice & CycleSlice & WellnessSlice & ProfileSlice & HydrationSlice & NutritionFitnessSlice & WorkoutSlice & ProgramSlice & CustomProgramSlice & GrocerySlice & RoutineSlice & RpgSlice & SettingsSlice & ReflectionSlice & ScheduleSlice & SchoolSlice & BodyProgressSlice & MomentumSlice & NutritionTrackingSlice & CountdownSlice;
 
 // Combined store. To add a new domain: create slices/xSlice.ts exporting
 // createXSlice + XSlice, spread it in here, add its storage keys to
@@ -57,6 +58,7 @@ export const useAppStore = create<AppState>()((...args) => ({
   ...createNutritionFitnessSlice(...args),
   ...createWorkoutSlice(...args),
   ...createProgramSlice(...args),
+  ...createCustomProgramSlice(...args),
   ...createGrocerySlice(...args),
   ...createRoutineSlice(...args),
   ...createRpgSlice(...args),
@@ -125,6 +127,7 @@ export const selectColorScheme = (s: AppState) => s.colorScheme || 'light';
 export const selectDateFormat = (s: AppState) => s.dateFormat || 'MM-DD-YYYY';
 export const selectUnitSystem = (s: AppState) => s.unitSystem || 'imperial';
 export const selectActiveProgramId = (s: AppState) => s.activeProgramId;
+export const selectCustomPrograms = (s: AppState) => s.customPrograms;
 export const selectPantryItems = (s: AppState) => s.pantryItems || [];
 export const selectCheckedIngredients = (s: AppState) => s.checkedIngredients || [];
 export const selectMealPlan = (s: AppState) => s.mealPlan;

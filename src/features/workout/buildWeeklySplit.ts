@@ -157,7 +157,7 @@ export function buildDayLetterContent(
   // groups to zero.
   filtered = interleaveByGroup(filtered, preferences?.focusAreas);
 
-  const perDay = Math.max(1, getEffectiveSessionExerciseCount(program.sessionExerciseCount || 4, preferences?.sessionTimeBudget));
+  const perDay = Math.max(1, getEffectiveSessionExerciseCount(program.sessionExerciseCount || 5, preferences?.sessionTimeBudget));
   const trainingDayCount = Math.min(DAY_LETTERS.length, Math.max(1, Math.ceil(filtered.length / perDay)));
 
   const lettersToContent = new Map<string, DayLetterContent>();
@@ -265,7 +265,7 @@ export function getAvailableDayLetters(program: ProgramDefinition, preferences?:
   const matchesGroup = ([, ex]: [string, any]) =>
     (program.targetGroups || []).includes('all') || (program.targetGroups || []).includes(ex.group);
   const filtered = entries.filter(matchesGroup);
-  const perDay = Math.max(1, getEffectiveSessionExerciseCount(program.sessionExerciseCount || 4, preferences?.sessionTimeBudget));
+  const perDay = Math.max(1, getEffectiveSessionExerciseCount(program.sessionExerciseCount || 5, preferences?.sessionTimeBudget));
   const trainingDayCount = Math.min(DAY_LETTERS.length, Math.max(1, Math.ceil(filtered.length / perDay)));
   return DAY_LETTERS.slice(0, trainingDayCount);
 }

@@ -19,6 +19,7 @@ import type { MomentumSlice } from './momentumSlice';
 import type { NutritionFitnessSlice } from './nutritionFitnessSlice';
 import type { WorkoutSlice } from './workoutSlice';
 import type { ProgramSlice } from './programSlice';
+import type { CustomProgramSlice } from './customProgramSlice';
 import type { GrocerySlice } from './grocerySlice';
 import type { NutritionTrackingSlice } from './nutritionTrackingSlice';
 import type { UiSlice } from './uiSlice';
@@ -36,7 +37,7 @@ function today(): string {
 
 type FullState = TaskSlice & StreakSlice & MilestoneSlice & EnergySlice &
   StressSlice & CycleSlice & WellnessSlice & ProfileSlice & HydrationSlice & RoutineSlice & RpgSlice & SettingsSlice & ReflectionSlice & ScheduleSlice & SchoolSlice & BodyProgressSlice & MomentumSlice &
-  NutritionFitnessSlice & WorkoutSlice & ProgramSlice & GrocerySlice & NutritionTrackingSlice & UiSlice & CountdownSlice;
+  NutritionFitnessSlice & WorkoutSlice & ProgramSlice & CustomProgramSlice & GrocerySlice & NutritionTrackingSlice & UiSlice & CountdownSlice;
 
 // The only place that reads every domain's storage at once. Adding a new
 // slice means adding one line here and one line in the destructure below,
@@ -55,12 +56,12 @@ export const createHydrationSlice: StateCreator<FullState, [], [], HydrationSlic
       const [
         tasks, streaks, milestones, energyLogs, cycleLogs, cycleTrackingEnabledStored, stressLogs,
         wellnessPreferences, profile, routines, rpgState, settingsState, reflectionState,
-        nutritionFitnessState, workoutState, programState, groceryState, scheduleState, schoolState, bodyProgressState, momentumState, nutritionTrackingState, countdownState,
+        nutritionFitnessState, workoutState, programState, customPrograms, groceryState, scheduleState, schoolState, bodyProgressState, momentumState, nutritionTrackingState, countdownState,
       ] = await Promise.all([
           repo.getTasks(), repo.getStreaks(), repo.getMilestones(),
           repo.getEnergyLogs(), repo.getCycleLogs(), repo.getCycleTrackingEnabled(), repo.getStressLogs(),
           repo.getWellnessPreferences(), repo.getProfile(), repo.getRoutines(), repo.getRpgState(), repo.getSettingsState(), repo.getReflectionState(),
-          repo.getNutritionFitnessState(), repo.getWorkoutState(), repo.getProgramState(), repo.getGroceryState(), repo.getScheduleState(), repo.getSchoolState(), repo.getBodyProgressState(), repo.getMomentumState(), repo.getNutritionTrackingState(), repo.getCountdownState(),
+          repo.getNutritionFitnessState(), repo.getWorkoutState(), repo.getProgramState(), repo.getCustomPrograms(), repo.getGroceryState(), repo.getScheduleState(), repo.getSchoolState(), repo.getBodyProgressState(), repo.getMomentumState(), repo.getNutritionTrackingState(), repo.getCountdownState(),
         ]);
       set((state) => ({
         ...state,
@@ -130,6 +131,7 @@ export const createHydrationSlice: StateCreator<FullState, [], [], HydrationSlic
         activeProgramId: programState?.activeProgramId ?? state.activeProgramId,
         programStartedAt: programState?.programStartedAt ?? state.programStartedAt,
         sessionsCompletedInProgram: programState?.sessionsCompletedInProgram ?? state.sessionsCompletedInProgram,
+        customPrograms: customPrograms || state.customPrograms,
 
         pantryItems: groceryState?.pantryItems ?? state.pantryItems,
         checkedIngredients: groceryState?.checkedIngredients ?? state.checkedIngredients,

@@ -13,6 +13,7 @@ import type { MomentumState } from '@/store/slices/momentumSlice';
 import type { NutritionFitnessState } from '@/store/slices/nutritionFitnessSlice';
 import type { WorkoutState, WorkoutSessionDraft } from '@/store/slices/workoutSlice';
 import type { ProgramProgressState } from '@/store/slices/programSlice';
+import type { ProgramDefinition } from '@/content/programs';
 import type { GroceryState } from '@/store/slices/grocerySlice';
 import type { NutritionTrackingState } from '@/store/slices/nutritionTrackingSlice';
 import type { CountdownState } from '@/store/slices/countdownSlice';
@@ -76,6 +77,8 @@ export interface TaskRepository {
   saveWorkoutSessionDraft(draft: WorkoutSessionDraft | null): Promise<void>;
   getProgramState(): Promise<ProgramProgressState | null>;
   saveProgramState(state: ProgramProgressState): Promise<void>;
+  getCustomPrograms(): Promise<ProgramDefinition[] | null>;
+  saveCustomPrograms(programs: ProgramDefinition[]): Promise<void>;
   getGroceryState(): Promise<GroceryState | null>;
   saveGroceryState(state: GroceryState): Promise<void>;
   getNutritionTrackingState(): Promise<NutritionTrackingState | null>;

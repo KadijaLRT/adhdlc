@@ -83,6 +83,31 @@ const ReadingListSchema = z.object({
 export type ReadingListItem = z.infer<typeof ReadingListItemSchema>;
 export type ReadingList = z.infer<typeof ReadingListSchema>;
 
+// Every real exercise group this app actually has content for —
+// constraining generation to these (rather than letting the model
+// invent its own group names) is what keeps a generated program from
+// silently matching zero real exercises.
+const VALID_EXERCISE_GROUPS = ['glutes', 'hamstrings', 'quads', 'back', 'chest', 'core', 'calves', 'arms', 'shoulders', 'fullbody'] as const;
+
+const GeneratedProgramSchema = z.object({
+  title: z.string(),
+  emoji: z.string(),
+  forWhom: z.string(),
+  daysPerWeek: z.number().int().min(1).max(7),
+  durationWeeks: z.number().int().min(1).max(16),
+  // 'all' is a real recognized value elsewhere in this app's program
+  // matching (see ProgramDefinition's own comment) alongside specific
+  // group names — both are valid, unlike an invented group name.
+  targetGroups: z.array(z.string()).min(1),
+  // The only real system-wide bound is 2-8 (see
+  // getEffectiveSessionExerciseCount in buildWeeklySplit.ts) — nothing
+  // smaller is enforced here, since the person generating this
+  // explicitly does not want it artificially narrowed further.
+  sessionExerciseCount: z.number().int().min(2).max(8),
+  restBetweenSetsHint: z.string(),
+});
+export type GeneratedProgram = z.infer<typeof GeneratedProgramSchema>;
+
 const isoDateSchema = z.string().refine((val) => {
   // A regex alone (e.g. \d{4}-\d{2}-\d{2}) would pass "2026-13-45" —
   // this actually re-derives the date and checks it round-trips
@@ -383,6 +408,58 @@ Respond with ONLY valid JSON, no markdown fences:
       return { ...validated.data, wasTruncated: validated.data.wasTruncated || wasTruncated };
     } catch (error) {
       console.error('AvivaBrain: summarizeReadingToNotes failed', error);
+      if (error instanceof GroqProxyError) this.lastErrorReason = error.reason;
+      return null;
+    }
+  }
+
+  /**
+   * Generates a new workout program definition from a plain-language
+   * description of what someone wants — a real alternative to picking
+   * from the 7 built-in programs, which are deliberately kept small
+   * (see content/programs.ts's own comment about avoiding decision
+   * paralysis). That default is appropriate for someone choosing
+   * between pre-made options, but not for someone explicitly asking to
+   * generate their own — the prompt below is deliberately told not to
+   * apply that same narrowing, and the schema's only enforced bound is
+   * the real system-wide limit (2-8 exercises per session), not a
+   * smaller self-imposed one.
+   */
+  async generateWorkoutProgram(description: string): Promise<GeneratedProgram | null> {
+    this.lastErrorReason = null;
+    const cleanDescription = sanitizeString(description);
+    if (!cleanDescription) return null;
+
+    const systemPrompt = `You design a workout program based on what someone describes wanting.
+Pick real values, not the smallest plausible ones — someone generating their own program explicitly does not want it artificially minimized. sessionExerciseCount can be anywhere from 2 to 8 (the app's real system-wide range), daysPerWeek 1-7, durationWeeks 1-16 — choose whatever actually fits their description, including a genuinely larger session or duration if that's what they asked for or implied.
+targetGroups must only use these exact values: ${VALID_EXERCISE_GROUPS.join(', ')}, or "all" for every group. Never invent a group name that isn't in that list — it wouldn't match any real exercise.
+emoji should be one relevant emoji character. forWhom is a short one-line description of who this fits. restBetweenSetsHint is a short, encouraging one-line note about pacing between sets — reflect current guidance, not outdated "push to failure" framing: recommend stopping a couple of reps short of failure (not grinding every set to zero), and for a program that's specifically about maximal strength (low reps, heavy compound lifts), longer rest (3-5 minutes) is appropriate; for general hypertrophy/fitness work, 60-180 seconds is enough.
+Respond with ONLY valid JSON, no markdown fences:
+{"title": string, "emoji": string, "forWhom": string, "daysPerWeek": number, "durationWeeks": number, "targetGroups": [string], "sessionExerciseCount": number, "restBetweenSetsHint": string}`;
+
+    try {
+      const raw = await callGroqCompletion(
+        [{ role: 'system', content: systemPrompt }, { role: 'user', content: `What I want: "${cleanDescription}"` }],
+        0.6 // higher than extraction tasks — generating a program benefits from some real creative variation, not a single deterministic answer every time
+      );
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      // Defensively drop any group name the model invented anyway,
+      // rather than reject the whole program over one bad entry —
+      // matches the same lenient-validation reasoning already used for
+      // syllabus assignments elsewhere in this file.
+      if (Array.isArray(parsed?.targetGroups)) {
+        parsed.targetGroups = parsed.targetGroups.filter((g: unknown) => g === 'all' || VALID_EXERCISE_GROUPS.includes(g as any));
+        if (!parsed.targetGroups.length) parsed.targetGroups = ['all'];
+      }
+      const validated = GeneratedProgramSchema.safeParse(parsed);
+      if (!validated.success) {
+        console.error('AvivaBrain: generateWorkoutProgram schema validation failed', validated.error.flatten());
+        return null;
+      }
+      return validated.data;
+    } catch (error) {
+      console.error('AvivaBrain: generateWorkoutProgram failed', error);
       if (error instanceof GroqProxyError) this.lastErrorReason = error.reason;
       return null;
     }

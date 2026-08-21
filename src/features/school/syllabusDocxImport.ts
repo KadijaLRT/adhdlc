@@ -21,6 +21,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as mammoth from 'mammoth/mammoth.browser.js';
 
 import { extractSectionFromHtml } from './sectionExtractor';
+import { pickWebFile } from '@/features/settings/appleHealthImport';
 
 export interface DocxExtractResult {
   name: string;
@@ -42,21 +43,26 @@ export interface DocxExtractResult {
  * offers .docx.
  */
 export async function pickAndExtractDocxText(sectionLabel?: string | null): Promise<DocxExtractResult | null> {
-  const picked = await DocumentPicker.getDocumentAsync({
-    type: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document'],
-    copyToCacheDirectory: true,
-  });
-  if (picked.canceled || !picked.assets?.[0]) return null;
-
-  const asset = picked.assets[0];
-  const name = asset.name || 'reading.docx';
-
   let arrayBuffer: ArrayBuffer;
+  let name: string;
+
   if (Platform.OS === 'web') {
-    const file: File | undefined = (asset as any)?.file;
-    if (!file) throw new Error('COULD_NOT_READ');
+    // Same fix as syllabusEpubImport.ts / syllabusPdfImport.ts —
+    // expo-document-picker's web implementation reads the whole file
+    // into memory as base64 before returning, wasted work for a large
+    // .docx this only ever reads via the raw File below.
+    const file = await pickWebFile('application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx');
+    if (!file) return null;
+    name = file.name || 'reading.docx';
     arrayBuffer = await file.arrayBuffer();
   } else {
+    const picked = await DocumentPicker.getDocumentAsync({
+      type: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.docx'],
+      copyToCacheDirectory: true,
+    });
+    if (picked.canceled || !picked.assets?.[0]) return null;
+    const asset = picked.assets[0];
+    name = asset.name || 'reading.docx';
     const { File } = await import('expo-file-system');
     const nativeFile = new File(asset.uri);
     arrayBuffer = await nativeFile.arrayBuffer();

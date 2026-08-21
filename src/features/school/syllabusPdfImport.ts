@@ -6,6 +6,7 @@ import * as DocumentPicker from 'expo-document-picker';
 // cases — matches what's actually been verified to work in this
 // project's sandbox.
 import * as pdfjsLib from 'pdfjs-dist/legacy/build/pdf.mjs';
+import { pickWebFile } from '@/features/settings/appleHealthImport';
 
 // pdf.js requires an explicit worker — it throws synchronously
 // ("No GlobalWorkerOptions.workerSrc specified") without one, in a
@@ -88,21 +89,26 @@ async function extractTextFromPdfBytes(bytes: Uint8Array, range?: { startPage: n
  * visually rather than needing embedded text.
  */
 export async function pickAndExtractPdfText(range?: { startPage: number; endPage: number }): Promise<PdfExtractResult | null> {
-  const picked = await DocumentPicker.getDocumentAsync({
-    type: ['application/pdf'],
-    copyToCacheDirectory: true,
-  });
-  if (picked.canceled || !picked.assets?.[0]) return null;
-
-  const asset = picked.assets[0];
-  const name = asset.name || 'syllabus.pdf';
-
   let bytes: Uint8Array;
+  let name: string;
+
   if (Platform.OS === 'web') {
-    const file: File | undefined = (asset as any)?.file;
-    if (!file) throw new Error('COULD_NOT_READ');
+    // Same fix as syllabusEpubImport.ts — expo-document-picker's web
+    // implementation reads the whole file into memory as base64
+    // before returning, wasted work for a large PDF this only ever
+    // reads via the raw File below.
+    const file = await pickWebFile('application/pdf,.pdf');
+    if (!file) return null;
+    name = file.name || 'syllabus.pdf';
     bytes = new Uint8Array(await file.arrayBuffer());
   } else {
+    const picked = await DocumentPicker.getDocumentAsync({
+      type: ['application/pdf', '.pdf'],
+      copyToCacheDirectory: true,
+    });
+    if (picked.canceled || !picked.assets?.[0]) return null;
+    const asset = picked.assets[0];
+    name = asset.name || 'syllabus.pdf';
     const { File } = await import('expo-file-system');
     const nativeFile = new File(asset.uri);
     bytes = new Uint8Array(await nativeFile.arrayBuffer());

@@ -83,8 +83,8 @@ export const WORKOUT_EXERCISES: Record<string, Exercise> = {
   co6:{name:"Medicine Ball Slam",muscle:"Core + Full Body",group:"core",icon:"\uD83D\uDD25",tag:"Power + Core",rest:60,inc:0,sets:3,reps:"15",repsMin:15,eq:["medicine_ball"],cues:"Raise ball overhead, slam down hard. Catch and repeat. Explosive core power. Great stress release.",points:["Raise overhead","SLAM down hard","Catch and repeat","Perfect for stress/energy release"]},
   // -- LOWER BACK / COMPOUND ----------------------------------------------------
   lb1:{name:"Hyperextension / Back Extension",muscle:"Lower Back + Glutes",group:"back",icon:"\uD83D\uDD19",tag:"Lower back strength",rest:75,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["machine","bodyweight"],cues:"On hyperextension bench. Lower torso down, squeeze glutes to rise. Don't hyperextend past parallel.",points:["Use hyperextension bench","Lower torso down","Squeeze glutes to rise","Stop at parallel"]},
-  lb2:{name:"Deadlift",muscle:"Full Posterior Chain",group:"back",icon:"\uD83D\uDD19",tag:"Queen of all lifts",rest:120,inc:5,sets:3,reps:"5",repsMin:5,eq:["barbell"],cues:"Hinge at hips, bar over mid-foot. Chest up, back flat. Drive floor away. This builds EVERYTHING.",points:["Bar over mid-foot","Chest up, back flat","Drive the floor away","Builds everything"]},
-  lb3:{name:"Sumo Deadlift",muscle:"Glutes + Hamstrings + Back",group:"back",icon:"\uD83D\uDD19",tag:"Wide stance DL",rest:120,inc:5,sets:3,reps:"5",repsMin:5,eq:["barbell"],cues:"Wide stance, toes out. Hips drop lower, torso more upright. Great for glutes and inner thighs.",points:["Wide stance","Toes out","Hips drop lower","More upright torso"]},
+  lb2:{name:"Deadlift",muscle:"Full Posterior Chain",group:"back",icon:"\uD83D\uDD19",tag:"Queen of all lifts",rest:240,inc:5,sets:3,reps:"5",repsMin:5,eq:["barbell"],cues:"Hinge at hips, bar over mid-foot. Chest up, back flat. Drive floor away. This builds EVERYTHING.",points:["Bar over mid-foot","Chest up, back flat","Drive the floor away","Builds everything"]},
+  lb3:{name:"Sumo Deadlift",muscle:"Glutes + Hamstrings + Back",group:"back",icon:"\uD83D\uDD19",tag:"Wide stance DL",rest:240,inc:5,sets:3,reps:"5",repsMin:5,eq:["barbell"],cues:"Wide stance, toes out. Hips drop lower, torso more upright. Great for glutes and inner thighs.",points:["Wide stance","Toes out","Hips drop lower","More upright torso"]},
   // -- CALVES ------------------------------------------------------------------
   ca1:{name:"Standing Calf Raise",muscle:"Calves",group:"calves",icon:"\uD83E\uDDB5",tag:"Calf builder",rest:45,inc:5,sets:4,reps:"20",repsMin:20,eq:["machine","bodyweight","dumbbell"],cues:"Full stretch at bottom, full contraction at top. Slow and controlled. Calves respond to high reps.",points:["Full stretch at bottom","Full contraction at top","Slow tempo","High reps = calf growth"]},
   ca2:{name:"Seated Calf Raise",muscle:"Soleus (lower calf)",group:"calves",icon:"\uD83E\uDDB5",tag:"Soleus focus",rest:45,inc:5,sets:4,reps:"20",repsMin:20,eq:["machine"],cues:"Knees at 90\u00B0. Full range. Seated version hits the soleus (deeper calf muscle) more than standing.",points:["Knees at 90\u00B0","Full range","Hits deeper soleus muscle"]},
@@ -107,7 +107,7 @@ export const WORKOUT_EXERCISES: Record<string, Exercise> = {
   b10:{name:"Chest Supported Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"No cheat possible",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["dumbbell","machine"],cues:"Chest on incline bench. Row dumbbells or use machine. Chest support eliminates all body English \u2014 pure back work.",points:["Chest on incline pad","No swinging possible","Full stretch at bottom","Pure back isolation"]},
   b11:{name:"Kneeling Lat Pulldown",muscle:"Lats",group:"back",icon:"\uD83D\uDD19",tag:"Core + lats",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["cable"],cues:"Kneel at the cable, no seat. Core must engage to stay upright. Same pull motion \u2014 elbows drive down to ribs.",points:["Kneel, don't sit","Core braces for stability","Elbows drive down","Great core + lat combo"]},
   b12:{name:"Seated Cable Pullover",muscle:"Lats",group:"back",icon:"\uD83D\uDD19",tag:"Lat isolation from cable",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["cable"],cues:"Sit facing high cable, arms extended overhead. Pull straight down to thighs. Pure lat stretch and contraction.",points:["Sit facing high cable","Arms extended overhead","Pull to thighs","Feel the lat stretch"]},
-  b13:{name:"Rack Pull",muscle:"Back + Posterior Chain",group:"back",icon:"\uD83D\uDD19",tag:"Partial deadlift",rest:120,inc:10,sets:3,reps:"5",repsMin:5,eq:["barbell"],cues:"Like a deadlift but bar starts at knee height. Allows heavier loading of the back. Great for upper back thickness.",points:["Bar at knee height","Same back position as DL","Heavier than full DL","Builds upper back thickness"]},
+  b13:{name:"Rack Pull",muscle:"Back + Posterior Chain",group:"back",icon:"\uD83D\uDD19",tag:"Partial deadlift",rest:240,inc:10,sets:3,reps:"5",repsMin:5,eq:["barbell"],cues:"Like a deadlift but bar starts at knee height. Allows heavier loading of the back. Great for upper back thickness.",points:["Bar at knee height","Same back position as DL","Heavier than full DL","Builds upper back thickness"]},
   b14:{name:"Resistance Band Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"Home or warmup row",rest:60,inc:0,sets:3,reps:"15",repsMin:15,eq:["resistance_band"],cues:"Band around a post or feet. Row elbows back, squeeze blades. Perfect for warming up or at home.",points:["Band fixed around anchor","Row elbows back","Squeeze shoulder blades","Great warmup exercise"]},
   // -- CHEST (extra) ------------------------------------------------------------
   c9:{name:"Chest Press Machine",muscle:"Chest",group:"chest",icon:"\uD83D\uDCAA",tag:"Controlled chest press",rest:75,inc:5,sets:3,reps:"12",repsMin:12,eq:["machine"],cues:"Adjust seat so handles are at chest height. Press straight out. Machine guides the path \u2014 good for feeling the chest working.",points:["Handles at chest height","Press straight out","Squeeze at full extension","Great mind-muscle connection"]},
@@ -152,7 +152,7 @@ export const WORKOUT_EXERCISES: Record<string, Exercise> = {
   fb11:{name:"Devil's Press",muscle:"Full Body",group:"fullbody",icon:"\uD83D\uDE08",tag:"Hardest dumbbell exercise",rest:90,inc:2.5,sets:3,reps:"8",repsMin:8,eq:["dumbbell"],cues:"Dumbbells on floor, burpee down, row both dumbbells at bottom, jump to standing, snatch both overhead in one move. Combines everything.",points:["Burpee with dumbbells","Row at the bottom","Snatch overhead to finish","Start VERY light"]},
   fb12:{name:"Dumbbell Squat to Press",muscle:"Legs + Shoulders",group:"fullbody",icon:"\uD83D\uDCAA",tag:"Legs and shoulders together",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["dumbbell"],cues:"Dumbbells at shoulders. Squat fully down, then as you stand up, press overhead. Separate the squat from the press \u2014 squat first, press second.",points:["Squat to full depth first","Stand, then press","Don't rush the sequence","Great beginner full body"]},
   fb13:{name:"Bear Crawl",muscle:"Full Body Stability",group:"fullbody",icon:"\uD83D\uDC3B",tag:"Primal movement",rest:60,inc:0,sets:3,reps:"20 steps",repsMin:20,eq:["bodyweight"],cues:"On hands and feet, knees hover 2 inches off ground. Move opposite hand and foot simultaneously. Core stays completely rigid. Harder than it looks.",points:["Knees hover 2 inches up","Opposite arm and leg move","Stay low, core rigid","Looks easy, absolutely isn't"]},
-  fb14:{name:"Clean and Press",muscle:"Full Body Power",group:"fullbody",icon:"\uD83C\uDFCB\uFE0F",tag:"Olympic lift variation",rest:90,inc:5,sets:3,reps:"6",repsMin:6,eq:["barbell","dumbbell"],cues:"Pull bar from hip height to shoulder (clean), then press overhead. Combines a hip hinge pull with an overhead press. Use dumbbells first to learn the movement.",points:["Clean: pull to front rack","Dip and drive for press","Dumbbells are easier to learn","Power from hip extension"]},
+  fb14:{name:"Clean and Press",muscle:"Full Body Power",group:"fullbody",icon:"\uD83C\uDFCB\uFE0F",tag:"Olympic lift variation",rest:240,inc:5,sets:3,reps:"6",repsMin:6,eq:["barbell","dumbbell"],cues:"Pull bar from hip height to shoulder (clean), then press overhead. Combines a hip hinge pull with an overhead press. Use dumbbells first to learn the movement.",points:["Clean: pull to front rack","Dip and drive for press","Dumbbells are easier to learn","Power from hip extension"]},
   fb15:{name:"Wall Ball",muscle:"Legs + Shoulders + Core",group:"fullbody",icon:"\uD83C\uDFC0",tag:"Full body conditioning",rest:60,inc:0,sets:3,reps:"15",repsMin:15,eq:["medicine_ball"],cues:"Hold medicine ball, squat deep, explode up and throw ball to a wall target at 10 feet. Catch, immediately squat into next rep. Non-stop flow.",points:["Squat deep before throw","Use leg drive to throw","Catch and flow into next squat","Target 10 feet up on wall"]},
   fb16:{name:"T Push-Up",muscle:"Chest + Core + Rotation",group:"fullbody",icon:"\uD83D\uDCAA",tag:"Push-up with rotation",rest:60,inc:0,sets:3,reps:"8 each",repsMin:8,uni:true,eq:["bodyweight","dumbbell"],cues:"Push-up, then rotate to side plank raising one arm to ceiling. Targets chest, obliques, and shoulder stability in one move.",points:["Push-up first, then rotate","Stack feet or stagger for balance","Arm points straight up","Slow rotation = more oblique work"]},
 
@@ -246,3 +246,40 @@ export const WGROUPS = {
   "arms": ['a10', 'a11', 'a12', 'a13', 'a14', 'a15', 'a16', 'a17', 'a18', 'a19', 'a20', 'a21'],
   "fullbody": ['fb5', 'fb6', 'fb7', 'fb8', 'fb9', 'fb10', 'fb11', 'fb12', 'fb13', 'fb14', 'fb15', 'fb16', 'fb17', 'fb18', 'fb19', 'fb20'],
 };
+
+/**
+ * True for an exercise with no weighted-equipment option at all (e.g.
+ * Plank Variations, Wall Sit, Push-Up Variations, Burpee) — logging a
+ * weight for these is meaningless, unlike an exercise that merely
+ * supports a bodyweight variant alongside real weighted equipment
+ * (Barbell Hip Thrust lists both "barbell" and "bodyweight" and
+ * genuinely does get weighted; this correctly returns false for it).
+ * No separate field was added to every exercise entry for this — the
+ * existing `eq` array already carries the real signal.
+ */
+export function isBodyweightOnlyExercise(exercise: Pick<Exercise, 'eq'>): boolean {
+  return exercise.eq.length === 1 && exercise.eq[0] === 'bodyweight';
+}
+
+/**
+ * Parses a target duration in seconds out of an exercise's reps
+ * string (e.g. "45-60 sec", "30 sec each", "15-20 sec each side") —
+ * returns null for a genuinely rep-based exercise ("10-12", "max").
+ * For a range, the upper bound is used as the target: this app's
+ * position elsewhere (forgiving, non-punitive systems) is to encourage
+ * reaching the fuller end of a stated range rather than defaulting to
+ * the minimum. Verified against every "sec"-containing reps string
+ * actually present in this file.
+ */
+export function parseTimeBasedSeconds(reps: string): number | null {
+  const match = reps.match(/(\d+)(?:-(\d+))?\s*sec/i);
+  if (!match) return null;
+  const low = match[1] ? parseInt(match[1], 10) : NaN;
+  const high = match[2] ? parseInt(match[2], 10) : low;
+  return Number.isFinite(high) ? high : null;
+}
+
+/** True for an exercise whose reps field is a time duration rather than a rep count — the set-row UI shows a countdown timer instead of a reps number input for these. */
+export function isTimeBasedExercise(exercise: Pick<Exercise, 'reps'>): boolean {
+  return parseTimeBasedSeconds(exercise.reps) !== null;
+}

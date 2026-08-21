@@ -3,9 +3,10 @@ import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAppStore, selectAdhdFocusModeEnabled, selectSetLogs } from '@/store/index';
-import { WORKOUT_EXERCISES } from '@/content/exercises';
+import { WORKOUT_EXERCISES, isBodyweightOnlyExercise, parseTimeBasedSeconds } from '@/content/exercises';
 import { getWarmupForGroups } from '@/content/warmupContent';
 import InlineStepTimer from '@/shared/components/InlineStepTimer';
+import InlineSetTimer from '@/shared/components/InlineSetTimer';
 import { Heading } from '@/shared/components/Heading';
 import { getRepository } from '@/core/storage';
 import { createWriteGuard } from '@/core/storage/writeGuard';
@@ -262,7 +263,14 @@ export default function WorkoutDaySession({
     // just check truthiness; it specifically clamps negative values
     // to 0 while still allowing a legitimate 0 through untouched.
     const safeWeight = Math.max(0, Number(row.weight) || 0);
-    const safeReps = Math.max(0, Number(row.reps) || 0);
+    // A completed timed set writes reps as "Ns" (e.g. "45s") — see
+    // InlineSetTimer's onComplete wiring above. Number("45s") is NaN,
+    // which would silently zero out the actual held duration instead
+    // of logging it, so the trailing "s" is stripped before parsing.
+    // Downstream PR-tracking (logSet) then treats "seconds held"
+    // exactly like reps — both are a plain "more is better" number,
+    // so no other change was needed there.
+    const safeReps = Math.max(0, Number(String(row.reps).replace(/s$/i, '')) || 0);
     const { isNewRecord } = await logSet(exerciseId, safeWeight, safeReps);
     updateRow(exerciseId, index, { done: true });
     if (isNewRecord) {
@@ -374,6 +382,8 @@ export default function WorkoutDaySession({
           {sessionExerciseIds.map((exerciseId) => {
             const exercise = WORKOUT_EXERCISES?.[exerciseId];
             if (!exercise) return null;
+            const hidesWeightInput = isBodyweightOnlyExercise(exercise);
+            const timeTargetSeconds = parseTimeBasedSeconds(exercise.reps);
             const rows = rowsByExercise[exerciseId] || [];
             const exerciseDone = rows.length > 0 && rows.every((r) => r.done);
             const isExpanded = expandedId === exerciseId;
@@ -443,8 +453,8 @@ export default function WorkoutDaySession({
 
                     <View className="flex-row items-center px-1 mb-1">
                       <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide w-10">Set</Text>
-                      <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide flex-1 text-center">Weight</Text>
-                      <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide flex-1 text-center">Reps</Text>
+                      {!hidesWeightInput && <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide flex-1 text-center">Weight</Text>}
+                      <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide flex-1 text-center">{timeTargetSeconds !== null ? 'Time' : 'Reps'}</Text>
                       <View className="w-8" />
                     </View>
 
@@ -454,25 +464,40 @@ export default function WorkoutDaySession({
                       return (
                       <View key={index} className="flex-row items-center gap-1.5 mb-2">
                         <Text className="text-slate-500 text-xs w-10 text-center">{setNumber}{sideLabel ? ` ${sideLabel}` : ''}</Text>
+                        {!hidesWeightInput && (
+                          <View className="flex-1">
+                            <TextInput
+                              value={row.weight}
+                              onChangeText={(v) => updateRow(exerciseId, index, { weight: v })}
+                              placeholder="0"
+                              placeholderTextColor="#64748b"
+                              keyboardType="numeric"
+                              editable={!row.done}
+                              className={row.done ? 'w-full bg-stone-100 dark:bg-slate-800 text-slate-400 text-center rounded-lg py-2' : 'w-full bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-center rounded-lg py-2'}
+                            />
+                          </View>
+                        )}
                         <View className="flex-1">
-                          <TextInput
-                            value={row.weight}
-                            onChangeText={(v) => updateRow(exerciseId, index, { weight: v })}
-                            placeholder="0"
-                            placeholderTextColor="#64748b"
-                            keyboardType="numeric"
-                            editable={!row.done}
-                            className={row.done ? 'w-full bg-stone-100 dark:bg-slate-800 text-slate-400 text-center rounded-lg py-2' : 'w-full bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-center rounded-lg py-2'}
-                          />
-                        </View>
-                        <View className="flex-1">
-                          <TextInput
-                            value={row.reps}
-                            onChangeText={(v) => updateRow(exerciseId, index, { reps: v })}
-                            keyboardType="numeric"
-                            editable={!row.done}
-                            className={row.done ? 'w-full bg-stone-100 dark:bg-slate-800 text-slate-400 text-center rounded-lg py-2' : 'w-full bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-center rounded-lg py-2'}
-                          />
+                          {timeTargetSeconds !== null ? (
+                            row.done ? (
+                              <View className="w-full bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center">
+                                <Text className="text-slate-400 text-sm">{row.reps || `${timeTargetSeconds}s`}</Text>
+                              </View>
+                            ) : (
+                              <InlineSetTimer
+                                targetSeconds={timeTargetSeconds}
+                                onComplete={(heldSeconds) => updateRow(exerciseId, index, { reps: `${heldSeconds}s` })}
+                              />
+                            )
+                          ) : (
+                            <TextInput
+                              value={row.reps}
+                              onChangeText={(v) => updateRow(exerciseId, index, { reps: v })}
+                              keyboardType="numeric"
+                              editable={!row.done}
+                              className={row.done ? 'w-full bg-stone-100 dark:bg-slate-800 text-slate-400 text-center rounded-lg py-2' : 'w-full bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-center rounded-lg py-2'}
+                            />
+                          )}
                         </View>
                         <Pressable onPress={() => handleCompleteSet(exerciseId, index)} className="w-8 items-center">
                           <View className={row.done ? 'w-7 h-7 rounded-full bg-emerald-500 items-center justify-center' : 'w-7 h-7 rounded-full border-2 border-emerald-500 items-center justify-center'}>

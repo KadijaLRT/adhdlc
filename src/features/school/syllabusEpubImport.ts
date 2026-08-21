@@ -18,6 +18,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import JSZip from 'jszip';
 
 import { extractSectionFromHtml } from './sectionExtractor';
+import { pickWebFile } from '@/features/settings/appleHealthImport';
 
 export interface EpubExtractResult {
   name: string;
@@ -150,21 +151,28 @@ async function extractEpubText(zip: JSZip, sectionLabel?: string | null): Promis
 }
 
 export async function pickAndExtractEpubText(sectionLabel?: string | null): Promise<EpubExtractResult | null> {
-  const picked = await DocumentPicker.getDocumentAsync({
-    type: ['application/epub+zip'],
-    copyToCacheDirectory: true,
-  });
-  if (picked.canceled || !picked.assets?.[0]) return null;
-
-  const asset = picked.assets[0];
-  const name = asset.name || 'reading.epub';
-
   let arrayBuffer: ArrayBuffer;
+  let name: string;
+
   if (Platform.OS === 'web') {
-    const file: File | undefined = (asset as any)?.file;
-    if (!file) throw new Error('COULD_NOT_READ');
+    // expo-document-picker's own web implementation unconditionally
+    // reads the whole file into memory as a base64 data URL before
+    // ever returning — real, wasted memory pressure for a large file
+    // that's never even used (this always reads via asset.file
+    // directly below). Same fix already proven for Apple Health
+    // imports (see pickWebFile's own comment there).
+    const file = await pickWebFile('application/epub+zip,.epub');
+    if (!file) return null;
+    name = file.name || 'reading.epub';
     arrayBuffer = await file.arrayBuffer();
   } else {
+    const picked = await DocumentPicker.getDocumentAsync({
+      type: ['application/epub+zip', '.epub'],
+      copyToCacheDirectory: true,
+    });
+    if (picked.canceled || !picked.assets?.[0]) return null;
+    const asset = picked.assets[0];
+    name = asset.name || 'reading.epub';
     const { File } = await import('expo-file-system');
     const nativeFile = new File(asset.uri);
     arrayBuffer = await nativeFile.arrayBuffer();
