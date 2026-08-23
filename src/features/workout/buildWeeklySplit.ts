@@ -1,4 +1,4 @@
-import { WORKOUT_EXERCISES } from '@/content/exercises';
+import { WORKOUT_EXERCISES, isCompoundExercise } from '@/content/exercises';
 import type { ProgramDefinition } from '@/content/programs';
 import type { FitnessPreferences, SessionTimeBudget } from '@/store/slices/nutritionFitnessSlice';
 import { interleaveByGroup } from './interleaveExercises';
@@ -128,6 +128,52 @@ export function getVariedExerciseSelection(
     if (!isRepeat) return candidate;
   }
   return shuffled.slice(0, count);
+}
+
+/**
+ * Orders a session's exercises the way a trainer actually would,
+ * rather than leaving them in whatever order variety/energy selection
+ * happened to produce. Two real, independently-converged principles
+ * from exercise science drive this (multiple sources agree,
+ * see isCompoundExercise's own doc comment for the classification
+ * itself):
+ *
+ * 1. If a muscle group needs extra attention, train it first — force
+ *    output and neural drive are highest at the start of a session, so
+ *    that's when priority work benefits most from full effort. This
+ *    reuses `priorityGroups` (the person's existing `focusAreas`
+ *    preference, already used by interleaveByGroup to weight which
+ *    exercises get selected in the first place) rather than
+ *    introducing a second, separately-configured priority concept —
+ *    "which muscles I want extra attention on" is one setting, not two.
+ * 2. Within whatever isn't priority-ordered, compound (multi-joint)
+ *    movements go before isolation (single-joint) work — compound
+ *    lifts demand more coordination and neural drive, which are both
+ *    highest early in a session; isolation work is comparatively
+ *    forgiving of some accumulated fatigue.
+ *
+ * Stable within each group (doesn't reshuffle exercises that are
+ * already in the same priority/compound-vs-isolation bucket), so this
+ * only reorders when it actually changes something meaningful, not on
+ * every call.
+ */
+export function orderExercisesLikeATrainer(exerciseIds: string[], priorityGroups?: string[] | null): string[] {
+  const priority = new Set(priorityGroups || []);
+
+  const rank = (id: string): number => {
+    const exercise = WORKOUT_EXERCISES?.[id];
+    const isPriority = !!exercise && priority.has(exercise.group);
+    const isCompound = isCompoundExercise(id);
+    if (isPriority && isCompound) return 0;
+    if (isPriority) return 1;
+    if (isCompound) return 2;
+    return 3;
+  };
+
+  // A stable sort (Array.prototype.sort is guaranteed stable in every
+  // JS engine this app targets) — exercises within the same rank keep
+  // their existing relative order rather than getting shuffled again.
+  return [...exerciseIds].sort((a, b) => rank(a) - rank(b));
 }
 
 export function buildDayLetterContent(

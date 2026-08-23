@@ -28,6 +28,19 @@
  * pointless if the file has already been fully loaded and bloated
  * before it gets there — so for this import specifically, get the raw
  * File directly instead and skip that step entirely.
+ *
+ * `accept` should be extension(s) only (e.g. ".pdf", not
+ * "application/pdf,.pdf") — iOS Safari has a real, longstanding
+ * WebKit bug where its Files-app picker unreliably honors MIME-type
+ * matching in the `accept` attribute, and can incorrectly grey out and
+ * disable genuinely valid files when a MIME type is present, even
+ * alongside a correct matching extension (confirmed via an Apple
+ * community thread reproducing this exact symptom with the .docx MIME
+ * type this app uses, and an open WebKit bug report dating back to at
+ * least iOS 9). Desktop/Android browsers handle MIME+extension
+ * correctly, but since this one `accept` string has to work
+ * everywhere, extension-only is the version that's actually reliable
+ * on every platform this app runs on.
  */
 export function pickWebFile(accept: string): Promise<File | null> {
   return new Promise((resolve) => {

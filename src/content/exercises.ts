@@ -262,6 +262,46 @@ export function isBodyweightOnlyExercise(exercise: Pick<Exercise, 'eq'>): boolea
 }
 
 /**
+ * Every one of this file's exercises, individually reviewed by actual
+ * movement pattern — not inferred from a heuristic. Two heuristics
+ * were tried first and rejected after producing real, confirmed
+ * misclassifications: matching on exercise name (missed compound
+ * movements like "Lat Pulldown" and "Push-Up Variations" that don't
+ * contain an obvious keyword), and checking whether the `muscle` field
+ * names more than one region (misread genuine compound lifts like
+ * Barbell Bent-Over Row and Incline Barbell Press as isolation, since
+ * their muscle field only names one primary region despite being
+ * real multi-joint movements). This set is the result of manually
+ * checking every exercise against the actual definition — compound:
+ * a genuine multi-joint movement (hip hinge, squat, lunge, press, row,
+ * pull, carry, or full-body/power movement); isolation: a single-joint
+ * movement targeting one muscle through one joint action.
+ *
+ * Used to order a session the way a trainer would — compound
+ * movements first, while energy and neural drive are highest, matching
+ * the well-established convention (multiple independent
+ * exercise-science sources agree on this specific ordering principle).
+ */
+const COMPOUND_EXERCISE_IDS = new Set([
+  'g1', 'g1b', 'g5', 'g6', 'g7', 'g8', 'g9', 'g10', 'g11', 'g12', 'g16', 'g17', 'g18',
+  'g21', 'g22', 'g23', 'g24', 'g26',
+  'h1', 'h4', 'h6', 'h8', 'h10', 'h11', 'h12', 'h13',
+  'q1', 'q5', 'q6', 'q7', 'q10', 'q12', 'q13', 'q14', 'q15',
+  'b1', 'b1b', 'b1c', 'b2', 'b2b', 'b3', 'b4', 'b4b', 'b5', 'b5b', 'b8', 'b9',
+  'b10', 'b11', 'b12', 'b13', 'b14', 'b15', 'b16', 'b18', 'b19', 'b20',
+  'c1', 'c2', 'c5', 'c6', 'c8', 'c9', 'c10', 'c11', 'c13', 'c14', 'c16',
+  'a12', 'a19', 'a21',
+  'sh1', 'sh6', 'sh7', 'sh10', 'sh16',
+  'lb1', 'lb2', 'lb3',
+  'fb1', 'fb2', 'fb3', 'fb4', 'fb5', 'fb6', 'fb7', 'fb8', 'fb9', 'fb10',
+  'fb11', 'fb12', 'fb13', 'fb14', 'fb15', 'fb16', 'fb17', 'fb18', 'fb19', 'fb20',
+]);
+
+export function isCompoundExercise(exerciseId: string): boolean {
+  return COMPOUND_EXERCISE_IDS.has(exerciseId);
+}
+
+/**
  * Parses a target duration in seconds out of an exercise's reps
  * string (e.g. "45-60 sec", "30 sec each", "15-20 sec each side") —
  * returns null for a genuinely rep-based exercise ("10-12", "max").

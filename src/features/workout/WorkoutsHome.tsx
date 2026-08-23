@@ -7,7 +7,7 @@ import {
 } from '@/store/index';
 import { getProgramById } from '@/content/programs';
 import { getCurrentProgramWeek, getSessionsThisWeek } from './buildProgramSession';
-import { buildWeeklySplit, getEnergyAdjustedExerciseIds, getVariedExerciseSelection, type WeeklySplitDay } from './buildWeeklySplit';
+import { buildWeeklySplit, getEnergyAdjustedExerciseIds, getVariedExerciseSelection, orderExercisesLikeATrainer, type WeeklySplitDay } from './buildWeeklySplit';
 import { getWeightProgressLabel } from './weightProgress';
 import { pickStartSomewhereExercise } from './pickStartSomewhere';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
@@ -17,6 +17,7 @@ import { Heading, Subheading } from '@/shared/components/Heading';
 import { getRepository } from '@/core/storage';
 import { buildSessionKey } from './WorkoutDaySession';
 import type { WorkoutSessionDraft } from '@/store/slices/workoutSlice';
+import { toLocalDateString } from '@/shared/formatDate';
 
 function DayStrip({
   days, activeIndex, onJumpTo, onEditDay,
@@ -167,7 +168,26 @@ export default function WorkoutsHome() {
         try {
           const repo = await getRepository();
           const draft = await repo.getWorkoutSessionDraft();
-          if (!cancelled) setInProgressDraft(draft);
+          if (cancelled) return;
+          // A draft last touched on a previous calendar day is treated
+          // as abandoned, not resumable — a session genuinely still in
+          // progress today (even hours-long, even paused a while) still
+          // correctly resumes, since this checks updatedAt (refreshed
+          // on every autosave) against today's date, not how long ago
+          // it started.
+          const isStale = !!draft && toLocalDateString(new Date(draft.updatedAt)) !== toLocalDateString(new Date());
+          if (isStale) {
+            // Clear it outright rather than just hide it in memory —
+            // an abandoned draft sitting in storage forever would
+            // still silently resurrect itself in a future session
+            // (e.g. after this same day letter comes back around) if
+            // this check were only applied at render time instead of
+            // actually clearing the stale draft here.
+            await repo.saveWorkoutSessionDraft(null);
+            setInProgressDraft(null);
+          } else {
+            setInProgressDraft(draft);
+          }
         } catch (error) {
           console.error('WorkoutsHome: failed to check for an in-progress workout draft', error);
         }
@@ -250,7 +270,13 @@ export default function WorkoutsHome() {
         seed
       );
       const baseIds = variedIds.length ? variedIds : day.exerciseIds;
-      effectiveExerciseIds = getEnergyAdjustedExerciseIds(baseIds, day.muscleGroups, energyLevel);
+      const energyAdjustedIds = getEnergyAdjustedExerciseIds(baseIds, day.muscleGroups, energyLevel);
+      // Same priority signal interleaveByGroup already uses to bias
+      // which exercises get selected — applying it here too means "the
+      // muscles I said I care about" consistently shapes both what's
+      // chosen and the order it's trained in, not two separately
+      // configured ideas of priority.
+      effectiveExerciseIds = orderExercisesLikeATrainer(energyAdjustedIds, fitnessPreferences?.focusAreas);
       recordUsedExerciseCombo(day.title, baseIds);
     }
 

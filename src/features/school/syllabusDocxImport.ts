@@ -51,7 +51,7 @@ export async function pickAndExtractDocxText(sectionLabel?: string | null): Prom
     // expo-document-picker's web implementation reads the whole file
     // into memory as base64 before returning, wasted work for a large
     // .docx this only ever reads via the raw File below.
-    const file = await pickWebFile('application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx');
+    const file = await pickWebFile('.docx');
     if (!file) return null;
     name = file.name || 'reading.docx';
     arrayBuffer = await file.arrayBuffer();

@@ -72,6 +72,12 @@ export interface WorkoutState {
   // entries per day (see recordUsedExerciseCombo) rather than growing
   // forever.
   recentDayExerciseHistory: Record<string, string[][]>;
+  // Same idea as recentDayExerciseHistory above, but keyed by warm-up
+  // category ('lower_body', 'upper_body', 'core', 'fullbody') instead
+  // of day title — the last few move-id combos actually used for that
+  // category's warm-up, so getWarmupForGroups can rotate away from
+  // repeating what was just done.
+  recentWarmupHistory: Record<string, string[][]>;
 }
 
 export interface WorkoutSlice extends WorkoutState {
@@ -84,6 +90,7 @@ export interface WorkoutSlice extends WorkoutState {
   setWeekdayAssignment: (weekdayIndex: number, dayLetter: string | null) => Promise<void>;
   logRecoveryUpdate: (date: string, updates: Partial<Omit<RecoveryLogEntry, 'date'>>) => Promise<void>;
   recordUsedExerciseCombo: (dayTitle: string, exerciseIds: string[]) => Promise<void>;
+  recordUsedWarmupCombo: (category: string, moveIds: string[]) => Promise<void>;
 }
 
 const DEFAULT_STATE: WorkoutState = {
@@ -96,6 +103,7 @@ const DEFAULT_STATE: WorkoutState = {
   weekdayAssignment: [null, 'A', 'B', 'C', 'D', 'E', 'F'], // default: Sun rest, Mon–Sat A–F
   recoveryLogs: [],
   recentDayExerciseHistory: {},
+  recentWarmupHistory: {},
 };
 
 const persist = createWriteGuard(async (state: WorkoutState) => {
@@ -113,6 +121,7 @@ function currentState(get: () => WorkoutState): WorkoutState {
     weekdayAssignment: get().weekdayAssignment || DEFAULT_STATE.weekdayAssignment,
     recoveryLogs: get().recoveryLogs || [],
     recentDayExerciseHistory: get().recentDayExerciseHistory || {},
+    recentWarmupHistory: get().recentWarmupHistory || {},
   };
 }
 
@@ -240,6 +249,19 @@ export const createWorkoutSlice: StateCreator<WorkoutSlice> = (set, get) => ({
     const nextState = {
       ...currentState(get),
       recentDayExerciseHistory: { ...existing, [dayTitle]: nextHistoryForDay },
+    };
+    set(nextState);
+    await persist(nextState);
+  },
+
+  recordUsedWarmupCombo: async (category, moveIds) => {
+    if (!category || !moveIds?.length) return;
+    const existing = get().recentWarmupHistory || {};
+    const historyForCategory = existing[category] || [];
+    const nextHistoryForCategory = [...historyForCategory, moveIds].slice(-3);
+    const nextState = {
+      ...currentState(get),
+      recentWarmupHistory: { ...existing, [category]: nextHistoryForCategory },
     };
     set(nextState);
     await persist(nextState);

@@ -2,9 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAppStore, selectAdhdFocusModeEnabled, selectSetLogs } from '@/store/index';
-import { WORKOUT_EXERCISES, isBodyweightOnlyExercise, parseTimeBasedSeconds } from '@/content/exercises';
-import { getWarmupForGroups } from '@/content/warmupContent';
+import { useAppStore, selectAdhdFocusModeEnabled, selectSetLogs, selectRecentWarmupHistory } from '@/store/index';
+import type { SetLogEntry } from '@/store/slices/workoutSlice';
+import { WORKOUT_EXERCISES, isBodyweightOnlyExercise, parseTimeBasedSeconds, type Exercise } from '@/content/exercises';
+import { suggestNextSet } from './weightProgress';
+import { toLocalDateString } from '@/shared/formatDate';
+import { getWarmupForGroups, warmupCategoryForGroups } from '@/content/warmupContent';
 import InlineStepTimer from '@/shared/components/InlineStepTimer';
 import InlineSetTimer from '@/shared/components/InlineSetTimer';
 import { Heading } from '@/shared/components/Heading';
@@ -38,15 +41,28 @@ function formatElapsed(totalSeconds: number): string {
   return `${m}:${String(s).padStart(2, '0')}`;
 }
 
-/** Builds `count` sets worth of rows — for a unilateral exercise, that's `count` Right/Left pairs, not `count` generic rows. */
-function buildSetRows(count: number, repsMin: number, isUnilateral: boolean): SetRow[] {
+/**
+ * Builds `count` sets worth of rows — for a unilateral exercise,
+ * that's `count` Right/Left pairs, not `count` generic rows.
+ *
+ * Every row's reps prefill from the suggestion (the double-progression
+ * target — see suggestNextSet), and the FIRST set's weight also
+ * prefills from the suggestion — later sets are deliberately left
+ * blank rather than all prefilled identically, since real training
+ * routinely uses the same weight for every set within a session but
+ * that's a decision the person should confirm per set, not have
+ * silently assumed for sets they haven't done yet.
+ */
+function buildSetRows(count: number, exercise: Exercise, exerciseId: string, setLogs: SetLogEntry[], isUnilateral: boolean): SetRow[] {
+  const suggestion = suggestNextSet(exerciseId, exercise.reps, exercise.repsMin, exercise.inc, setLogs);
+  const suggestedReps = suggestion.reps || String(exercise.repsMin || 10);
   if (!isUnilateral) {
-    return Array.from({ length: count }, () => ({ weight: '', reps: String(repsMin || 10), done: false }));
+    return Array.from({ length: count }, (_, i) => ({ weight: i === 0 ? suggestion.weight : '', reps: suggestedReps, done: false }));
   }
   const rows: SetRow[] = [];
   for (let i = 0; i < count; i++) {
-    rows.push({ weight: '', reps: String(repsMin || 10), done: false, side: 'right' });
-    rows.push({ weight: '', reps: String(repsMin || 10), done: false, side: 'left' });
+    rows.push({ weight: i === 0 ? suggestion.weight : '', reps: suggestedReps, done: false, side: 'right' });
+    rows.push({ weight: i === 0 ? suggestion.weight : '', reps: suggestedReps, done: false, side: 'left' });
   }
   return rows;
 }
@@ -101,7 +117,29 @@ export default function WorkoutDaySession({
     () => Array.from(new Set(sessionExerciseIds.map((id) => WORKOUT_EXERCISES?.[id]?.group).filter((g): g is string => !!g))),
     [sessionExerciseIds]
   );
-  const warmup = useMemo(() => getWarmupForGroups(sessionMuscleGroups), [sessionMuscleGroups]);
+  const recentWarmupHistory = useAppStore(selectRecentWarmupHistory);
+  const recordUsedWarmupCombo = useAppStore((s) => s.recordUsedWarmupCombo);
+  const warmupCategory = useMemo(() => warmupCategoryForGroups(sessionMuscleGroups), [sessionMuscleGroups]);
+  const warmup = useMemo(() => {
+    // Same seeding approach as exercise variety (WorkoutsHome.tsx) —
+    // today's date as YYYYMMDD, stable through re-renders today,
+    // different the next time this screen is opened.
+    const seed = Number(new Date().toISOString().slice(0, 10).replace(/-/g, ''));
+    return getWarmupForGroups(sessionMuscleGroups, 5, recentWarmupHistory[warmupCategory] || [], seed);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- recentWarmupHistory intentionally excluded: it's read once to pick today's varied warm-up, not something a re-render should re-roll against its own just-recorded entry
+  }, [sessionMuscleGroups, warmupCategory]);
+
+  // Records which specific moves were actually shown, once per mount
+  // (not on every render) — this is what getVariedWarmupSelection
+  // checks next time to avoid repeating the identical combo. Recording
+  // on mount (not on "did they actually do it") matches how exercise
+  // variety already records at session start rather than completion —
+  // simpler, and avoids the warm-up ever being repeated purely because
+  // someone opened the session without finishing the warm-up card.
+  useEffect(() => {
+    if (warmup.steps.length) recordUsedWarmupCombo(warmupCategory, warmup.steps.map((s) => s.id));
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- deliberately only on mount, not every time `warmup` is recomputed
+  }, []);
 
   // The session's real start time — normally seeded from the
   // sessionStartedAt route param, but overwritten with the original
@@ -127,7 +165,7 @@ export default function WorkoutDaySession({
       if (!exercise) continue;
       const isReduced = energyLightened || (reducedGroups?.length && reducedGroups.includes(exercise.group));
       const setCount = isReduced ? Math.max(2, exercise.sets - 1) : exercise.sets;
-      initial[id] = buildSetRows(setCount, exercise.repsMin, !!exercise.uni);
+      initial[id] = buildSetRows(setCount, exercise, id, setLogs, !!exercise.uni);
     }
     return initial;
   });
@@ -142,10 +180,22 @@ export default function WorkoutDaySession({
       try {
         const repo = await getRepository();
         const draft = await repo.getWorkoutSessionDraft();
-        if (!cancelled && draft && draft.sessionKey === sessionKey) {
-          if (draft.sessionExerciseIds?.length) setSessionExerciseIds(draft.sessionExerciseIds);
-          if (draft.rowsByExercise) setRowsByExercise(draft.rowsByExercise);
-          if (draft.sessionStartedAt) setStartedAtMs(new Date(draft.sessionStartedAt).getTime());
+        if (cancelled) return;
+        if (draft && draft.sessionKey === sessionKey) {
+          // Same staleness rule as WorkoutsHome.tsx's own draft check —
+          // this is a second, independent loading path (someone can
+          // land directly on this screen via a deep link or the
+          // browser's back button without passing through that
+          // screen's check first), so it needs the same protection
+          // rather than assuming the other check already covered it.
+          const isStale = toLocalDateString(new Date(draft.updatedAt)) !== toLocalDateString(new Date());
+          if (isStale) {
+            await repo.saveWorkoutSessionDraft(null);
+          } else {
+            if (draft.sessionExerciseIds?.length) setSessionExerciseIds(draft.sessionExerciseIds);
+            if (draft.rowsByExercise) setRowsByExercise(draft.rowsByExercise);
+            if (draft.sessionStartedAt) setStartedAtMs(new Date(draft.sessionStartedAt).getTime());
+          }
         }
       } catch (error) {
         console.error('WorkoutDaySession: failed to restore in-progress session draft', error);
@@ -181,6 +231,15 @@ export default function WorkoutDaySession({
     return () => clearInterval(interval);
   }, [startedAtMs]);
 
+  const [confirmingTimerReset, setConfirmingTimerReset] = useState(false);
+  const handleResetTimer = () => {
+    // startedAtMs is the single source of truth the elapsed-timer
+    // effect above already derives from — resetting it to now is all
+    // that's needed, no separate elapsedSeconds state to touch.
+    setStartedAtMs(Date.now());
+    setConfirmingTimerReset(false);
+  };
+
   const totalSets = useMemo(() => Object.values(rowsByExercise).reduce((sum, rows) => sum + rows.length, 0), [rowsByExercise]);
   const doneSets = useMemo(() => Object.values(rowsByExercise).reduce((sum, rows) => sum + rows.filter((r) => r.done).length, 0), [rowsByExercise]);
   const allDone = totalSets > 0 && doneSets === totalSets;
@@ -214,7 +273,7 @@ export default function WorkoutDaySession({
     setSessionExerciseIds((prev) => [...prev, exerciseId]);
     setRowsByExercise((prev) => ({
       ...prev,
-      [exerciseId]: buildSetRows(exercise.sets, exercise.repsMin, !!exercise.uni),
+      [exerciseId]: buildSetRows(exercise.sets, exercise, exerciseId, setLogs, !!exercise.uni),
     }));
     setExpandedId(exerciseId);
     setShowAddExercise(false);
@@ -229,6 +288,20 @@ export default function WorkoutDaySession({
       return next;
     });
     if (expandedId === exerciseId) setExpandedId(null);
+  };
+
+  const handleMoveExercise = (exerciseId: string, direction: 'up' | 'down') => {
+    setSessionExerciseIds((prev) => {
+      const index = prev.indexOf(exerciseId);
+      if (index === -1) return prev;
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      if (targetIndex < 0 || targetIndex >= prev.length) return prev; // already at an end — nothing to do
+      const next = [...prev];
+      const temp = next[index];
+      next[index] = next[targetIndex]!;
+      next[targetIndex] = temp!;
+      return next;
+    });
   };
 
   const exerciseSearchResults = useMemo(
@@ -320,7 +393,7 @@ export default function WorkoutDaySession({
     setRowsByExercise((prev) => {
       const next = { ...prev };
       delete next[oldExerciseId];
-      next[newExerciseId] = buildSetRows(existingSetCount, newExercise.repsMin, !!newExercise.uni);
+      next[newExerciseId] = buildSetRows(existingSetCount, newExercise, newExerciseId, setLogs, !!newExercise.uni);
       return next;
     });
     if (expandedId === oldExerciseId) setExpandedId(newExerciseId);
@@ -351,7 +424,22 @@ export default function WorkoutDaySession({
             <Text className="text-slate-900 dark:text-slate-100 text-base font-bold">{dayTitle || "Today's workout"}</Text>
             <Text className="text-slate-500 text-xs mt-0.5">{sessionExerciseIds.length} exercise{sessionExerciseIds.length === 1 ? '' : 's'}</Text>
           </View>
-          <Text className="text-emerald-600 dark:text-emerald-400 text-xl font-bold">{formatElapsed(elapsedSeconds)}</Text>
+          <View className="items-end">
+            {confirmingTimerReset ? (
+              <View className="flex-row items-center gap-2">
+                <Pressable onPress={handleResetTimer} hitSlop={6}>
+                  <Text className="text-red-500 text-xs font-semibold">Reset?</Text>
+                </Pressable>
+                <Pressable onPress={() => setConfirmingTimerReset(false)} hitSlop={6}>
+                  <Text className="text-slate-400 text-xs">Cancel</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable onPress={() => setConfirmingTimerReset(true)} hitSlop={6}>
+                <Text className="text-emerald-600 dark:text-emerald-400 text-xl font-bold">{formatElapsed(elapsedSeconds)}</Text>
+              </Pressable>
+            )}
+          </View>
         </View>
         <View className="flex-row items-center gap-2 mt-2">
           <View className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
@@ -379,7 +467,7 @@ export default function WorkoutDaySession({
             </View>
           )}
 
-          {sessionExerciseIds.map((exerciseId) => {
+          {sessionExerciseIds.map((exerciseId, exerciseIndex) => {
             const exercise = WORKOUT_EXERCISES?.[exerciseId];
             if (!exercise) return null;
             const hidesWeightInput = isBodyweightOnlyExercise(exercise);
@@ -405,8 +493,43 @@ export default function WorkoutDaySession({
                       <Text className="text-slate-500 text-xs">
                         {exercise.muscle} · {exercise.uni ? Math.round(rows.length / 2) : rows.length} set{(exercise.uni ? Math.round(rows.length / 2) : rows.length) === 1 ? '' : 's'}{exercise.uni ? ' · each side' : ''}{isReducedThisExercise ? ' · lightened' : ''}
                       </Text>
+                      {(() => {
+                        // Recomputed from setLogs (past sessions), not
+                        // the live row state — this should keep
+                        // showing why the prefill happened even as the
+                        // person edits today's numbers, not disappear
+                        // or change as soon as they type.
+                        const suggestion = suggestNextSet(exerciseId, exercise.reps, exercise.repsMin, exercise.inc, setLogs);
+                        if (suggestion.reason === 'increase') {
+                          return <Text className="text-emerald-600 dark:text-emerald-400 text-[11px] mt-0.5">↑ Try {suggestion.weight} — you hit the top of your range last time</Text>;
+                        }
+                        if (suggestion.reason === 'repeat') {
+                          return <Text className="text-slate-400 text-[11px] mt-0.5">Beat {suggestion.reps} reps to earn a weight increase next time</Text>;
+                        }
+                        return null;
+                      })()}
                     </View>
                   </View>
+                  <Pressable
+                    onPress={() => handleMoveExercise(exerciseId, 'up')}
+                    disabled={exerciseIndex === 0}
+                    hitSlop={6}
+                    className="px-1"
+                    accessibilityLabel={`Move ${exercise.name} up`}
+                    accessibilityRole="button"
+                  >
+                    <Text className={exerciseIndex === 0 ? 'text-slate-200 dark:text-slate-700 text-xs' : 'text-slate-400 text-xs'}>▲</Text>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => handleMoveExercise(exerciseId, 'down')}
+                    disabled={exerciseIndex === sessionExerciseIds.length - 1}
+                    hitSlop={6}
+                    className="px-1"
+                    accessibilityLabel={`Move ${exercise.name} down`}
+                    accessibilityRole="button"
+                  >
+                    <Text className={exerciseIndex === sessionExerciseIds.length - 1 ? 'text-slate-200 dark:text-slate-700 text-xs' : 'text-slate-400 text-xs'}>▼</Text>
+                  </Pressable>
                   <Pressable onPress={() => { setSwappingId(exerciseId); setShowAddExercise(false); setExerciseSearch(''); }} className="px-2">
                     <Text className="text-slate-400 text-xs">🔄</Text>
                   </Pressable>

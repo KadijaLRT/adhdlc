@@ -1,5 +1,85 @@
 import type { SetLogEntry } from '@/store/slices/workoutSlice';
 import { toLocalDateString } from '@/shared/formatDate';
+import { parseTimeBasedSeconds } from '@/content/exercises';
+
+export interface SetSuggestion {
+  weight: string;
+  reps: string;
+  /** Whether this suggestion bumped the weight (hit the top of the rep range last time) or just carried the previous weight/reps forward as a target to beat. Shown in the UI so the person understands why a number is prefilled, not just that one is. */
+  reason: 'increase' | 'repeat' | 'none';
+}
+
+function parseRepsRange(reps: string, repsMin: number): { min: number; max: number } {
+  const match = reps.match(/(\d+)\s*-\s*(\d+)/);
+  if (match && match[1] && match[2]) return { min: parseInt(match[1], 10), max: parseInt(match[2], 10) };
+  return { min: repsMin, max: repsMin }; // a single fixed rep target (e.g. "12") — no range to progress within, min and max are the same number
+}
+
+/**
+ * Suggests a starting weight and reps for an exercise's first set,
+ * based on what actually happened last session — double progression,
+ * not "always add weight" (which real guidance consistently warns
+ * against: reps and weight are separate levers, and pushing weight up
+ * every single session without first demonstrating the current weight
+ * is easy is how form breaks down and plateaus/injuries happen).
+ *
+ * Time-based exercises (Plank, Wall Sit, etc.) are explicitly excluded
+ * — they don't take a weight input at all (see
+ * isBodyweightOnlyExercise elsewhere), so there's nothing here for
+ * this function to suggest; the caller should skip calling this for
+ * those entirely.
+ */
+export function suggestNextSet(
+  exerciseId: string,
+  repsTarget: string,
+  repsMin: number,
+  weightIncrement: number,
+  setLogs: SetLogEntry[]
+): SetSuggestion {
+  if (parseTimeBasedSeconds(repsTarget) !== null) {
+    return { weight: '', reps: '', reason: 'none' };
+  }
+
+  const logsForExercise = (setLogs || [])
+    .filter((l) => l.exerciseId === exerciseId)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+  if (!logsForExercise.length) return { weight: '', reps: '', reason: 'none' };
+
+  // Every set actually logged on the single most recent day this
+  // exercise was trained — not just the single best set, since double
+  // progression cares whether EVERY set hit the top of the range, not
+  // just the best one.
+  const mostRecentDate = logsForExercise[0]?.date;
+  if (!mostRecentDate) return { weight: '', reps: '', reason: 'none' };
+  const mostRecentDay = toLocalDateString(new Date(mostRecentDate));
+  const lastSessionSets = logsForExercise.filter((l) => toLocalDateString(new Date(l.date)) === mostRecentDay);
+  if (!lastSessionSets.length) return { weight: '', reps: '', reason: 'none' };
+
+  const { min, max } = parseRepsRange(repsTarget, repsMin);
+  const lastWeight = Math.max(...lastSessionSets.map((s) => s.weight));
+  // A weight-only exercise with no real range (e.g. a fixed "12 reps"
+  // target) still benefits from carrying the last weight forward —
+  // just without the reps-first double-progression logic, since
+  // there's no range to progress reps within.
+  if (min === max) {
+    return { weight: lastWeight > 0 ? String(lastWeight) : '', reps: String(min), reason: 'repeat' };
+  }
+
+  const allSetsHitTop = lastSessionSets.every((s) => s.reps >= max);
+  if (allSetsHitTop && lastWeight > 0) {
+    return { weight: String(lastWeight + weightIncrement), reps: String(min), reason: 'increase' };
+  }
+
+  // Didn't hit the top on every set last time — same weight, but the
+  // actual reps achieved (the best set) becomes the visible target to
+  // beat this time, per the double-progression "add reps first" rule.
+  const bestRepsLastTime = Math.max(...lastSessionSets.map((s) => s.reps));
+  return {
+    weight: lastWeight > 0 ? String(lastWeight) : '',
+    reps: String(Math.max(bestRepsLastTime, min)),
+    reason: 'repeat',
+  };
+}
 
 /**
  * Compares the most recent logged weight for an exercise against the

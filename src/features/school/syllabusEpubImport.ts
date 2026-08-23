@@ -161,7 +161,7 @@ export async function pickAndExtractEpubText(sectionLabel?: string | null): Prom
     // that's never even used (this always reads via asset.file
     // directly below). Same fix already proven for Apple Health
     // imports (see pickWebFile's own comment there).
-    const file = await pickWebFile('application/epub+zip,.epub');
+    const file = await pickWebFile('.epub');
     if (!file) return null;
     name = file.name || 'reading.epub';
     arrayBuffer = await file.arrayBuffer();

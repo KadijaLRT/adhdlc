@@ -97,7 +97,7 @@ export async function pickAndExtractPdfText(range?: { startPage: number; endPage
     // implementation reads the whole file into memory as base64
     // before returning, wasted work for a large PDF this only ever
     // reads via the raw File below.
-    const file = await pickWebFile('application/pdf,.pdf');
+    const file = await pickWebFile('.pdf');
     if (!file) return null;
     name = file.name || 'syllabus.pdf';
     bytes = new Uint8Array(await file.arrayBuffer());
