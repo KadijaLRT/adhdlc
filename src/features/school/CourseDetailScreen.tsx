@@ -155,9 +155,9 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
         return;
       }
       await summarizeAndAppend(picked.name, picked.text);
-    } catch (error) {
+    } catch (error: any) {
       console.error('CourseDetailScreen: failed to read reading PDF', error);
-      setReadingUploadError("Couldn't read that PDF. Try a .txt, .docx, or .epub file, or a photo instead.");
+      setReadingUploadError(error?.message === 'NOT_PDF' ? "That's not a .pdf file — pick a PDF, or try Word/ePub/.txt instead." : "Couldn't read that PDF. Try a .txt, .docx, or .epub file, or a photo instead.");
     }
   };
 
@@ -171,9 +171,9 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
         return;
       }
       await summarizeAndAppend(picked.name, picked.text);
-    } catch (error) {
+    } catch (error: any) {
       console.error('CourseDetailScreen: failed to read reading docx', error);
-      setReadingUploadError("Couldn't read that file. Make sure it's a .docx (not the older .doc format).");
+      setReadingUploadError(error?.message === 'NOT_DOCX' ? "That's not a .docx file — pick a Word document (not the older .doc format)." : "Couldn't read that file. Make sure it's a .docx (not the older .doc format).");
     }
   };
 
@@ -189,7 +189,8 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
       await summarizeAndAppend(picked.title || picked.name, picked.text);
     } catch (error: any) {
       console.error('CourseDetailScreen: failed to read reading epub', error);
-      setReadingUploadError(error?.message === 'NOT_A_VALID_EPUB' ? "That doesn't look like a valid .epub file." : "Couldn't read that file.");
+      if (error?.message === 'NOT_EPUB') setReadingUploadError("That's not a .epub file — pick an ePub book file.");
+      else setReadingUploadError(error?.message === 'NOT_A_VALID_EPUB' ? "That doesn't look like a valid .epub file." : "Couldn't read that file.");
     }
   };
 

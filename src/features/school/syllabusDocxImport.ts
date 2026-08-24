@@ -57,12 +57,15 @@ export async function pickAndExtractDocxText(sectionLabel?: string | null): Prom
     arrayBuffer = await file.arrayBuffer();
   } else {
     const picked = await DocumentPicker.getDocumentAsync({
-      type: ['application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.docx'],
+      type: '*/*',
       copyToCacheDirectory: true,
     });
     if (picked.canceled || !picked.assets?.[0]) return null;
     const asset = picked.assets[0];
     name = asset.name || 'reading.docx';
+    if (!name.toLowerCase().endsWith('.docx')) {
+      throw new Error('NOT_DOCX');
+    }
     const { File } = await import('expo-file-system');
     const nativeFile = new File(asset.uri);
     arrayBuffer = await nativeFile.arrayBuffer();

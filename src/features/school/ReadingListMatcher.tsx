@@ -96,6 +96,9 @@ export default function ReadingListMatcher({ onMatched }: ReadingListMatcherProp
       let message = "Couldn't read that file.";
       if (error?.message === 'LOOKS_SCANNED') message = "That PDF doesn't seem to have real text in it — it's probably scanned. Try a different format.";
       if (error?.message === 'NO_TEXT') message = "That file didn't have any readable text in it.";
+      if (error?.message === 'NOT_PDF') message = "That's not a .pdf file.";
+      if (error?.message === 'NOT_DOCX') message = "That's not a .docx file (the older .doc format isn't supported).";
+      if (error?.message === 'NOT_EPUB') message = "That's not a .epub file.";
       console.error('ReadingListMatcher: failed to extract matched source', error);
       updateMatch(index, { status: 'error', error: message });
     }

@@ -104,9 +104,9 @@ export default function SyllabusUploadCard({ fixedCourseId, onDone }: SyllabusUp
       }
       setFileName(picked.name);
       await runTextExtract(picked.text);
-    } catch (error) {
+    } catch (error: any) {
       console.error('SyllabusUploadCard: failed to extract PDF text', error);
-      setFileError("Couldn't read that PDF. If it's a scanned document, try \"Upload screenshot\" instead — otherwise, try a .txt file.");
+      setFileError(error?.message === 'NOT_PDF' ? "That's not a .pdf file — pick a PDF instead." : "Couldn't read that PDF. If it's a scanned document, try \"Upload screenshot\" instead — otherwise, try a .txt file.");
     }
   };
 

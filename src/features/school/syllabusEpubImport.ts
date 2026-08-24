@@ -167,12 +167,15 @@ export async function pickAndExtractEpubText(sectionLabel?: string | null): Prom
     arrayBuffer = await file.arrayBuffer();
   } else {
     const picked = await DocumentPicker.getDocumentAsync({
-      type: ['application/epub+zip', '.epub'],
+      type: '*/*',
       copyToCacheDirectory: true,
     });
     if (picked.canceled || !picked.assets?.[0]) return null;
     const asset = picked.assets[0];
     name = asset.name || 'reading.epub';
+    if (!name.toLowerCase().endsWith('.epub')) {
+      throw new Error('NOT_EPUB');
+    }
     const { File } = await import('expo-file-system');
     const nativeFile = new File(asset.uri);
     arrayBuffer = await nativeFile.arrayBuffer();

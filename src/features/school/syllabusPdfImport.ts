@@ -87,6 +87,20 @@ async function extractTextFromPdfBytes(bytes: Uint8Array, range?: { startPage: n
  * explanation. The caller should point someone in that situation at
  * the screenshot/photo upload path instead, which reads the page
  * visually rather than needing embedded text.
+ *
+ * On native (iOS/Android), the picker's own `type` filter is
+ * deliberately left as the wildcard (matches every file), not narrowed
+ * to "application/pdf" — expo-document-picker's native type matching is
+ * meant to work via UTIs, not raw MIME strings, and there's a real,
+ * open, unresolved Expo GitHub issue (expo/expo#29403) confirming a
+ * specific type like this can fail to match real files on iOS with no
+ * workaround short of a custom UTI plugin config this app doesn't
+ * have. Rather than fight that documented native bug (which is what
+ * caused files to appear greyed out/unselectable — see the
+ * conversation this was fixed from), every file is shown, and the
+ * actual extension is validated in app code afterward (NOT_PDF below)
+ * instead of relying on a native filter mechanism that doesn't reliably
+ * work.
  */
 export async function pickAndExtractPdfText(range?: { startPage: number; endPage: number }): Promise<PdfExtractResult | null> {
   let bytes: Uint8Array;
@@ -103,12 +117,15 @@ export async function pickAndExtractPdfText(range?: { startPage: number; endPage
     bytes = new Uint8Array(await file.arrayBuffer());
   } else {
     const picked = await DocumentPicker.getDocumentAsync({
-      type: ['application/pdf', '.pdf'],
+      type: '*/*',
       copyToCacheDirectory: true,
     });
     if (picked.canceled || !picked.assets?.[0]) return null;
     const asset = picked.assets[0];
     name = asset.name || 'syllabus.pdf';
+    if (!name.toLowerCase().endsWith('.pdf')) {
+      throw new Error('NOT_PDF');
+    }
     const { File } = await import('expo-file-system');
     const nativeFile = new File(asset.uri);
     bytes = new Uint8Array(await nativeFile.arrayBuffer());
