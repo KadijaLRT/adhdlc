@@ -53,9 +53,9 @@ function DayStrip({
 }
 
 function DayCard({
-  day, onStart, onLayout, programId, isResumable, resumingExerciseIds,
+  day, onStart, onLayout, programId, isResumable, resumingExerciseIds, isCheckingResume,
 }: {
-  day: WeeklySplitDay; onStart: () => void; onLayout: (y: number) => void; programId?: string; isResumable?: boolean; resumingExerciseIds?: string[];
+  day: WeeklySplitDay; onStart: () => void; onLayout: (y: number) => void; programId?: string; isResumable?: boolean; resumingExerciseIds?: string[]; isCheckingResume?: boolean;
 }) {
   const router = useRouter();
   const setLogs = useAppStore(selectSetLogs);
@@ -66,6 +66,17 @@ function DayCard({
   // unadjusted day definition even when resuming, so the preview
   // listed different exercises than the session the person actually
   // landed on.
+  //
+  // isCheckingResume covers the real async window before that
+  // resumability check even resolves — during that window,
+  // isResumable/resumingExerciseIds are both still their initial
+  // "assume nothing's in progress" values, not a genuine answer yet.
+  // Previously this card had no way to tell the difference and
+  // confidently rendered the base list during that window, which then
+  // visibly changed to the real (resumed) list a moment later once
+  // the check actually completed — reported as the preview briefly
+  // showing something different right after opening the screen, with
+  // no action taken in between.
   const displayedExerciseIds = isResumable && resumingExerciseIds?.length ? resumingExerciseIds : day.exerciseIds;
 
   if (day.isRestDay) {
@@ -92,19 +103,35 @@ function DayCard({
       </View>
       <Text className="text-slate-900 text-xl font-bold mb-1 dark:text-slate-100">{day.title}</Text>
       <Text className="text-slate-500 text-xs mb-1 capitalize">{day.muscleGroups.join(' & ')}</Text>
-      <Text className="text-slate-500 text-xs mb-4">~{day.estimatedMinutes} min (estimate) · {displayedExerciseIds.length} exercises</Text>
+      {isCheckingResume ? (
+        <Text className="text-slate-400 text-xs mb-4">Checking for a workout in progress…</Text>
+      ) : (
+        <Text className="text-slate-500 text-xs mb-4">~{day.estimatedMinutes} min (estimate) · {displayedExerciseIds.length} exercises</Text>
+      )}
 
       <View className="gap-2 mb-4">
-        {displayedExerciseIds.map((id) => {
-          const exercise = WORKOUT_EXERCISES?.[id];
-          const progressLabel = getWeightProgressLabel(id, setLogs);
-          return (
-            <View key={id} className="flex-row items-center justify-between py-1">
-              <Text className="text-slate-800 text-sm flex-1 dark:text-slate-200">{exercise?.icon} {exercise?.name || id}</Text>
-              {progressLabel && <Text className="text-emerald-700 text-xs font-semibold dark:text-emerald-400">{progressLabel}</Text>}
-            </View>
-          );
-        })}
+        {isCheckingResume ? (
+          // Three plain placeholder rows, not real exercise names —
+          // committing to either the base list or a resumed one here
+          // would be a guess, since the check that actually knows
+          // which is correct hasn't resolved yet. This is what used to
+          // silently guess "not resumable" and show the wrong list for
+          // a moment instead.
+          [0, 1, 2].map((i) => (
+            <View key={i} className="h-5 rounded bg-stone-100 dark:bg-slate-800" style={{ opacity: 1 - i * 0.2 }} />
+          ))
+        ) : (
+          displayedExerciseIds.map((id) => {
+            const exercise = WORKOUT_EXERCISES?.[id];
+            const progressLabel = getWeightProgressLabel(id, setLogs);
+            return (
+              <View key={id} className="flex-row items-center justify-between py-1">
+                <Text className="text-slate-800 text-sm flex-1 dark:text-slate-200">{exercise?.icon} {exercise?.name || id}</Text>
+                {progressLabel && <Text className="text-emerald-700 text-xs font-semibold dark:text-emerald-400">{progressLabel}</Text>}
+              </View>
+            );
+          })
+        )}
       </View>
 
       <View className="flex-row gap-2 mb-3">
@@ -155,6 +182,15 @@ export default function WorkoutsHome() {
   const [activeIndex, setActiveIndex] = useState(0);
   const [hasCheckedAutoAssign, setHasCheckedAutoAssign] = useState(false);
   const [inProgressDraft, setInProgressDraft] = useState<WorkoutSessionDraft | null>(null);
+  // Distinct from inProgressDraft being null — that's ambiguous between
+  // "haven't checked storage yet" and "checked, there's genuinely
+  // nothing." DayCard uses this to avoid confidently rendering the
+  // base (potentially wrong) exercise list during the real async
+  // window before the check resolves — previously it did exactly that,
+  // which is what someone would see as the preview briefly showing the
+  // wrong list right after navigating here, then correcting itself a
+  // moment later with no action taken.
+  const [isDraftCheckComplete, setIsDraftCheckComplete] = useState(false);
 
   // Re-checked on every focus, not just mount — tab screens in expo-router
   // stay mounted when you switch tabs, so a mount-only check would miss a
@@ -164,6 +200,7 @@ export default function WorkoutsHome() {
   useFocusEffect(
     useCallback(() => {
       let cancelled = false;
+      setIsDraftCheckComplete(false);
       (async () => {
         try {
           const repo = await getRepository();
@@ -190,6 +227,8 @@ export default function WorkoutsHome() {
           }
         } catch (error) {
           console.error('WorkoutsHome: failed to check for an in-progress workout draft', error);
+        } finally {
+          if (!cancelled) setIsDraftCheckComplete(true);
         }
       })();
       return () => { cancelled = true; };
@@ -369,6 +408,7 @@ export default function WorkoutsHome() {
                   programId={activeProgram?.id}
                   isResumable={!!matchingDraft}
                   resumingExerciseIds={matchingDraft?.sessionExerciseIds}
+                  isCheckingResume={!isDraftCheckComplete}
                 />
               );
             })}

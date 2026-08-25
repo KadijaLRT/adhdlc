@@ -19,6 +19,7 @@ import { getDailyInsight } from './DailyInsight';
 import { buildTodaysPlan, type PlanItem } from './buildTodaysPlan';
 import ReflectionCard from './ReflectionCard';
 import BiggestHurdleCard from './BiggestHurdleCard';
+import DueAssignmentsCard from './DueAssignmentsCard';
 
 function StreakBadge() {
   const streaks = useAppStore(selectStreaks);
@@ -69,6 +70,8 @@ export default function HomeScreen() {
           <Text className="text-slate-500 text-sm">{todayLabel}</Text>
           <StreakBadge />
         </View>
+
+        <DueAssignmentsCard />
 
         {isEvening ? (
           <ReflectionCard />
