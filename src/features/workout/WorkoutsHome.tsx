@@ -415,6 +415,10 @@ export default function WorkoutsHome() {
           </View>
         )}
 
+        <Pressable onPress={() => router?.push?.('/fitness/six-twelve-twentyfive')} className="bg-white dark:bg-slate-900 rounded-2xl py-3 items-center mb-2">
+          <Text className="text-slate-800 dark:text-slate-200 text-sm font-medium">🔥 Try the 6-12-25 Method</Text>
+        </Pressable>
+
         <Pressable onPress={() => router?.push?.('/fitness/exercises')} className="py-3 items-center">
           <Text className="text-indigo-600 text-sm font-medium">Browse all exercises by muscle group →</Text>
         </Pressable>
