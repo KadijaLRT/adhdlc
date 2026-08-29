@@ -26,10 +26,20 @@ export default function ExecutiveFunctionRings() {
   const energyLevel = useAppStore(selectEnergyLevel);
   const stressLogs = useAppStore(selectStressLogs);
 
-  const completedToday = (tasks || []).filter((t) => t?.isComplete).length;
+  const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
+  // Bug fix: this previously counted every task ever completed,
+  // all-time, capped at 100% — so Focus permanently pinned at 100%
+  // forever once 5 tasks had been completed in the app's history, and
+  // never reflected "today" at all. rewardedAt is already set to the
+  // real completion timestamp the first time a task is finished (see
+  // taskSlice.ts), so it's used here to scope the count to today only.
+  const completedToday = (tasks || []).filter((t) => t?.isComplete && t?.rewardedAt?.slice(0, 10) === today).length;
   const focusScore = Math.min(completedToday * 20, 100);
   const energyScore = energyToScore(energyLevel);
-  const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
+  // Bug fix: this previously had no real input at all — nothing in the
+  // app ever called logStressForToday, so every user saw a hardcoded
+  // 70% here permanently. StressCheckinCard (added to Home below the
+  // energy check-in) now actually feeds this.
   const todaysStress = (stressLogs || []).find((l) => l.date === today);
   const stressScore = todaysStress ? 100 - energyToScore(todaysStress.stressLevel) : 70;
 

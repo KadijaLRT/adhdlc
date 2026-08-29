@@ -11,6 +11,7 @@ import { buildWeeklySplit, getEnergyAdjustedExerciseIds, getVariedExerciseSelect
 import { getWeightProgressLabel } from './weightProgress';
 import { pickStartSomewhereExercise } from './pickStartSomewhere';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
+import { SIX_TWELVE_TWENTYFIVE_GROUPS, type SixTwelveTwentyFiveGroup } from '@/content/sixTwelveTwentyFive';
 import PersonalizeFitnessCard from './PersonalizeFitnessCard';
 import RecoveryPlanCard from './RecoveryPlanCard';
 import { Heading, Subheading } from '@/shared/components/Heading';
@@ -52,12 +53,24 @@ function DayStrip({
   );
 }
 
+// day.muscleGroups already uses the same lowercase group ids as
+// exercise.group ('glutes', 'fullbody', etc — see buildWeeklySplit.ts),
+// which are exactly the ids SIX_TWELVE_TWENTYFIVE_GROUPS uses, so this
+// is a direct lookup rather than any kind of label-matching guess.
+function firstSixTwelveTwentyFiveGroup(muscleGroups: string[]): SixTwelveTwentyFiveGroup | null {
+  const validIds = new Set(SIX_TWELVE_TWENTYFIVE_GROUPS.map((g) => g.id));
+  const match = (muscleGroups || []).find((g) => validIds.has(g as SixTwelveTwentyFiveGroup));
+  return (match as SixTwelveTwentyFiveGroup) || null;
+}
+
 function DayCard({
   day, onStart, onLayout, programId, isResumable, resumingExerciseIds, isCheckingResume,
 }: {
   day: WeeklySplitDay; onStart: () => void; onLayout: (y: number) => void; programId?: string; isResumable?: boolean; resumingExerciseIds?: string[]; isCheckingResume?: boolean;
 }) {
   const router = useRouter();
+  const sixTwelveTwentyFiveGroup = firstSixTwelveTwentyFiveGroup(day.muscleGroups);
+  const sixTwelveTwentyFiveLabel = SIX_TWELVE_TWENTYFIVE_GROUPS.find((g) => g.id === sixTwelveTwentyFiveGroup)?.label;
   const setLogs = useAppStore(selectSetLogs);
   // A resumed draft's own saved exercise list (post variety/energy
   // adjustment, and reflecting any mid-session swaps) is what
@@ -154,6 +167,15 @@ function DayCard({
       <Pressable onPress={onStart} className="bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500">
         <Text className="text-white font-semibold">{isResumable ? `▶ Resume Day ${day.dayLetter}` : `▶ Start Day ${day.dayLetter}`}</Text>
       </Pressable>
+
+      {sixTwelveTwentyFiveGroup && !isResumable && (
+        <Pressable
+          onPress={() => router?.push?.({ pathname: '/fitness/six-twelve-twentyfive', params: { group: sixTwelveTwentyFiveGroup } })}
+          className="items-center pt-3"
+        >
+          <Text className="text-slate-500 text-xs">🔥 Or try the 6-12-25 method for {sixTwelveTwentyFiveLabel} today →</Text>
+        </Pressable>
+      )}
     </View>
   );
 }

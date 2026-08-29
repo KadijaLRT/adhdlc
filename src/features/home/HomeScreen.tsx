@@ -14,6 +14,7 @@ import {
 } from '@/store/index';
 import ExecutiveFunctionRings from './ExecutiveFunctionRings';
 import DayRhythmCard from '@/features/energy/DayRhythmCard';
+import StressCheckinCard from '@/features/energy/StressCheckinCard';
 import WeeklyChallengeCard from '@/features/gamification/WeeklyChallengeCard';
 import { getDailyInsight } from './DailyInsight';
 import { buildTodaysPlan, type PlanItem } from './buildTodaysPlan';
@@ -116,6 +117,7 @@ export default function HomeScreen() {
         <BiggestHurdleCard />
         <ExecutiveFunctionRings />
         <DayRhythmCard />
+        <StressCheckinCard />
         <WeeklyChallengeCard />
 
         <Pressable onPress={() => router?.push?.('/tasks')} className="py-2">

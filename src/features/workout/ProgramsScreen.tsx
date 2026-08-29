@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, FlatList, ActivityIndicator } from 'react-native';
+import { useRouter } from 'expo-router';
 // Note: the "Switch program"/"Choose a program" list below is rendered
 // with a plain .map() rather than a nested FlatList. A FlatList nested
 // inside this screen's outer ScrollView — even with scrollEnabled={false}
@@ -149,6 +150,7 @@ function GymSelectorCard() {
 // active — this screen is only reached via the "Programs" button
 // from there.
 export default function ProgramsScreen() {
+  const router = useRouter();
   const activeProgramId = useAppStore(selectActiveProgramId);
   const sessionsCompletedInProgram = useAppStore((s) => s.sessionsCompletedInProgram);
   const fitnessPreferences = useAppStore(selectFitnessPreferences);
@@ -243,6 +245,26 @@ export default function ProgramsScreen() {
             <Text className="text-indigo-700 dark:text-indigo-300 text-sm font-semibold">✨ Generate a new program</Text>
           </Pressable>
         )}
+
+        {/*
+          6-12-25 isn't a multi-week program like the ones below (it has
+          no daysPerWeek/durationWeeks progression) — it's a technique
+          you can apply to any single muscle group on any given day. So
+          rather than force it into the ProgramDefinition shape just to
+          appear in the "Choose a program" list (which would misleadingly
+          suggest it's a weeks-long plan you "start"), it gets its own
+          clearly-separate card here.
+        */}
+        <Pressable
+          onPress={() => router?.push?.('/fitness/six-twelve-twentyfive')}
+          className="bg-white border-2 border-orange-400 rounded-2xl p-4 mb-4 dark:bg-slate-900"
+        >
+          <View className="flex-row items-center justify-between mb-1">
+            <Text className="text-slate-900 font-semibold dark:text-slate-100">🔥 6-12-25 Method</Text>
+            <Text className="text-orange-500 text-[10px] font-bold uppercase tracking-wide">Technique</Text>
+          </View>
+          <Text className="text-slate-500 text-xs">Not a weekly program — a single-session technique you can use for any muscle group, anytime.</Text>
+        </Pressable>
 
         <Text className="text-slate-900 text-lg font-semibold mb-3 dark:text-slate-100">{activeProgram ? 'Switch program' : 'Choose a program'}</Text>
         <View style={{ gap: 10 }}>

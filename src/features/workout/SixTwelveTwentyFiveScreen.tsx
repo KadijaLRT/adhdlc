@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAppStore, selectFitnessPreferences, selectGyms, selectActiveGymId } from '@/store/index';
 import {
   SIX_TWELVE_TWENTYFIVE_GROUPS, pickSixTwelveTwentyFiveTemplate, type SixTwelveTwentyFiveGroup,
@@ -25,6 +25,11 @@ function InfoRow({ emoji, children }: { emoji: string; children: React.ReactNode
  */
 export default function SixTwelveTwentyFiveScreen() {
   const router = useRouter();
+  // Arrives when someone taps "Or try the 6-12-25 method for X today"
+  // from a specific day card on the Workouts tab — that day's own
+  // primary muscle group, pre-selected so it's a one-tap continue
+  // rather than making them pick it again from the grid below.
+  const { group: incomingGroup } = useLocalSearchParams<{ group?: string }>();
   const fitnessPreferences = useAppStore(selectFitnessPreferences);
   const gyms = useAppStore(selectGyms);
   const activeGymId = useAppStore(selectActiveGymId);
@@ -77,6 +82,24 @@ export default function SixTwelveTwentyFiveScreen() {
             </View>
           )}
         </View>
+
+        {incomingGroup && SIX_TWELVE_TWENTYFIVE_GROUPS.some((g) => g.id === incomingGroup) && (() => {
+          const groupMeta = SIX_TWELVE_TWENTYFIVE_GROUPS.find((g) => g.id === incomingGroup)!;
+          const template = pickSixTwelveTwentyFiveTemplate(incomingGroup as SixTwelveTwentyFiveGroup, equipment);
+          if (!template.length) return null;
+          return (
+            <Pressable
+              onPress={() => handlePickGroup(incomingGroup as SixTwelveTwentyFiveGroup)}
+              className="bg-indigo-600 rounded-2xl p-4 mb-4 active:bg-indigo-500"
+            >
+              <Text className="text-indigo-100 text-xs mb-1">Today's day targets this muscle group</Text>
+              <Text className="text-white font-semibold text-base mb-1">Continue with {groupMeta.icon} {groupMeta.label} →</Text>
+              <Text className="text-indigo-100 text-xs">
+                {template.map((s) => WORKOUT_EXERCISES?.[s.exerciseId]?.name).filter(Boolean).join(' · ')}
+              </Text>
+            </Pressable>
+          );
+        })()}
 
         <Subheading className="mb-2">Choose a muscle group</Subheading>
         <View className="flex-row flex-wrap gap-2 mb-4">
