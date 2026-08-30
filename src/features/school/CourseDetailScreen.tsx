@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAppStore, selectCourses, selectAssignments, selectDateFormat } from '@/store/index';
@@ -38,7 +38,6 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
 
   const [newTitle, setNewTitle] = useState('');
   const [newDueDate, setNewDueDate] = useState('');
-  const [gradeInput, setGradeInput] = useState('');
   const [goalInput, setGoalInput] = useState('');
   const [creditsInput, setCreditsInput] = useState('');
   const [notesText, setNotesText] = useState('');
@@ -56,19 +55,28 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
   const [gradeSaved, setGradeSaved] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryWeight, setNewCategoryWeight] = useState('');
+  const [newCategoryPoints, setNewCategoryPoints] = useState('');
   const [addingCategory, setAddingCategory] = useState(false);
 
   const course = (courses || []).find((c) => c.id === courseId);
   const courseAssignments = (assignments || []).filter((a) => a.courseId === courseId);
 
-  const handleSaveGrade = () => {
-    // Number('') is 0, not NaN — gradeInput's own truthiness check
-    // below already handles "field left blank," so this only needs to
-    // guard against what someone actually typed being nonsensical.
-    // Clamped to 0-100 for grade/goal (a percentage can't sensibly be
-    // outside that range) and to >= 0 for credits (a negative credit
-    // count would corrupt weighted GPA and degree-progress math the
-    // same way NaN would).
+  const gradeBreakdown = computeCourseGrade(course?.gradeCategories, courseAssignments);
+  const categoryWeightSum = totalCategoryWeight(course?.gradeCategories);
+
+  // Grade is entirely calculated from category points now — there's no
+  // manual Current % field to keep in sync, so this just persists the
+  // calculated value into course.currentGrade whenever the underlying
+  // assignments change, which is what gpaCalculations.ts already reads
+  // for weighted GPA. Goal % and credit hours are still genuinely
+  // manual (nothing computes those), so they keep their own Save flow.
+  useEffect(() => {
+    if (gradeBreakdown && course && course.currentGrade !== gradeBreakdown.overallPercent) {
+      updateCourse(courseId, { currentGrade: gradeBreakdown.overallPercent });
+    }
+  }, [gradeBreakdown?.overallPercent, courseId]);
+
+  const handleSaveGoalAndCredits = () => {
     const parseGradeValue = (raw: string, current: number | undefined): number | undefined => {
       if (!raw) return current;
       const parsed = Number(raw);
@@ -82,7 +90,6 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
       return parsed;
     };
     updateCourse(courseId, {
-      currentGrade: parseGradeValue(gradeInput, course?.currentGrade),
       gradeGoal: parseGradeValue(goalInput, course?.gradeGoal),
       credits: parseCreditsValue(creditsInput, course?.credits),
     });
@@ -90,33 +97,28 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
     setTimeout(() => setGradeSaved(false), 2000);
   };
 
-  const gradeBreakdown = computeCourseGrade(course?.gradeCategories, courseAssignments);
-  const categoryWeightSum = totalCategoryWeight(course?.gradeCategories);
-
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) return;
     const weight = Number(newCategoryWeight);
     const safeWeight = Number.isFinite(weight) ? Math.min(100, Math.max(0, weight)) : 0;
-    const next = [...(course?.gradeCategories || []), { id: generateId('gradecat'), name: newCategoryName.trim(), weightPercent: safeWeight }];
+    const points = Number(newCategoryPoints);
+    const safePoints = Number.isFinite(points) ? Math.max(0, points) : 0;
+    const next = [...(course?.gradeCategories || []), { id: generateId('gradecat'), name: newCategoryName.trim(), weightPercent: safeWeight, totalPointsPossible: safePoints }];
     updateCourse(courseId, { gradeCategories: next });
     setNewCategoryName('');
     setNewCategoryWeight('');
+    setNewCategoryPoints('');
     setAddingCategory(false);
   };
 
   const handleRemoveCategory = (id: string) => {
     // Assignments that referenced this category keep their categoryId
     // pointing at a now-missing category rather than being silently
-    // recategorized — computeCourseGrade already only counts scores
+    // recategorized — computeCourseGrade already only counts points
     // whose categoryId matches a category that still exists, so this
     // can't corrupt the grade; the person can just recategorize those
-    // assignments if they want the scores to count again.
+    // assignments if they want the points to count again.
     updateCourse(courseId, { gradeCategories: (course?.gradeCategories || []).filter((c) => c.id !== id) });
-  };
-
-  const handleUseCalculatedGrade = () => {
-    if (!gradeBreakdown) return;
-    setGradeInput(String(gradeBreakdown.overallPercent));
   };
 
   const handleStartEditCourse = () => {
@@ -413,7 +415,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               {course.gradeCategories!.map((cat) => (
                 <View key={cat.id} className="flex-row items-center justify-between bg-stone-100 dark:bg-slate-800 rounded-lg px-3 py-2">
                   <Text className="text-slate-700 dark:text-slate-300 text-xs flex-1">{cat.name}</Text>
-                  <Text className="text-slate-500 text-xs mr-3">{cat.weightPercent}%</Text>
+                  <Text className="text-slate-500 text-xs mr-3">{cat.totalPointsPossible} pts · {cat.weightPercent}%</Text>
                   <Pressable onPress={() => handleRemoveCategory(cat.id)}>
                     <Text className="text-red-500 text-xs">Remove</Text>
                   </Pressable>
@@ -428,7 +430,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
           )}
 
           {addingCategory ? (
-            <View className="flex-row gap-2 mb-2">
+            <View className="gap-2 mb-2">
               <TextInput
                 value={newCategoryName}
                 onChangeText={setNewCategoryName}
@@ -436,19 +438,28 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
                 placeholderTextColor="#64748b"
                 autoFocus
                 className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
-                style={{ flex: 2 }}
               />
-              <TextInput
-                value={newCategoryWeight}
-                onChangeText={setNewCategoryWeight}
-                placeholder="Weight %"
-                placeholderTextColor="#64748b"
-                keyboardType="numeric"
-                className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
-              />
-              <Pressable onPress={handleAddCategory} className="bg-indigo-600 rounded-xl px-3 justify-center">
-                <Text className="text-white text-sm font-semibold">Add</Text>
-              </Pressable>
+              <View className="flex-row gap-2">
+                <TextInput
+                  value={newCategoryPoints}
+                  onChangeText={setNewCategoryPoints}
+                  placeholder="Total points, e.g. 60"
+                  placeholderTextColor="#64748b"
+                  keyboardType="numeric"
+                  className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+                />
+                <TextInput
+                  value={newCategoryWeight}
+                  onChangeText={setNewCategoryWeight}
+                  placeholder="Weight %"
+                  placeholderTextColor="#64748b"
+                  keyboardType="numeric"
+                  className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+                />
+                <Pressable onPress={handleAddCategory} className="bg-indigo-600 rounded-xl px-3 justify-center">
+                  <Text className="text-white text-sm font-semibold">Add</Text>
+                </Pressable>
+              </View>
             </View>
           ) : (
             <Pressable onPress={() => setAddingCategory(true)} className="mb-2">
@@ -456,31 +467,32 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
             </Pressable>
           )}
 
-          {gradeBreakdown && (
+          {/*
+            No manual Current % field anymore — this is the entire
+            grade readout, calculated straight from category points.
+            The useEffect above keeps course.currentGrade (what
+            gpaCalculations.ts reads) in sync with this automatically.
+          */}
+          {gradeBreakdown ? (
             <View className="bg-indigo-600/10 rounded-xl p-3 mb-2">
-              <Text className="text-indigo-700 dark:text-indigo-300 text-xs font-semibold mb-1">
-                Calculated from assignments: {gradeBreakdown.overallPercent}%
+              <Text className="text-indigo-700 dark:text-indigo-300 text-base font-bold mb-1">
+                {gradeBreakdown.overallPercent}%{course.gradeGoal !== undefined ? ` · goal ${course.gradeGoal}%` : ''}
               </Text>
               {gradeBreakdown.byCategory.filter((c) => c.gradedCount > 0).map((c) => (
                 <Text key={c.categoryId} className="text-indigo-600 dark:text-indigo-400 text-[11px]">
-                  {c.name}: {c.averagePercent}% ({c.gradedCount} graded)
+                  {c.name}: {c.pointsEarned}/{c.totalPointsPossible} pts ({c.percent}%, {c.gradedCount} graded)
                 </Text>
               ))}
-              <Pressable onPress={handleUseCalculatedGrade} className="mt-1.5">
-                <Text className="text-indigo-700 dark:text-indigo-300 text-xs font-bold">Use this as Current % →</Text>
-              </Pressable>
             </View>
+          ) : (
+            <Text className="text-slate-400 text-xs mb-2">
+              {course.gradeCategories?.length
+                ? 'No assignments graded yet — enter points on an assignment to see your grade here.'
+                : 'Add a grading category above, then enter points on individual assignments to see your grade here.'}
+            </Text>
           )}
 
-          <View className="flex-row gap-2 mb-2">
-            <TextInput
-              value={gradeInput}
-              onChangeText={setGradeInput}
-              placeholder="Current %"
-              placeholderTextColor="#64748b"
-              keyboardType="numeric"
-              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
-            />
+          <View className="flex-row gap-2">
             <TextInput
               value={goalInput}
               onChangeText={setGoalInput}
@@ -489,8 +501,6 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               keyboardType="numeric"
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
-          </View>
-          <View className="flex-row gap-2">
             <TextInput
               value={creditsInput}
               onChangeText={setCreditsInput}
@@ -499,7 +509,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               keyboardType="numeric"
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
-            <Pressable onPress={handleSaveGrade} className="bg-indigo-600 rounded-xl px-4 justify-center">
+            <Pressable onPress={handleSaveGoalAndCredits} className="bg-indigo-600 rounded-xl px-4 justify-center">
               <Text className="text-white text-sm font-semibold">{gradeSaved ? 'Saved ✓' : 'Save'}</Text>
             </Pressable>
           </View>

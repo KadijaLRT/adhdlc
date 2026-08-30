@@ -2,20 +2,24 @@ import type { Assignment, GradeCategory } from '@/store/slices/schoolSlice';
 
 export interface CourseGradeBreakdown {
   overallPercent: number;
-  byCategory: { categoryId: string; name: string; averagePercent: number; gradedCount: number }[];
+  byCategory: { categoryId: string; name: string; pointsEarned: number; totalPointsPossible: number; percent: number; gradedCount: number }[];
 }
 
 /**
- * Weighted-by-category cumulative grade: within a category, assignment
- * scores are simple-averaged; across categories, those averages are
- * combined using each category's weight — but renormalized to only the
- * categories that actually have at least one graded assignment so far.
- * Without renormalizing, an Exams category worth 50% with no exam
- * graded yet would silently cap the visible grade near 50%, which
- * misrepresents "not graded yet" as "failing that portion." Returns
- * null when nothing is gradeable yet (no categories, or no assignment
- * in any category has a score), so the caller can distinguish "no data"
- * from "a real 0%."
+ * Weighted-by-category cumulative grade, computed in raw points per
+ * category (matching how a real syllabus states it — e.g. "Quizzes: 60
+ * points total") rather than averaging 0-100 percentages. Within a
+ * category, pointsEarned is summed across graded assignments and
+ * divided by the category's own declared totalPointsPossible — not the
+ * sum of each assignment's individual max, since the syllabus total is
+ * the authority and may include items not yet entered. Across
+ * categories, those percentages combine using each category's weight,
+ * renormalized to only the categories that actually have at least one
+ * graded assignment so far — without renormalizing, an Exams category
+ * worth 50% with nothing graded yet would silently cap the visible
+ * grade near 50%, misrepresenting "not graded yet" as "failing that
+ * portion." Returns null when nothing is gradeable yet, so the caller
+ * can distinguish "no data" from "a real 0%."
  */
 export function computeCourseGrade(
   categories: GradeCategory[] | undefined,
@@ -24,11 +28,10 @@ export function computeCourseGrade(
   if (!categories?.length) return null;
 
   const byCategory = categories.map((cat) => {
-    const graded = assignments.filter((a) => a.categoryId === cat.id && typeof a.score === 'number');
-    const averagePercent = graded.length
-      ? graded.reduce((sum, a) => sum + (a.score as number), 0) / graded.length
-      : 0;
-    return { categoryId: cat.id, name: cat.name, averagePercent, gradedCount: graded.length, weightPercent: cat.weightPercent };
+    const graded = assignments.filter((a) => a.categoryId === cat.id && typeof a.pointsEarned === 'number');
+    const pointsEarned = graded.reduce((sum, a) => sum + (a.pointsEarned as number), 0);
+    const percent = cat.totalPointsPossible > 0 ? (pointsEarned / cat.totalPointsPossible) * 100 : 0;
+    return { categoryId: cat.id, name: cat.name, pointsEarned, totalPointsPossible: cat.totalPointsPossible, percent, gradedCount: graded.length, weightPercent: cat.weightPercent };
   });
 
   const gradedCategories = byCategory.filter((c) => c.gradedCount > 0);
@@ -38,13 +41,13 @@ export function computeCourseGrade(
   // If every graded category was somehow weighted 0, fall back to an
   // equal split across them rather than dividing by zero.
   const overallPercent = totalWeight > 0
-    ? gradedCategories.reduce((sum, c) => sum + c.averagePercent * (c.weightPercent || 0), 0) / totalWeight
-    : gradedCategories.reduce((sum, c) => sum + c.averagePercent, 0) / gradedCategories.length;
+    ? gradedCategories.reduce((sum, c) => sum + c.percent * (c.weightPercent || 0), 0) / totalWeight
+    : gradedCategories.reduce((sum, c) => sum + c.percent, 0) / gradedCategories.length;
 
   return {
     overallPercent: Math.round(overallPercent * 10) / 10,
-    byCategory: byCategory.map(({ categoryId, name, averagePercent, gradedCount }) => ({
-      categoryId, name, averagePercent: Math.round(averagePercent * 10) / 10, gradedCount,
+    byCategory: byCategory.map(({ categoryId, name, pointsEarned, totalPointsPossible, percent, gradedCount }) => ({
+      categoryId, name, pointsEarned, totalPointsPossible, percent: Math.round(percent * 10) / 10, gradedCount,
     })),
   };
 }

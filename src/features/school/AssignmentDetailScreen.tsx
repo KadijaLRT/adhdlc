@@ -21,7 +21,8 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
   const [breakingDown, setBreakingDown] = useState(false);
   const [breakDownError, setBreakDownError] = useState<string | null>(null);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
-  const [scoreInput, setScoreInput] = useState('');
+  const [pointsEarnedInput, setPointsEarnedInput] = useState('');
+  const [pointsPossibleInput, setPointsPossibleInput] = useState('');
   const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
   const [scoreSaved, setScoreSaved] = useState(false);
 
@@ -37,10 +38,19 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
   }
 
   const handleSaveGrade = () => {
-    const parsed = Number(scoreInput);
-    const nextScore = scoreInput && Number.isFinite(parsed) ? Math.min(100, Math.max(0, parsed)) : assignment.score;
+    // Points are raw, not clamped to 0-100 — a category can be worth
+    // any total (Final Summative is 200 pts on this person's own
+    // syllabus), so only guard against non-numeric/negative input, not
+    // an arbitrary percentage ceiling.
+    const parseNonNegative = (raw: string, current: number | undefined): number | undefined => {
+      if (!raw) return current;
+      const parsed = Number(raw);
+      if (!Number.isFinite(parsed) || parsed < 0) return current;
+      return parsed;
+    };
     updateAssignment(assignment.id, {
-      score: nextScore,
+      pointsEarned: parseNonNegative(pointsEarnedInput, assignment.pointsEarned),
+      pointsPossible: parseNonNegative(pointsPossibleInput, assignment.pointsPossible),
       categoryId: selectedCategoryId ?? assignment.categoryId,
     });
     setScoreSaved(true);
@@ -101,15 +111,17 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
           Mirrors the same Current %/Goal %-style grade card used at
           course level (CourseDetailScreen.tsx), scoped to just this
           one assignment: a category (from the course's grading
-          categories) plus this assignment's own score. Feeds
-          computeCourseGrade (courseGrading.ts) which the course screen
-          uses to show the cumulative grade.
+          categories) plus points earned/possible for this one item —
+          e.g. 18/20 on a quiz, matching how the syllabus itself states
+          points rather than a 0-100 score. Feeds computeCourseGrade
+          (courseGrading.ts) which the course screen uses to show the
+          cumulative grade.
         */}
         <View className="bg-white rounded-2xl p-4 mb-6 dark:bg-slate-900">
           <Text className="text-slate-700 text-sm font-medium mb-2 dark:text-slate-300">Grade</Text>
-          {assignment.score !== undefined && (
+          {assignment.pointsEarned !== undefined && (
             <Text className="text-slate-500 text-xs mb-2">
-              Currently {assignment.score}%
+              Currently {assignment.pointsEarned}{assignment.pointsPossible !== undefined ? `/${assignment.pointsPossible}` : ''} pts
               {assignment.categoryId && course?.gradeCategories?.find((c) => c.id === assignment.categoryId)
                 ? ` · ${course.gradeCategories.find((c) => c.id === assignment.categoryId)?.name}`
                 : ''}
@@ -140,9 +152,17 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
 
           <View className="flex-row gap-2">
             <TextInput
-              value={scoreInput}
-              onChangeText={setScoreInput}
-              placeholder="Score %"
+              value={pointsEarnedInput}
+              onChangeText={setPointsEarnedInput}
+              placeholder="Points earned"
+              placeholderTextColor="#64748b"
+              keyboardType="numeric"
+              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+            />
+            <TextInput
+              value={pointsPossibleInput}
+              onChangeText={setPointsPossibleInput}
+              placeholder="Points possible"
               placeholderTextColor="#64748b"
               keyboardType="numeric"
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"

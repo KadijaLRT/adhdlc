@@ -8,6 +8,7 @@ export interface GradeCategory {
   id: string;
   name: string; // e.g. "Homework", "Quizzes", "Exams"
   weightPercent: number; // 0-100, categories on a course are meant to sum to ~100 but this isn't enforced
+  totalPointsPossible: number; // e.g. 60 for "Quizzes (20 pts each) x3" — the syllabus's declared total for this category, not just whatever's been entered so far
 }
 
 export interface Course {
@@ -45,7 +46,8 @@ export interface Assignment {
   isComplete: boolean;
   subSteps: AssignmentSubStep[];
   categoryId?: string; // references a Course.gradeCategories entry
-  score?: number; // 0-100, this assignment's own grade once graded
+  pointsEarned?: number; // raw points scored on this one assignment, e.g. 18
+  pointsPossible?: number; // raw points this one assignment was worth, e.g. 20
 }
 
 export interface SchoolState {
