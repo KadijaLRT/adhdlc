@@ -7,8 +7,7 @@ export type CourseStatus = 'in_progress' | 'completed' | 'failed' | 'retaking';
 export interface GradeCategory {
   id: string;
   name: string; // e.g. "Homework", "Quizzes", "Exams"
-  weightPercent: number; // 0-100, categories on a course are meant to sum to ~100 but this isn't enforced
-  totalPointsPossible: number; // e.g. 60 for "Quizzes (20 pts each) x3" — the syllabus's declared total for this category, not just whatever's been entered so far
+  totalPointsPossible: number; // e.g. 60 for "Quizzes (20 pts each) x3" — the syllabus's declared total for this category
 }
 
 export interface Course {

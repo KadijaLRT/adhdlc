@@ -3,7 +3,7 @@ import { View, Text, Pressable, TextInput, ScrollView, ActivityIndicator, Platfo
 import { useRouter } from 'expo-router';
 import { useAppStore, selectCourses, selectAssignments, selectDateFormat } from '@/store/index';
 import { getCourseStatus } from '@/store/slices/schoolSlice';
-import { computeCourseGrade, totalCategoryWeight } from './courseGrading';
+import { computeCourseGrade } from './courseGrading';
 import { formatDate } from '@/shared/formatDate';
 import { avivaBrain, type FlashcardSet, type ReadingNotes } from '@/core/ai/AvivaBrain';
 import { describeAiFailure } from '@/core/ai/describeAiFailure';
@@ -55,7 +55,6 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
   const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(null);
   const [gradeSaved, setGradeSaved] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
-  const [newCategoryWeight, setNewCategoryWeight] = useState('');
   const [newCategoryPoints, setNewCategoryPoints] = useState('');
   const [addingCategory, setAddingCategory] = useState(false);
 
@@ -63,7 +62,6 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
   const courseAssignments = (assignments || []).filter((a) => a.courseId === courseId);
 
   const gradeBreakdown = computeCourseGrade(course?.gradeCategories, courseAssignments);
-  const categoryWeightSum = totalCategoryWeight(course?.gradeCategories);
 
   // Grade is entirely calculated from category points now — there's no
   // manual Current % field to keep in sync, so this just persists the
@@ -100,14 +98,11 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
 
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) return;
-    const weight = Number(newCategoryWeight);
-    const safeWeight = Number.isFinite(weight) ? Math.min(100, Math.max(0, weight)) : 0;
     const points = Number(newCategoryPoints);
     const safePoints = Number.isFinite(points) ? Math.max(0, points) : 0;
-    const next = [...(course?.gradeCategories || []), { id: generateId('gradecat'), name: newCategoryName.trim(), weightPercent: safeWeight, totalPointsPossible: safePoints }];
+    const next = [...(course?.gradeCategories || []), { id: generateId('gradecat'), name: newCategoryName.trim(), totalPointsPossible: safePoints }];
     updateCourse(courseId, { gradeCategories: next });
     setNewCategoryName('');
-    setNewCategoryWeight('');
     setNewCategoryPoints('');
     setAddingCategory(false);
   };
@@ -454,17 +449,12 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               {course.gradeCategories!.map((cat) => (
                 <View key={cat.id} className="flex-row items-center justify-between bg-stone-100 dark:bg-slate-800 rounded-lg px-3 py-2">
                   <Text className="text-slate-700 dark:text-slate-300 text-xs flex-1">{cat.name}</Text>
-                  <Text className="text-slate-500 text-xs mr-3">{cat.totalPointsPossible} pts · {cat.weightPercent}%</Text>
+                  <Text className="text-slate-500 text-xs mr-3">{cat.totalPointsPossible} pts</Text>
                   <Pressable onPress={() => handleRemoveCategory(cat.id)}>
                     <Text className="text-red-500 text-xs">Remove</Text>
                   </Pressable>
                 </View>
               ))}
-              {categoryWeightSum !== 100 && (
-                <Text className="text-amber-600 dark:text-amber-400 text-[11px]">
-                  Weights add up to {categoryWeightSum}%, not 100% — the grade below still calculates fine, just double-check this matches your syllabus.
-                </Text>
-              )}
             </View>
           )}
 
@@ -478,30 +468,20 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
                 autoFocus
                 className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
               />
-              <View className="flex-row gap-2">
-                <TextInput
-                  value={newCategoryPoints}
-                  onChangeText={setNewCategoryPoints}
-                  placeholder="Total points, e.g. 60"
-                  placeholderTextColor="#64748b"
-                  keyboardType="numeric"
-                  className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
-                />
-                <TextInput
-                  value={newCategoryWeight}
-                  onChangeText={setNewCategoryWeight}
-                  placeholder="Weight %"
-                  placeholderTextColor="#64748b"
-                  keyboardType="numeric"
-                  className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
-                />
-              </View>
+              <TextInput
+                value={newCategoryPoints}
+                onChangeText={setNewCategoryPoints}
+                placeholder="Total points, e.g. 60"
+                placeholderTextColor="#64748b"
+                keyboardType="numeric"
+                className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+              />
               <View className="flex-row gap-2">
                 <Pressable onPress={handleAddCategory} className="flex-1 bg-indigo-600 rounded-xl py-2.5 items-center">
                   <Text className="text-white text-sm font-semibold">Save category</Text>
                 </Pressable>
                 <Pressable
-                  onPress={() => { setAddingCategory(false); setNewCategoryName(''); setNewCategoryWeight(''); setNewCategoryPoints(''); }}
+                  onPress={() => { setAddingCategory(false); setNewCategoryName(''); setNewCategoryPoints(''); }}
                   className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center"
                 >
                   <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Cancel</Text>
