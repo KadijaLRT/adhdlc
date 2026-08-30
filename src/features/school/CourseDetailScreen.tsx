@@ -8,6 +8,7 @@ import { formatDate } from '@/shared/formatDate';
 import { avivaBrain, type FlashcardSet, type ReadingNotes } from '@/core/ai/AvivaBrain';
 import { describeAiFailure } from '@/core/ai/describeAiFailure';
 import { Heading } from '@/shared/components/Heading';
+import { CollapsibleSection } from '@/shared/components/CollapsibleSection';
 import { generateId } from '@/shared/generateId';
 import { DateInput } from '@/shared/components/DateInput';
 import { pickAndReadTextFile } from './syllabusImport';
@@ -387,10 +388,42 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
           </View>
         )}
 
-        <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
-          <Text className="text-slate-700 text-sm font-medium mb-2 dark:text-slate-300">Grade</Text>
+        <CollapsibleSection
+          title="Grade"
+          badge={gradeBreakdown ? `${gradeBreakdown.overallPercent}%` : undefined}
+          subtitle={gradeBreakdown ? `${gradeBreakdown.overallPercent}%${course.gradeGoal !== undefined ? ` · goal ${course.gradeGoal}%` : ''}` : 'No grade yet'}
+        >
+          {/*
+            Goal % and credit hours first, per request — these are the
+            two genuinely manual fields with their own Save action.
+            Grading categories (below) are a separate concern with
+            their own Save action, not sharing a row with these.
+          */}
+          <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1.5">Goal & credits</Text>
+          <View className="flex-row gap-2 mb-2">
+            <TextInput
+              value={goalInput}
+              onChangeText={setGoalInput}
+              placeholder="Goal %"
+              placeholderTextColor="#64748b"
+              keyboardType="numeric"
+              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+            />
+            <TextInput
+              value={creditsInput}
+              onChangeText={setCreditsInput}
+              placeholder="Credit hours (for GPA)"
+              placeholderTextColor="#64748b"
+              keyboardType="numeric"
+              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+            />
+          </View>
+          <Pressable onPress={handleSaveGoalAndCredits} className="bg-indigo-600 rounded-xl py-2.5 items-center mb-4">
+            <Text className="text-white text-sm font-semibold">{gradeSaved ? 'Saved ✓' : 'Save goal & credits'}</Text>
+          </Pressable>
+
           {(course.currentGrade !== undefined || course.gradeGoal !== undefined || course.credits !== undefined) && (
-            <Text className="text-slate-500 text-xs mb-2">
+            <Text className="text-slate-500 text-xs mb-4">
               {course.currentGrade !== undefined && course.gradeGoal !== undefined
                 ? `Currently ${course.currentGrade}% · goal ${course.gradeGoal}%${course.currentGrade >= course.gradeGoal ? ' · on track' : ` · ${course.gradeGoal - course.currentGrade} points to go`}`
                 : course.currentGrade !== undefined
@@ -402,14 +435,20 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
             </Text>
           )}
 
+          <View className="h-px bg-stone-100 dark:bg-slate-800 mb-4" />
+
           {/*
             Grading categories (e.g. Homework 20% / Quizzes 30% / Exams
             50%) — assignments pick one of these on the assignment
             screen, and the cumulative grade below is calculated from
             whichever categories actually have a graded assignment so
-            far, weighted by these percentages.
+            far, weighted by these percentages. Its own Save action
+            (renamed from "Add" — this is the button that was getting
+            visually lost crammed into a 3-column row before), stacked
+            in its own vertical form rather than squeezed alongside two
+            numeric inputs, so it's never clipped on a phone screen.
           */}
-          <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1.5 mt-1">Grading categories</Text>
+          <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1.5">Grading categories</Text>
           {(course.gradeCategories?.length || 0) > 0 && (
             <View className="gap-1.5 mb-2">
               {course.gradeCategories!.map((cat) => (
@@ -456,8 +495,16 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
                   keyboardType="numeric"
                   className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
                 />
-                <Pressable onPress={handleAddCategory} className="bg-indigo-600 rounded-xl px-3 justify-center">
-                  <Text className="text-white text-sm font-semibold">Add</Text>
+              </View>
+              <View className="flex-row gap-2">
+                <Pressable onPress={handleAddCategory} className="flex-1 bg-indigo-600 rounded-xl py-2.5 items-center">
+                  <Text className="text-white text-sm font-semibold">Save category</Text>
+                </Pressable>
+                <Pressable
+                  onPress={() => { setAddingCategory(false); setNewCategoryName(''); setNewCategoryWeight(''); setNewCategoryPoints(''); }}
+                  className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center"
+                >
+                  <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Cancel</Text>
                 </Pressable>
               </View>
             </View>
@@ -467,14 +514,16 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
             </Pressable>
           )}
 
+          <View className="h-px bg-stone-100 dark:bg-slate-800 mb-4 mt-2" />
+
           {/*
-            No manual Current % field anymore — this is the entire
-            grade readout, calculated straight from category points.
-            The useEffect above keeps course.currentGrade (what
-            gpaCalculations.ts reads) in sync with this automatically.
+            Calculated grade readout — entirely derived from category
+            points, no manual entry here. The useEffect above keeps
+            course.currentGrade (what gpaCalculations.ts reads) in sync
+            with this automatically.
           */}
           {gradeBreakdown ? (
-            <View className="bg-indigo-600/10 rounded-xl p-3 mb-2">
+            <View className="bg-indigo-600/10 rounded-xl p-3">
               <Text className="text-indigo-700 dark:text-indigo-300 text-base font-bold mb-1">
                 {gradeBreakdown.overallPercent}%{course.gradeGoal !== undefined ? ` · goal ${course.gradeGoal}%` : ''}
               </Text>
@@ -485,38 +534,15 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               ))}
             </View>
           ) : (
-            <Text className="text-slate-400 text-xs mb-2">
+            <Text className="text-slate-400 text-xs">
               {course.gradeCategories?.length
                 ? 'No assignments graded yet — enter points on an assignment to see your grade here.'
                 : 'Add a grading category above, then enter points on individual assignments to see your grade here.'}
             </Text>
           )}
+        </CollapsibleSection>
 
-          <View className="flex-row gap-2">
-            <TextInput
-              value={goalInput}
-              onChangeText={setGoalInput}
-              placeholder="Goal %"
-              placeholderTextColor="#64748b"
-              keyboardType="numeric"
-              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
-            />
-            <TextInput
-              value={creditsInput}
-              onChangeText={setCreditsInput}
-              placeholder="Credit hours (for GPA)"
-              placeholderTextColor="#64748b"
-              keyboardType="numeric"
-              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
-            />
-            <Pressable onPress={handleSaveGoalAndCredits} className="bg-indigo-600 rounded-xl px-4 justify-center">
-              <Text className="text-white text-sm font-semibold">{gradeSaved ? 'Saved ✓' : 'Save'}</Text>
-            </Pressable>
-          </View>
-        </View>
-
-        <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
-          <Text className="text-slate-700 text-sm font-medium mb-2 dark:text-slate-300">Notes & flashcards</Text>
+        <CollapsibleSection title="Notes & flashcards" defaultOpen={false} subtitle="Upload a reading or type notes, then generate flashcards">
           <Text className="text-slate-500 text-xs mb-2">Upload a weekly reading to turn it into notes below, or type/paste your own.</Text>
 
           <ReadingListMatcher onMatched={summarizeAndAppend} />
@@ -601,12 +627,11 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               ))}
             </View>
           ) : null}
-        </View>
+        </CollapsibleSection>
 
         <SyllabusUploadCard fixedCourseId={courseId} />
 
-        <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
-          <Text className="text-slate-700 text-sm font-medium mb-2 dark:text-slate-300">New assignment</Text>
+        <CollapsibleSection title="New assignment" defaultOpen={false} subtitle="Add an assignment by title and due date">
           <TextInput
             value={newTitle}
             onChangeText={setNewTitle}
@@ -620,41 +645,47 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
           <Pressable onPress={handleAdd} className="bg-indigo-600 rounded-xl py-3 items-center">
             <Text className="text-white font-semibold">Add</Text>
           </Pressable>
-        </View>
+        </CollapsibleSection>
 
-        <View className="gap-2 mb-8">
-          {courseAssignments.length === 0 && <Text className="text-slate-500 text-center mt-4">No assignments yet.</Text>}
-          {courseAssignments.map((a) => (
-            <View key={a.id} className="bg-white rounded-xl dark:bg-slate-900">
-              {confirmingRemoveId === a.id ? (
-                <View className="p-4">
-                  <Text className="text-red-500 text-xs font-medium mb-2">Remove "{a.title}"?</Text>
-                  <View className="flex-row gap-2">
-                    <Pressable
-                      onPress={async () => { await removeAssignment(a.id); setConfirmingRemoveId(null); }}
-                      className="flex-1 bg-red-500 rounded-lg py-2 items-center active:bg-red-400"
-                    >
-                      <Text className="text-white text-xs font-semibold">Remove</Text>
+        <CollapsibleSection
+          title="Assignments"
+          badge={courseAssignments.length ? String(courseAssignments.length) : undefined}
+          subtitle={courseAssignments.length ? `${courseAssignments.length} assignment${courseAssignments.length === 1 ? '' : 's'}` : 'No assignments yet'}
+        >
+          <View className="gap-2">
+            {courseAssignments.length === 0 && <Text className="text-slate-500 text-center mt-4">No assignments yet.</Text>}
+            {courseAssignments.map((a) => (
+              <View key={a.id} className="bg-stone-50 dark:bg-slate-800 rounded-xl">
+                {confirmingRemoveId === a.id ? (
+                  <View className="p-4">
+                    <Text className="text-red-500 text-xs font-medium mb-2">Remove "{a.title}"?</Text>
+                    <View className="flex-row gap-2">
+                      <Pressable
+                        onPress={async () => { await removeAssignment(a.id); setConfirmingRemoveId(null); }}
+                        className="flex-1 bg-red-500 rounded-lg py-2 items-center active:bg-red-400"
+                      >
+                        <Text className="text-white text-xs font-semibold">Remove</Text>
+                      </Pressable>
+                      <Pressable onPress={() => setConfirmingRemoveId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center">
+                        <Text className="text-slate-600 dark:text-slate-300 text-xs font-semibold">Cancel</Text>
+                      </Pressable>
+                    </View>
+                  </View>
+                ) : (
+                  <View className="flex-row items-center">
+                    <Pressable onPress={() => router?.push?.(`/school/assignment/${a.id}`)} className="flex-1 p-4 flex-row items-center justify-between">
+                      <Text className={a.isComplete ? 'text-slate-500 line-through flex-1' : 'text-slate-900 dark:text-slate-100 flex-1'}>{a.title}</Text>
+                      <Text className="text-slate-500 text-xs">{formatDate(a.dueDate, dateFormat)}</Text>
                     </Pressable>
-                    <Pressable onPress={() => setConfirmingRemoveId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center">
-                      <Text className="text-slate-600 dark:text-slate-300 text-xs font-semibold">Cancel</Text>
+                    <Pressable onPress={() => setConfirmingRemoveId(a.id)} accessibilityLabel={`Remove ${a.title}`} className="px-3 py-4">
+                      <Text className="text-slate-300 dark:text-slate-600 text-base">✕</Text>
                     </Pressable>
                   </View>
-                </View>
-              ) : (
-                <View className="flex-row items-center">
-                  <Pressable onPress={() => router?.push?.(`/school/assignment/${a.id}`)} className="flex-1 p-4 flex-row items-center justify-between">
-                    <Text className={a.isComplete ? 'text-slate-500 line-through flex-1' : 'text-slate-900 dark:text-slate-100 flex-1'}>{a.title}</Text>
-                    <Text className="text-slate-500 text-xs">{formatDate(a.dueDate, dateFormat)}</Text>
-                  </Pressable>
-                  <Pressable onPress={() => setConfirmingRemoveId(a.id)} accessibilityLabel={`Remove ${a.title}`} className="px-3 py-4">
-                    <Text className="text-slate-300 dark:text-slate-600 text-base">✕</Text>
-                  </Pressable>
-                </View>
-              )}
-            </View>
-          ))}
-        </View>
+                )}
+              </View>
+            ))}
+          </View>
+        </CollapsibleSection>
 
         {confirmingDelete ? (
           <View className="border-2 border-red-400 bg-red-400/10 rounded-2xl p-4">
