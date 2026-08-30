@@ -36,8 +36,16 @@ export function buildTodaysPlan(
     plan.push({ id: nextTask.id, label: nextTask.title, kind: 'task' });
   }
 
-  if (energyLevel !== 'low') {
-    plan.push({ id: 'focus-block', label: 'A focus session, whenever fits', kind: 'focus' });
+  // Bug fix: this used to be added whenever energy wasn't "low",
+  // regardless of whether anything else was in the plan — so on a day
+  // with no routines and no incomplete tasks, a focus session was the
+  // *only* thing shown, with no context for what it even builds toward.
+  // Now it only shows up alongside something real to actually apply it
+  // to, and its own label says what it earns (Focus skill XP, visible
+  // on the Progress screen — see FocusSession.tsx's awardProgress call)
+  // so tapping it isn't a mystery.
+  if (energyLevel !== 'low' && plan.length > 0) {
+    plan.push({ id: 'focus-block', label: 'A focus session, whenever fits — builds your Focus skill', kind: 'focus' });
   }
 
   return plan;

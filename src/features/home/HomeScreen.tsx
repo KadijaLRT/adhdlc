@@ -100,7 +100,12 @@ export default function HomeScreen() {
           <View className="bg-white dark:bg-slate-900 rounded-2xl p-4">
             <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-3">Today's plan</Text>
             {todaysPlan.length === 0 ? (
-              <Text className="text-slate-500 text-sm">Nothing urgent — a genuinely open day.</Text>
+              <View>
+                <Text className="text-slate-500 text-sm mb-3">Nothing on your list yet — add a task and it'll show up here.</Text>
+                <Pressable onPress={() => router?.push?.('/tasks')} className="bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500">
+                  <Text className="text-white text-sm font-semibold">+ Add a task</Text>
+                </Pressable>
+              </View>
             ) : (
               <View className="gap-2">
                 {todaysPlan.map((item, index) => (

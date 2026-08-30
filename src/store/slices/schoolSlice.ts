@@ -4,6 +4,12 @@ import { createWriteGuard } from '@/core/storage/writeGuard';
 
 export type CourseStatus = 'in_progress' | 'completed' | 'failed' | 'retaking';
 
+export interface GradeCategory {
+  id: string;
+  name: string; // e.g. "Homework", "Quizzes", "Exams"
+  weightPercent: number; // 0-100, categories on a course are meant to sum to ~100 but this isn't enforced
+}
+
 export interface Course {
   id: string;
   name: string;
@@ -14,6 +20,7 @@ export interface Course {
   notes?: string;
   isCompleted?: boolean; // kept for backward compatibility with data saved before `status` existed
   status?: CourseStatus;
+  gradeCategories?: GradeCategory[];
 }
 
 /** Reads status with a fallback to the older isCompleted boolean, for courses saved before status existed. */
@@ -37,6 +44,8 @@ export interface Assignment {
   estimatedMinutes?: number;
   isComplete: boolean;
   subSteps: AssignmentSubStep[];
+  categoryId?: string; // references a Course.gradeCategories entry
+  score?: number; // 0-100, this assignment's own grade once graded
 }
 
 export interface SchoolState {

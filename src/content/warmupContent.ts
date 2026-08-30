@@ -7,6 +7,10 @@ export interface WarmupStep {
   durationSeconds: number;
   emoji?: string; // shown large above the countdown, animated per `animation`
   animation?: WarmupAnimationType;
+  // Bilateral moves (left leg / right leg, etc) share a pairId so
+  // selection always keeps both sides together — see the comment on
+  // getVariedWarmupSelection for why this exists.
+  pairId?: string;
 }
 
 // Dynamic movement, not static stretching — the point of a warm-up is
@@ -30,12 +34,12 @@ const WARMUP_MOVE_POOLS: Record<WarmupCategory, WarmupStep[]> = {
   lower_body: [
     { id: 'lb-1', text: 'Bodyweight squats', durationSeconds: 30, emoji: '🏋️', animation: 'vertical' },
     { id: 'lb-2', text: 'Walking lunges', durationSeconds: 30, emoji: '🚶', animation: 'horizontal' },
-    { id: 'lb-3', text: 'Leg swings — Right leg', durationSeconds: 20, emoji: '🦵', animation: 'horizontal' },
-    { id: 'lb-4', text: 'Leg swings — Left leg', durationSeconds: 20, emoji: '🦵', animation: 'horizontal' },
+    { id: 'lb-3', text: 'Leg swings — Right leg', durationSeconds: 20, emoji: '🦵', animation: 'horizontal', pairId: 'leg-swings' },
+    { id: 'lb-4', text: 'Leg swings — Left leg', durationSeconds: 20, emoji: '🦵', animation: 'horizontal', pairId: 'leg-swings' },
     { id: 'lb-5', text: 'Glute bridges', durationSeconds: 30, emoji: '🍑', animation: 'vertical' },
     { id: 'lb-6', text: 'Bodyweight calf raises', durationSeconds: 20, emoji: '🦶', animation: 'quickVertical' },
-    { id: 'lb-7', text: 'Standing hip circles — Right leg', durationSeconds: 20, emoji: '🦵', animation: 'rotate' },
-    { id: 'lb-8', text: 'Standing hip circles — Left leg', durationSeconds: 20, emoji: '🦵', animation: 'rotate' },
+    { id: 'lb-7', text: 'Standing hip circles — Right leg', durationSeconds: 20, emoji: '🦵', animation: 'rotate', pairId: 'hip-circles' },
+    { id: 'lb-8', text: 'Standing hip circles — Left leg', durationSeconds: 20, emoji: '🦵', animation: 'rotate', pairId: 'hip-circles' },
     { id: 'lb-9', text: 'Bodyweight Romanian deadlifts', durationSeconds: 30, emoji: '🏋️', animation: 'vertical' },
     { id: 'lb-10', text: 'Lateral lunges, alternating sides', durationSeconds: 30, emoji: '🚶', animation: 'horizontal' },
     { id: 'lb-11', text: 'High knees, marching pace', durationSeconds: 20, emoji: '🏃', animation: 'quickVertical' },
@@ -111,6 +115,16 @@ function sameCombo(a: string[], b: string[]): boolean {
  * actually used for this category. Falls back to the
  * least-recently-used arrangement rather than failing if the pool is
  * ever too small to fully avoid every recent combo.
+ *
+ * Bug fix: this used to shuffle and slice individual pool entries, so
+ * a bilateral pair like "Standing hip circles — Right leg" /
+ * "— Left leg" was picked as two independent, unrelated entries — it
+ * was entirely possible for one side to land in the selected slice and
+ * the other not to, leaving a warm-up that only ever worked one side.
+ * Selection now operates on "units" — a pairId group is one atomic
+ * unit that's always included or excluded together, in its fixed
+ * right-then-left pool order — so it can go slightly over `count`
+ * steps to finish a pair rather than ever splitting one.
  */
 export function getVariedWarmupSelection(
   category: WarmupCategory,
@@ -119,18 +133,46 @@ export function getVariedWarmupSelection(
   seed: number
 ): WarmupStep[] {
   const pool = WARMUP_MOVE_POOLS[category] || [];
-  if (pool.length <= count) return pool;
+  if (!pool.length) return [];
 
-  const idToStep = new Map(pool.map((s) => [s.id, s]));
-  const shuffled = seededShuffle(pool.map((s) => s.id), seed);
-
-  for (let offset = 0; offset < shuffled.length; offset++) {
-    const rotated = [...shuffled.slice(offset), ...shuffled.slice(0, offset)];
-    const candidateIds = rotated.slice(0, count);
-    const isRepeat = recentCombos.some((combo) => sameCombo(combo, candidateIds));
-    if (!isRepeat) return candidateIds.map((id) => idToStep.get(id)).filter((s): s is WarmupStep => !!s);
+  // Build units: a pairId group becomes one unit (both ids, in pool
+  // order); everything else is its own single-id unit.
+  const seenPairIds = new Set<string>();
+  const units: string[][] = [];
+  for (const step of pool) {
+    if (step.pairId) {
+      if (seenPairIds.has(step.pairId)) continue; // already added as part of its pair's unit
+      seenPairIds.add(step.pairId);
+      units.push(pool.filter((s) => s.pairId === step.pairId).map((s) => s.id));
+    } else {
+      units.push([step.id]);
+    }
   }
-  return shuffled.slice(0, count).map((id) => idToStep.get(id)).filter((s): s is WarmupStep => !!s);
+
+  const totalSteps = units.reduce((sum, u) => sum + u.length, 0);
+  const idToStep = new Map(pool.map((s) => [s.id, s]));
+  const toSteps = (ids: string[]) => ids.map((id) => idToStep.get(id)).filter((s): s is WarmupStep => !!s);
+
+  if (totalSteps <= count) return toSteps(units.flat());
+
+  const buildCandidate = (orderedUnits: string[][]): string[] => {
+    const ids: string[] = [];
+    for (const unit of orderedUnits) {
+      if (ids.length >= count) break;
+      ids.push(...unit); // completing a pair may push slightly past `count` — intentional, see doc comment
+    }
+    return ids;
+  };
+
+  const shuffledUnits = seededShuffle(units, seed);
+
+  for (let offset = 0; offset < shuffledUnits.length; offset++) {
+    const rotated = [...shuffledUnits.slice(offset), ...shuffledUnits.slice(0, offset)];
+    const candidateIds = buildCandidate(rotated);
+    const isRepeat = recentCombos.some((combo) => sameCombo(combo, candidateIds));
+    if (!isRepeat) return toSteps(candidateIds);
+  }
+  return toSteps(buildCandidate(shuffledUnits));
 }
 
 /**

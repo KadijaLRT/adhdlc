@@ -3,6 +3,7 @@ import { View, Text, Pressable, TextInput, ScrollView, ActivityIndicator, Platfo
 import { useRouter } from 'expo-router';
 import { useAppStore, selectCourses, selectAssignments, selectDateFormat } from '@/store/index';
 import { getCourseStatus } from '@/store/slices/schoolSlice';
+import { computeCourseGrade, totalCategoryWeight } from './courseGrading';
 import { formatDate } from '@/shared/formatDate';
 import { avivaBrain, type FlashcardSet, type ReadingNotes } from '@/core/ai/AvivaBrain';
 import { describeAiFailure } from '@/core/ai/describeAiFailure';
@@ -53,6 +54,9 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(null);
   const [gradeSaved, setGradeSaved] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [newCategoryWeight, setNewCategoryWeight] = useState('');
+  const [addingCategory, setAddingCategory] = useState(false);
 
   const course = (courses || []).find((c) => c.id === courseId);
   const courseAssignments = (assignments || []).filter((a) => a.courseId === courseId);
@@ -84,6 +88,35 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
     });
     setGradeSaved(true);
     setTimeout(() => setGradeSaved(false), 2000);
+  };
+
+  const gradeBreakdown = computeCourseGrade(course?.gradeCategories, courseAssignments);
+  const categoryWeightSum = totalCategoryWeight(course?.gradeCategories);
+
+  const handleAddCategory = () => {
+    if (!newCategoryName.trim()) return;
+    const weight = Number(newCategoryWeight);
+    const safeWeight = Number.isFinite(weight) ? Math.min(100, Math.max(0, weight)) : 0;
+    const next = [...(course?.gradeCategories || []), { id: generateId('gradecat'), name: newCategoryName.trim(), weightPercent: safeWeight }];
+    updateCourse(courseId, { gradeCategories: next });
+    setNewCategoryName('');
+    setNewCategoryWeight('');
+    setAddingCategory(false);
+  };
+
+  const handleRemoveCategory = (id: string) => {
+    // Assignments that referenced this category keep their categoryId
+    // pointing at a now-missing category rather than being silently
+    // recategorized — computeCourseGrade already only counts scores
+    // whose categoryId matches a category that still exists, so this
+    // can't corrupt the grade; the person can just recategorize those
+    // assignments if they want the scores to count again.
+    updateCourse(courseId, { gradeCategories: (course?.gradeCategories || []).filter((c) => c.id !== id) });
+  };
+
+  const handleUseCalculatedGrade = () => {
+    if (!gradeBreakdown) return;
+    setGradeInput(String(gradeBreakdown.overallPercent));
   };
 
   const handleStartEditCourse = () => {
@@ -366,6 +399,79 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               {course.credits !== undefined ? ` · ${course.credits} credit${course.credits === 1 ? '' : 's'}` : ''}
             </Text>
           )}
+
+          {/*
+            Grading categories (e.g. Homework 20% / Quizzes 30% / Exams
+            50%) — assignments pick one of these on the assignment
+            screen, and the cumulative grade below is calculated from
+            whichever categories actually have a graded assignment so
+            far, weighted by these percentages.
+          */}
+          <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1.5 mt-1">Grading categories</Text>
+          {(course.gradeCategories?.length || 0) > 0 && (
+            <View className="gap-1.5 mb-2">
+              {course.gradeCategories!.map((cat) => (
+                <View key={cat.id} className="flex-row items-center justify-between bg-stone-100 dark:bg-slate-800 rounded-lg px-3 py-2">
+                  <Text className="text-slate-700 dark:text-slate-300 text-xs flex-1">{cat.name}</Text>
+                  <Text className="text-slate-500 text-xs mr-3">{cat.weightPercent}%</Text>
+                  <Pressable onPress={() => handleRemoveCategory(cat.id)}>
+                    <Text className="text-red-500 text-xs">Remove</Text>
+                  </Pressable>
+                </View>
+              ))}
+              {categoryWeightSum !== 100 && (
+                <Text className="text-amber-600 dark:text-amber-400 text-[11px]">
+                  Weights add up to {categoryWeightSum}%, not 100% — the grade below still calculates fine, just double-check this matches your syllabus.
+                </Text>
+              )}
+            </View>
+          )}
+
+          {addingCategory ? (
+            <View className="flex-row gap-2 mb-2">
+              <TextInput
+                value={newCategoryName}
+                onChangeText={setNewCategoryName}
+                placeholder="e.g. Exams"
+                placeholderTextColor="#64748b"
+                autoFocus
+                className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+                style={{ flex: 2 }}
+              />
+              <TextInput
+                value={newCategoryWeight}
+                onChangeText={setNewCategoryWeight}
+                placeholder="Weight %"
+                placeholderTextColor="#64748b"
+                keyboardType="numeric"
+                className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+              />
+              <Pressable onPress={handleAddCategory} className="bg-indigo-600 rounded-xl px-3 justify-center">
+                <Text className="text-white text-sm font-semibold">Add</Text>
+              </Pressable>
+            </View>
+          ) : (
+            <Pressable onPress={() => setAddingCategory(true)} className="mb-2">
+              <Text className="text-indigo-600 dark:text-indigo-400 text-xs font-medium">+ Add grading category</Text>
+            </Pressable>
+          )}
+
+          {gradeBreakdown && (
+            <View className="bg-indigo-600/10 rounded-xl p-3 mb-2">
+              <Text className="text-indigo-700 dark:text-indigo-300 text-xs font-semibold mb-1">
+                Calculated from assignments: {gradeBreakdown.overallPercent}%
+              </Text>
+              {gradeBreakdown.byCategory.filter((c) => c.gradedCount > 0).map((c) => (
+                <Text key={c.categoryId} className="text-indigo-600 dark:text-indigo-400 text-[11px]">
+                  {c.name}: {c.averagePercent}% ({c.gradedCount} graded)
+                </Text>
+              ))}
+              <Pressable onPress={handleUseCalculatedGrade} className="mt-1.5">
+                <Text className="text-indigo-700 dark:text-indigo-300 text-xs font-bold">Use this as Current % →</Text>
+              </Pressable>
+            </View>
+          )}
+
           <View className="flex-row gap-2 mb-2">
             <TextInput
               value={gradeInput}

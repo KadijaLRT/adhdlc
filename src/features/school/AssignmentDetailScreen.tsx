@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { View, Text, Pressable, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, Pressable, ActivityIndicator, ScrollView, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAppStore, selectAssignments, selectEnergyLevel, selectIsOverwhelmed, selectDateFormat } from '@/store/index';
+import { useAppStore, selectAssignments, selectEnergyLevel, selectIsOverwhelmed, selectDateFormat, selectCourses } from '@/store/index';
 import { avivaBrain } from '@/core/ai/AvivaBrain';
 import { spreadStepsAcrossDays, groupStepsByDate } from './spreadWorkload';
 import { Heading } from '@/shared/components/Heading';
@@ -10,6 +10,7 @@ import { formatDate } from '@/shared/formatDate';
 export default function AssignmentDetailScreen({ assignmentId }: { assignmentId: string }) {
   const router = useRouter();
   const assignments = useAppStore(selectAssignments);
+  const courses = useAppStore(selectCourses);
   const energyLevel = useAppStore(selectEnergyLevel);
   const isOverwhelmed = useAppStore(selectIsOverwhelmed);
   const dateFormat = useAppStore(selectDateFormat);
@@ -20,8 +21,12 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
   const [breakingDown, setBreakingDown] = useState(false);
   const [breakDownError, setBreakDownError] = useState<string | null>(null);
   const [confirmingRemove, setConfirmingRemove] = useState(false);
+  const [scoreInput, setScoreInput] = useState('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const [scoreSaved, setScoreSaved] = useState(false);
 
   const assignment = (assignments || []).find((a) => a.id === assignmentId);
+  const course = (courses || []).find((c) => c.id === assignment?.courseId);
 
   if (!assignment) {
     return (
@@ -30,6 +35,17 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
       </View>
     );
   }
+
+  const handleSaveGrade = () => {
+    const parsed = Number(scoreInput);
+    const nextScore = scoreInput && Number.isFinite(parsed) ? Math.min(100, Math.max(0, parsed)) : assignment.score;
+    updateAssignment(assignment.id, {
+      score: nextScore,
+      categoryId: selectedCategoryId ?? assignment.categoryId,
+    });
+    setScoreSaved(true);
+    setTimeout(() => setScoreSaved(false), 2000);
+  };
 
   const handleBreakDown = async () => {
     setBreakingDown(true);
@@ -80,6 +96,62 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
             {assignment.isComplete ? 'Marked done ✓' : 'Done'}
           </Text>
         </Pressable>
+
+        {/*
+          Mirrors the same Current %/Goal %-style grade card used at
+          course level (CourseDetailScreen.tsx), scoped to just this
+          one assignment: a category (from the course's grading
+          categories) plus this assignment's own score. Feeds
+          computeCourseGrade (courseGrading.ts) which the course screen
+          uses to show the cumulative grade.
+        */}
+        <View className="bg-white rounded-2xl p-4 mb-6 dark:bg-slate-900">
+          <Text className="text-slate-700 text-sm font-medium mb-2 dark:text-slate-300">Grade</Text>
+          {assignment.score !== undefined && (
+            <Text className="text-slate-500 text-xs mb-2">
+              Currently {assignment.score}%
+              {assignment.categoryId && course?.gradeCategories?.find((c) => c.id === assignment.categoryId)
+                ? ` · ${course.gradeCategories.find((c) => c.id === assignment.categoryId)?.name}`
+                : ''}
+            </Text>
+          )}
+
+          {(course?.gradeCategories?.length || 0) > 0 ? (
+            <View className="flex-row flex-wrap gap-2 mb-3">
+              {course!.gradeCategories!.map((cat) => {
+                const activeId = selectedCategoryId ?? assignment.categoryId;
+                const isActive = activeId === cat.id;
+                return (
+                  <Pressable
+                    key={cat.id}
+                    onPress={() => setSelectedCategoryId(cat.id)}
+                    className={isActive ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-full px-3 py-1.5' : 'bg-stone-100 dark:bg-slate-800 border-2 border-transparent rounded-full px-3 py-1.5'}
+                  >
+                    <Text className={isActive ? 'text-indigo-700 dark:text-indigo-300 text-xs font-medium' : 'text-slate-600 dark:text-slate-300 text-xs font-medium'}>{cat.name}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          ) : (
+            <Text className="text-slate-400 text-xs mb-3">
+              No grading categories set up for this course yet — add some from the course page to have this feed the cumulative grade.
+            </Text>
+          )}
+
+          <View className="flex-row gap-2">
+            <TextInput
+              value={scoreInput}
+              onChangeText={setScoreInput}
+              placeholder="Score %"
+              placeholderTextColor="#64748b"
+              keyboardType="numeric"
+              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+            />
+            <Pressable onPress={handleSaveGrade} className="bg-indigo-600 rounded-xl px-4 justify-center">
+              <Text className="text-white text-sm font-semibold">{scoreSaved ? 'Saved ✓' : 'Save'}</Text>
+            </Pressable>
+          </View>
+        </View>
 
         {(assignment.subSteps?.length || 0) === 0 ? (
           <>

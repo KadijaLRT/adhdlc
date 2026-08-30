@@ -8,6 +8,19 @@ function energyToScore(level: string | undefined): number {
   return 50;
 }
 
+// Bug fix: Calm was computed as `100 - energyToScore(stressLevel)`,
+// reusing the energy scale inverted. But energyToScore('low') = 25
+// (because low *energy* is the bad end of that scale), so even on the
+// best possible day — "low" stress — Calm capped at 100 - 25 = 75 and
+// could never reach 100. Stress needs its own mapping where "low"
+// stress is the good end and actually reaches 100.
+function stressToCalmScore(level: string | undefined): number {
+  if (level === 'low') return 100;
+  if (level === 'medium') return 60;
+  if (level === 'high') return 20;
+  return 50;
+}
+
 function Ring({ label, percent, color }: { label: string; percent: number; color: string }) {
   const clamped = Math.max(0, Math.min(percent || 0, 100));
   return (
@@ -41,7 +54,7 @@ export default function ExecutiveFunctionRings() {
   // 70% here permanently. StressCheckinCard (added to Home below the
   // energy check-in) now actually feeds this.
   const todaysStress = (stressLogs || []).find((l) => l.date === today);
-  const stressScore = todaysStress ? 100 - energyToScore(todaysStress.stressLevel) : 70;
+  const stressScore = todaysStress ? stressToCalmScore(todaysStress.stressLevel) : 70;
 
   return (
     <View className="bg-white rounded-2xl p-5 w-full flex-row justify-around dark:bg-slate-900">
