@@ -164,12 +164,12 @@ export default function CustomMealBuilder({ onSave, onCancel, onOpenScanner }: P
         <View>
           <TextInput value={manualName} onChangeText={setManualName} placeholder="Ingredient name" placeholderTextColor="#64748b" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-2" />
           <View className="flex-row gap-2 mb-2">
-            <View className="flex-1"><TextInput value={manualCal} onChangeText={setManualCal} placeholder="Calories" placeholderTextColor="#64748b" keyboardType="numeric" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
-            <View className="flex-1"><TextInput value={manualPro} onChangeText={setManualPro} placeholder="Protein g" placeholderTextColor="#64748b" keyboardType="numeric" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
+            <View className="flex-1"><TextInput value={manualCal} onChangeText={setManualCal} placeholder="Calories" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
+            <View className="flex-1"><TextInput value={manualPro} onChangeText={setManualPro} placeholder="Protein g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
           </View>
           <View className="flex-row gap-2 mb-3">
-            <View className="flex-1"><TextInput value={manualCarb} onChangeText={setManualCarb} placeholder="Carbs g" placeholderTextColor="#64748b" keyboardType="numeric" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
-            <View className="flex-1"><TextInput value={manualFat} onChangeText={setManualFat} placeholder="Fat g" placeholderTextColor="#64748b" keyboardType="numeric" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
+            <View className="flex-1"><TextInput value={manualCarb} onChangeText={setManualCarb} placeholder="Carbs g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
+            <View className="flex-1"><TextInput value={manualFat} onChangeText={setManualFat} placeholder="Fat g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
           </View>
           <View className="flex-row gap-2">
             <Pressable onPress={addManualIngredient} disabled={!manualName.trim()} className={manualName.trim() ? 'flex-1 bg-indigo-600 rounded-xl py-2 items-center active:bg-indigo-500' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2 items-center'}>

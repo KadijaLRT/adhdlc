@@ -270,7 +270,7 @@ export default function WorkoutSession({
                 <TextInput
                   value={weight}
                   onChangeText={setWeight}
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   placeholder="0"
                   placeholderTextColor="#64748b"
                   className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-center text-xl rounded-xl py-3 border border-slate-200 dark:border-slate-800"
@@ -281,7 +281,7 @@ export default function WorkoutSession({
                 <TextInput
                   value={reps}
                   onChangeText={setReps}
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-center text-xl rounded-xl py-3 border border-slate-200 dark:border-slate-800"
                 />
               </View>

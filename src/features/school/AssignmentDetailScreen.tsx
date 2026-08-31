@@ -150,13 +150,13 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
             </Text>
           )}
 
-          <View className="flex-row gap-2">
+          <View className="flex-row gap-2 mb-2">
             <TextInput
               value={pointsEarnedInput}
               onChangeText={setPointsEarnedInput}
               placeholder="Points earned"
               placeholderTextColor="#64748b"
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
             <TextInput
@@ -164,13 +164,13 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
               onChangeText={setPointsPossibleInput}
               placeholder="Points possible"
               placeholderTextColor="#64748b"
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
-            <Pressable onPress={handleSaveGrade} className="bg-indigo-600 rounded-xl px-4 justify-center">
-              <Text className="text-white text-sm font-semibold">{scoreSaved ? 'Saved ✓' : 'Save'}</Text>
-            </Pressable>
           </View>
+          <Pressable onPress={handleSaveGrade} className="bg-indigo-600 rounded-xl py-2.5 items-center">
+            <Text className="text-white text-sm font-semibold">{scoreSaved ? 'Saved ✓' : 'Save grade'}</Text>
+          </Pressable>
         </View>
 
         {(assignment.subSteps?.length || 0) === 0 ? (

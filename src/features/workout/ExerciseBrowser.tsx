@@ -3,6 +3,7 @@ import { View, Text, Pressable, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAppStore, selectCompletedExerciseLog, selectFitnessPreferences } from '@/store/index';
 import { WORKOUT_EXERCISES, type Exercise } from '@/content/exercises';
+import { deriveMuscleInvolvement, getJointAction } from '@/content/kinesiology';
 import { Heading } from '@/shared/components/Heading';
 
 // Secondary screen reached from "Browse all exercises" on the Workouts
@@ -73,6 +74,10 @@ export default function ExerciseBrowser() {
 
 function ExerciseCard({ exercise, exerciseId, completedCount, onLogCompletion }: { exercise: Exercise; exerciseId: string; completedCount: number; onLogCompletion: () => void }) {
   const router = useRouter();
+  const [showWhy, setShowWhy] = useState(false);
+  const muscleInvolvement = useMemo(() => deriveMuscleInvolvement(exercise), [exercise]);
+  const jointAction = useMemo(() => getJointAction(exercise), [exercise]);
+
   return (
     <View className="bg-white rounded-2xl p-4 dark:bg-slate-900">
       <View className="flex-row items-center justify-between mb-1">
@@ -80,7 +85,31 @@ function ExerciseCard({ exercise, exerciseId, completedCount, onLogCompletion }:
         {completedCount > 0 && <Text className="text-emerald-700 text-xs dark:text-emerald-400">done {completedCount}×</Text>}
       </View>
       <Text className="text-slate-500 text-xs mb-2">{exercise?.muscle} · {exercise?.sets} sets · {exercise?.reps} reps · rest {exercise?.rest}s</Text>
-      <Text className="text-slate-500 text-xs mb-3">{exercise?.cues}</Text>
+      <Text className="text-slate-500 text-xs mb-2">{exercise?.cues}</Text>
+
+      <Pressable onPress={() => setShowWhy((v) => !v)} className="mb-3">
+        <Text className="text-indigo-600 dark:text-indigo-400 text-xs font-medium">{showWhy ? 'Hide the kinesiology ▾' : 'Why this exercise →'}</Text>
+      </Pressable>
+
+      {showWhy && (
+        <View className="bg-stone-50 dark:bg-slate-800 rounded-xl p-3 mb-3">
+          <Text className="text-slate-700 dark:text-slate-300 text-xs mb-1">
+            <Text className="font-semibold">Primary: </Text>{muscleInvolvement.primary.join(', ') || '—'}
+          </Text>
+          {muscleInvolvement.secondary.length > 0 && (
+            <Text className="text-slate-500 text-xs mb-1">
+              <Text className="font-semibold text-slate-700 dark:text-slate-300">Secondary: </Text>{muscleInvolvement.secondary.join(', ')}
+            </Text>
+          )}
+          <Text className="text-slate-500 text-xs mb-1">
+            <Text className="font-semibold text-slate-700 dark:text-slate-300">Joint action: </Text>{jointAction.jointAction}
+          </Text>
+          <Text className="text-slate-500 text-xs">
+            <Text className="font-semibold text-slate-700 dark:text-slate-300">Plane of motion: </Text>{jointAction.plane}
+          </Text>
+        </View>
+      )}
+
       <Pressable onPress={() => router?.push?.(`/workout/session/${exerciseId}`)} className="bg-indigo-600 rounded-full py-2 items-center active:bg-indigo-500">
         <Text className="text-white text-xs font-semibold">Start guided session</Text>
       </Pressable>

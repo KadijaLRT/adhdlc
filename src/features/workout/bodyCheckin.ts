@@ -4,32 +4,58 @@ export interface BodyPart {
   icon: string;
 }
 
+// Covers every exercise.group value used in WORKOUT_EXERCISES (chest,
+// back, shoulders, arms, core, glutes, quads, hamstrings, calves) as
+// its own tappable part, plus joint-specific areas (knees, hips,
+// wrists, ankles, neck) that are a different kind of "sore" than a
+// muscle group — a cranky knee isn't the same complaint as sore
+// quads, even though both can affect quad exercises. The old list only
+// had 10 parts and had no way to flag chest, arms, core, glutes, or
+// quads at all — they were only reachable indirectly by picking a
+// nearby joint, which meant genuinely sore glutes or quads (extremely
+// common after leg day) had nowhere to go.
 export const BODY_PARTS: BodyPart[] = [
-  { id: 'lower_back', label: 'Lower Back', icon: '🦴' },
-  { id: 'knees', label: 'Knees', icon: '🦵' },
-  { id: 'hips', label: 'Hips', icon: '🍑' },
-  { id: 'shoulders', label: 'Shoulders', icon: '💪' },
-  { id: 'wrists', label: 'Wrists', icon: '🤜' },
   { id: 'neck', label: 'Neck', icon: '🦴' },
+  { id: 'shoulders', label: 'Shoulders', icon: '💪' },
   { id: 'upper_back', label: 'Upper Back', icon: '🛡️' },
-  { id: 'ankles', label: 'Ankles', icon: '🦶' },
+  { id: 'chest', label: 'Chest', icon: '🫁' },
+  { id: 'arms', label: 'Arms', icon: '💪' },
+  { id: 'wrists', label: 'Wrists', icon: '🤜' },
+  { id: 'core', label: 'Core / Abs', icon: '🎯' },
+  { id: 'lower_back', label: 'Lower Back', icon: '🦴' },
+  { id: 'hips', label: 'Hips', icon: '🦴' },
+  { id: 'glutes', label: 'Glutes', icon: '🍑' },
+  { id: 'quads', label: 'Quads', icon: '🦵' },
   { id: 'hamstrings', label: 'Hamstrings', icon: '🦵' },
+  { id: 'knees', label: 'Knees', icon: '🦵' },
   { id: 'calves', label: 'Calves', icon: '🦶' },
+  { id: 'ankles', label: 'Ankles', icon: '🦶' },
 ];
 
-// Maps a body part to the exercise muscle groups it affects — same
-// mapping the old app used.
+// Maps a body part to the exercise muscle groups it affects. Direct
+// muscle-group parts (glutes, quads, chest, etc) map primarily to
+// themselves plus the groups that commonly load them together in
+// compound movements — e.g. flagged Quads also lightens Glutes work,
+// since squat-pattern exercises load both regardless of which one is
+// actually sore. Joint parts (knees, hips, wrists, ankles, neck) map
+// to whichever muscle groups place load through that joint, not to a
+// specific muscle.
 export const INJURY_GROUP_MAP: Record<string, string[]> = {
-  lower_back: ['back', 'fullbody'],
-  knees: ['quads', 'hamstrings', 'calves'],
-  hips: ['glutes', 'quads', 'hamstrings'],
-  shoulders: ['shoulders', 'chest', 'arms', 'back'],
-  wrists: ['arms', 'chest', 'back'],
   neck: ['shoulders', 'back'],
+  shoulders: ['shoulders', 'chest', 'arms', 'back'],
   upper_back: ['back', 'shoulders'],
-  ankles: ['calves', 'quads', 'hamstrings'],
-  hamstrings: ['hamstrings'],
+  chest: ['chest', 'shoulders', 'arms'],
+  arms: ['arms', 'chest', 'back'],
+  wrists: ['arms', 'chest', 'back'],
+  core: ['core', 'fullbody'],
+  lower_back: ['back', 'fullbody'],
+  hips: ['glutes', 'quads', 'hamstrings'],
+  glutes: ['glutes', 'hamstrings'],
+  quads: ['quads', 'glutes'],
+  hamstrings: ['hamstrings', 'glutes'],
+  knees: ['quads', 'hamstrings', 'calves'],
   calves: ['calves'],
+  ankles: ['calves', 'quads', 'hamstrings'],
 };
 
 export type PainSeverity = 1 | 2 | 3; // 1=mild, 2=noticeable, 3=a lot

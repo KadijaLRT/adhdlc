@@ -594,7 +594,7 @@ export default function WorkoutDaySession({
                               onChangeText={(v) => updateRow(exerciseId, index, { weight: v })}
                               placeholder="0"
                               placeholderTextColor="#64748b"
-                              keyboardType="numeric"
+                              keyboardType="decimal-pad"
                               editable={!row.done}
                               className={row.done ? 'w-full bg-stone-100 dark:bg-slate-800 text-slate-400 text-center rounded-lg py-2' : 'w-full bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-center rounded-lg py-2'}
                             />
@@ -616,7 +616,7 @@ export default function WorkoutDaySession({
                             <TextInput
                               value={row.reps}
                               onChangeText={(v) => updateRow(exerciseId, index, { reps: v })}
-                              keyboardType="numeric"
+                              keyboardType="decimal-pad"
                               editable={!row.done}
                               className={row.done ? 'w-full bg-stone-100 dark:bg-slate-800 text-slate-400 text-center rounded-lg py-2' : 'w-full bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-center rounded-lg py-2'}
                             />

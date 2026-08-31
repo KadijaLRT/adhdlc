@@ -15,7 +15,7 @@ export interface Course {
   name: string;
   emoji: string;
   currentGrade?: number; // 0-100
-  gradeGoal?: number; // 0-100
+  gradeGoal?: number; // target total points for the course, e.g. 576 (a course's own declared point scale, not a 0-100 percentage — see the Summary of Assignments table on a syllabus, which states a real point total like "640")
   credits?: number; // credit hours, used for weighted GPA
   notes?: string;
   isCompleted?: boolean; // kept for backward compatibility with data saved before `status` existed

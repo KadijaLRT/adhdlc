@@ -76,11 +76,14 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
   }, [gradeBreakdown?.overallPercent, courseId]);
 
   const handleSaveGoalAndCredits = () => {
-    const parseGradeValue = (raw: string, current: number | undefined): number | undefined => {
+    // Goal is a raw points total now, not a 0-100 percentage — no
+    // upper clamp, since a course's own point scale can be anything
+    // (640 on this person's actual syllabus).
+    const parsePointsValue = (raw: string, current: number | undefined): number | undefined => {
       if (!raw) return current;
       const parsed = Number(raw);
-      if (!Number.isFinite(parsed)) return current;
-      return Math.min(100, Math.max(0, parsed));
+      if (!Number.isFinite(parsed) || parsed < 0) return current;
+      return parsed;
     };
     const parseCreditsValue = (raw: string, current: number | undefined): number | undefined => {
       if (!raw) return current;
@@ -89,13 +92,25 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
       return parsed;
     };
     updateCourse(courseId, {
-      gradeGoal: parseGradeValue(goalInput, course?.gradeGoal),
+      gradeGoal: parsePointsValue(goalInput, course?.gradeGoal),
       credits: parseCreditsValue(creditsInput, course?.credits),
     });
     setGradeSaved(true);
     setTimeout(() => setGradeSaved(false), 2000);
   };
 
+  // Total points earned/possible across every category (graded or
+  // not) — used to compare against the points-based goal below.
+  // gradeBreakdown itself only sums possible points for categories
+  // that have at least one graded item (see courseGrading.ts), which
+  // is correct for the overall % but not what a "goal points" compare
+  // needs — the goal is against the course's full declared point
+  // scale, whether or not everything's graded yet.
+  const totalPointsEarnedSoFar = (course?.gradeCategories || []).reduce((sum, cat) => {
+    const graded = courseAssignments.filter((a) => a.categoryId === cat.id && typeof a.pointsEarned === 'number');
+    return sum + graded.reduce((s, a) => s + (a.pointsEarned as number), 0);
+  }, 0);
+  const totalPointsPossibleAllCategories = (course?.gradeCategories || []).reduce((sum, cat) => sum + (cat.totalPointsPossible || 0), 0);
   const handleAddCategory = () => {
     if (!newCategoryName.trim()) return;
     const points = Number(newCategoryPoints);
@@ -386,22 +401,22 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
         <CollapsibleSection
           title="Grade"
           badge={gradeBreakdown ? `${gradeBreakdown.overallPercent}%` : undefined}
-          subtitle={gradeBreakdown ? `${gradeBreakdown.overallPercent}%${course.gradeGoal !== undefined ? ` · goal ${course.gradeGoal}%` : ''}` : 'No grade yet'}
+          subtitle={gradeBreakdown ? `${gradeBreakdown.overallPercent}%${course.gradeGoal !== undefined ? ` · goal ${course.gradeGoal} pts` : ''}` : 'No grade yet'}
         >
           {/*
-            Goal % and credit hours first, per request — these are the
-            two genuinely manual fields with their own Save action.
-            Grading categories (below) are a separate concern with
-            their own Save action, not sharing a row with these.
+            Goal (points) and credit hours first, per request — these
+            are the two genuinely manual fields with their own Save
+            action. Grading categories (below) are a separate concern
+            with their own Save action, not sharing a row with these.
           */}
           <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1.5">Goal & credits</Text>
           <View className="flex-row gap-2 mb-2">
             <TextInput
               value={goalInput}
               onChangeText={setGoalInput}
-              placeholder="Goal %"
+              placeholder="Goal, e.g. 576 pts"
               placeholderTextColor="#64748b"
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
             <TextInput
@@ -409,7 +424,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               onChangeText={setCreditsInput}
               placeholder="Credit hours (for GPA)"
               placeholderTextColor="#64748b"
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
           </View>
@@ -419,12 +434,12 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
 
           {(course.currentGrade !== undefined || course.gradeGoal !== undefined || course.credits !== undefined) && (
             <Text className="text-slate-500 text-xs mb-4">
-              {course.currentGrade !== undefined && course.gradeGoal !== undefined
-                ? `Currently ${course.currentGrade}% · goal ${course.gradeGoal}%${course.currentGrade >= course.gradeGoal ? ' · on track' : ` · ${course.gradeGoal - course.currentGrade} points to go`}`
+              {course.gradeGoal !== undefined && totalPointsPossibleAllCategories > 0
+                ? `${totalPointsEarnedSoFar} pts earned so far · goal ${course.gradeGoal} pts${totalPointsEarnedSoFar >= course.gradeGoal ? ' · on track' : ` · ${course.gradeGoal - totalPointsEarnedSoFar} pts to go`}`
                 : course.currentGrade !== undefined
                 ? `Currently ${course.currentGrade}%`
                 : course.gradeGoal !== undefined
-                ? `Goal ${course.gradeGoal}%`
+                ? `Goal ${course.gradeGoal} pts`
                 : ''}
               {course.credits !== undefined ? ` · ${course.credits} credit${course.credits === 1 ? '' : 's'}` : ''}
             </Text>
@@ -473,7 +488,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
                 onChangeText={setNewCategoryPoints}
                 placeholder="Total points, e.g. 60"
                 placeholderTextColor="#64748b"
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
                 className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
               />
               <View className="flex-row gap-2">
@@ -505,7 +520,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
           {gradeBreakdown ? (
             <View className="bg-indigo-600/10 rounded-xl p-3">
               <Text className="text-indigo-700 dark:text-indigo-300 text-base font-bold mb-1">
-                {gradeBreakdown.overallPercent}%{course.gradeGoal !== undefined ? ` · goal ${course.gradeGoal}%` : ''}
+                {gradeBreakdown.overallPercent}%{course.gradeGoal !== undefined ? ` · goal ${course.gradeGoal} pts` : ''}
               </Text>
               {gradeBreakdown.byCategory.filter((c) => c.gradedCount > 0).map((c) => (
                 <Text key={c.categoryId} className="text-indigo-600 dark:text-indigo-400 text-[11px]">

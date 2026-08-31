@@ -177,7 +177,7 @@ export default function RecoveryPlanCard({ compact = false }: { compact?: boolea
             onChangeText={setSleepInput}
             placeholder="Hours"
             placeholderTextColor="#64748b"
-            keyboardType="numeric"
+            keyboardType="decimal-pad"
             className="flex-1 bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-center"
           />
           <Pressable

@@ -142,7 +142,7 @@ export default function BodyProgressScreen() {
               onChangeText={setWeightInput}
               placeholder={`Log today's weight (${wUnit})`}
               placeholderTextColor="#64748b"
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
               onSubmitEditing={handleLogWeight}
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
@@ -156,7 +156,7 @@ export default function BodyProgressScreen() {
               onChangeText={setGoalInput}
               placeholder={`Goal weight (${wUnit})`}
               placeholderTextColor="#64748b"
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
               onSubmitEditing={handleSaveGoal}
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
@@ -190,7 +190,7 @@ export default function BodyProgressScreen() {
               onChangeText={setMeasurementInput}
               placeholder={`${MEASUREMENT_SITES.find((s) => s.id === selectedSite)?.label} (${lUnit})`}
               placeholderTextColor="#64748b"
-              keyboardType="numeric"
+              keyboardType="decimal-pad"
               onSubmitEditing={handleLogMeasurement}
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
