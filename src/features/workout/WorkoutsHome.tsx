@@ -32,7 +32,8 @@ function DayStrip({
       showsHorizontalScrollIndicator={false}
       data={days}
       keyExtractor={(d) => d.weekdayLabel}
-      contentContainerStyle={{ gap: 8, marginBottom: 16 }}
+      style={{ height: 84, flexGrow: 0, marginBottom: 16 }}
+      contentContainerStyle={{ gap: 8, alignItems: 'center' }}
       renderItem={({ item, index }) => {
         const isActive = index === activeIndex;
         return (
@@ -64,9 +65,9 @@ function firstSixTwelveTwentyFiveGroup(muscleGroups: string[]): SixTwelveTwentyF
 }
 
 function DayCard({
-  day, onStart, onLayout, programId, isResumable, resumingExerciseIds, isCheckingResume,
+  day, onStart, onBodyCheckin, onLayout, programId, isResumable, resumingExerciseIds, isCheckingResume,
 }: {
-  day: WeeklySplitDay; onStart: () => void; onLayout: (y: number) => void; programId?: string; isResumable?: boolean; resumingExerciseIds?: string[]; isCheckingResume?: boolean;
+  day: WeeklySplitDay; onStart: () => void; onBodyCheckin: () => void; onLayout: (y: number) => void; programId?: string; isResumable?: boolean; resumingExerciseIds?: string[]; isCheckingResume?: boolean;
 }) {
   const router = useRouter();
   const sixTwelveTwentyFiveGroup = firstSixTwelveTwentyFiveGroup(day.muscleGroups);
@@ -149,10 +150,7 @@ function DayCard({
 
       <View className="flex-row gap-2 mb-3">
         <Pressable
-          onPress={() => router?.push?.({
-            pathname: '/workout/checkin',
-            params: { exerciseIds: displayedExerciseIds.join(','), programId: programId || '', dayTitle: day.title },
-          })}
+          onPress={onBodyCheckin}
           className="flex-1 border-2 border-stone-300 rounded-xl py-3 items-center dark:border-slate-700"
         >
           <Text className="text-slate-700 text-xs dark:text-slate-300">🩺 Body Check-in</Text>
@@ -298,48 +296,48 @@ export default function WorkoutsHome() {
     }
   };
 
-  const handleStartDay = (day: WeeklySplitDay) => {
-    if (!day.exerciseIds.length) return;
-    // sessionKey deliberately uses the day's original structural exercise
-    // list, not the energy-adjusted one below — "which day this is"
-    // shouldn't change just because today's energy differs from
-    // whenever an in-progress draft for it was last saved.
+  /**
+   * Computes the actual exercise list for a day, whether resuming an
+   * in-progress draft or generating a fresh variety+energy-adjusted
+   * selection. Extracted from handleStartDay (below) so Body Check-in
+   * can share the exact same logic.
+   *
+   * Bug fix: Body Check-in previously used displayedExerciseIds
+   * directly on the DayCard — day.exerciseIds when not resuming, which
+   * is the day's raw static definition with no variety rotation and no
+   * energy-based trimming applied. "Start Day" and "Body Check-in"
+   * produced two different exercise sets for the exact same day,
+   * depending purely on which button was tapped.
+   */
+  const resolveEffectiveExerciseIds = (day: WeeklySplitDay): { exerciseIds: string[]; sessionStartedAt?: string } => {
     const sessionKey = buildSessionKey(activeProgram?.id, day.title);
     const matchingDraft = inProgressDraft?.sessionKey === sessionKey ? inProgressDraft : null;
 
-    let effectiveExerciseIds: string[];
     if (matchingDraft) {
-      // The draft's own saved exercise list — reflects the actual
-      // variety/energy adjustment and any mid-session swaps from when
-      // this session was started, not the day's base definition.
-      // Falls back to day.exerciseIds only if the draft is somehow
-      // missing its own list (shouldn't happen, but never send an
-      // empty list to the next screen).
-      effectiveExerciseIds = matchingDraft.sessionExerciseIds?.length ? matchingDraft.sessionExerciseIds : day.exerciseIds;
-    } else {
-      // A fresh session for this day gets a varied combo instead of the
-      // same static exercises every time — rotated across the full
-      // eligible pool for these muscle groups, seeded by today's date
-      // (stable through re-renders today, different next time) and
-      // excluding the last few combos actually used for this exact day.
-      const seed = Number(new Date().toISOString().slice(0, 10).replace(/-/g, ''));
-      const variedIds = getVariedExerciseSelection(
-        day.muscleGroups,
-        day.exerciseIds.length,
-        activeGym?.equipment,
-        recentDayExerciseHistory[day.title] || [],
-        seed
-      );
-      const baseIds = variedIds.length ? variedIds : day.exerciseIds;
-      const energyAdjustedIds = getEnergyAdjustedExerciseIds(baseIds, day.muscleGroups, energyLevel);
-      // Same priority signal interleaveByGroup already uses to bias
-      // which exercises get selected — applying it here too means "the
-      // muscles I said I care about" consistently shapes both what's
-      // chosen and the order it's trained in, not two separately
-      // configured ideas of priority.
-      effectiveExerciseIds = orderExercisesLikeATrainer(energyAdjustedIds, fitnessPreferences?.focusAreas);
-      recordUsedExerciseCombo(day.title, baseIds);
+      return {
+        exerciseIds: matchingDraft.sessionExerciseIds?.length ? matchingDraft.sessionExerciseIds : day.exerciseIds,
+        sessionStartedAt: matchingDraft.sessionStartedAt,
+      };
     }
+
+    const seed = Number(new Date().toISOString().slice(0, 10).replace(/-/g, ''));
+    const variedIds = getVariedExerciseSelection(
+      day.muscleGroups,
+      day.exerciseIds.length,
+      activeGym?.equipment,
+      recentDayExerciseHistory[day.title] || [],
+      seed
+    );
+    const baseIds = variedIds.length ? variedIds : day.exerciseIds;
+    const energyAdjustedIds = getEnergyAdjustedExerciseIds(baseIds, day.muscleGroups, energyLevel);
+    const effectiveExerciseIds = orderExercisesLikeATrainer(energyAdjustedIds, fitnessPreferences?.focusAreas);
+    recordUsedExerciseCombo(day.title, baseIds);
+    return { exerciseIds: effectiveExerciseIds };
+  };
+
+  const handleStartDay = (day: WeeklySplitDay) => {
+    if (!day.exerciseIds.length) return;
+    const { exerciseIds: effectiveExerciseIds, sessionStartedAt } = resolveEffectiveExerciseIds(day);
 
     router?.push?.({
       pathname: '/workout/day-session',
@@ -350,9 +348,18 @@ export default function WorkoutsHome() {
         // Reuse the original start time when resuming, so the elapsed
         // timer reflects when the workout actually began rather than
         // restarting from zero.
-        sessionStartedAt: matchingDraft?.sessionStartedAt || new Date().toISOString(),
+        sessionStartedAt: sessionStartedAt || new Date().toISOString(),
         energyLightened: isLowEnergyToday ? '1' : '',
       },
+    });
+  };
+
+  const handleBodyCheckin = (day: WeeklySplitDay) => {
+    if (!day.exerciseIds.length) return;
+    const { exerciseIds: effectiveExerciseIds } = resolveEffectiveExerciseIds(day);
+    router?.push?.({
+      pathname: '/workout/checkin',
+      params: { exerciseIds: effectiveExerciseIds.join(','), programId: activeProgram?.id || '', dayTitle: day.title },
     });
   };
 
@@ -426,6 +433,7 @@ export default function WorkoutsHome() {
                   key={day.weekdayLabel}
                   day={day}
                   onStart={() => handleStartDay(day)}
+                  onBodyCheckin={() => handleBodyCheckin(day)}
                   onLayout={(y) => { cardOffsets.current[index] = y; }}
                   programId={activeProgram?.id}
                   isResumable={!!matchingDraft}

@@ -135,6 +135,7 @@ export default function SchoolProgramSetupCard() {
           <TextInput
             value={localUniversity}
             onChangeText={setLocalUniversity}
+            onBlur={handleSaveProgram}
             placeholder="e.g. University of Michigan"
             placeholderTextColor="#64748b"
             className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-4"
@@ -147,7 +148,7 @@ export default function SchoolProgramSetupCard() {
                 {COMMON_PROGRAMS.map((p) => (
                   <Pressable
                     key={p}
-                    onPress={() => setLocalProgram(p)}
+                    onPress={() => { setLocalProgram(p); setSchoolSetup({ programName: p, universityName: localUniversity }); }}
                     className={localProgram === p ? 'bg-emerald-400/10 border-2 border-emerald-400 rounded-full py-1.5 px-3' : 'bg-stone-100 dark:bg-slate-800 border-2 border-transparent rounded-full py-1.5 px-3'}
                   >
                     <Text className={localProgram === p ? 'text-emerald-700 dark:text-emerald-400 text-xs' : 'text-slate-700 dark:text-slate-300 text-xs'}>{p}</Text>
@@ -162,6 +163,7 @@ export default function SchoolProgramSetupCard() {
             <TextInput
               value={localProgram}
               onChangeText={setLocalProgram}
+              onBlur={handleSaveProgram}
               placeholder="Type your program or major"
               placeholderTextColor="#64748b"
               className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-4"
@@ -196,7 +198,7 @@ export default function SchoolProgramSetupCard() {
         </>
       )}
 
-      <Pressable onPress={() => setExpanded(false)} className="py-2 mt-1">
+      <Pressable onPress={() => { if (!isYounger) handleSaveProgram(); setExpanded(false); }} className="py-2 mt-1">
         <Text className="text-slate-500 text-center text-xs">Done</Text>
       </Pressable>
     </View>

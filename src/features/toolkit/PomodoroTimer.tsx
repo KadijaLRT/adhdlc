@@ -14,6 +14,7 @@ export default function PomodoroTimer() {
   const [phase, setPhase] = useState<'work' | 'break'>('work');
   const [secondsLeft, setSecondsLeft] = useState(MODES['25/5'].workMin * 60);
   const [running, setRunning] = useState(false);
+  const [justSwitched, setJustSwitched] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
@@ -23,6 +24,15 @@ export default function PomodoroTimer() {
         if (s <= 1) {
           const nextPhase = phase === 'work' ? 'break' : 'work';
           setPhase(nextPhase);
+          // Bug fix: reaching 0 used to switch work<->break completely
+          // silently — no sound, no vibration, no visual change beyond
+          // a tiny label swap easy to miss if the phone isn't being
+          // looked at right then. Someone using this to manage
+          // attention could come back 20 minutes later having been "on
+          // break" the whole time with no idea it happened. A brief,
+          // impossible-to-miss banner now marks every transition.
+          setJustSwitched(true);
+          setTimeout(() => setJustSwitched(false), 4000);
           const current = MODES[mode];
           return (nextPhase === 'work' ? current.workMin : current.breakMin) * 60;
         }
@@ -37,6 +47,7 @@ export default function PomodoroTimer() {
     setPhase('work');
     setSecondsLeft(MODES[m].workMin * 60);
     setRunning(false);
+    setJustSwitched(false);
   };
 
   const minutes = Math.floor(secondsLeft / 60);
@@ -45,6 +56,15 @@ export default function PomodoroTimer() {
   return (
     <View className="bg-white dark:bg-slate-900 rounded-2xl p-4">
       <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-3">⏱️ Pomodoro Timer</Text>
+
+      {justSwitched && (
+        <View className={phase === 'break' ? 'bg-emerald-400/20 border-2 border-emerald-400 rounded-xl p-3 mb-3' : 'bg-indigo-400/20 border-2 border-indigo-400 rounded-xl p-3 mb-3'}>
+          <Text className={phase === 'break' ? 'text-emerald-700 dark:text-emerald-400 text-sm font-semibold text-center' : 'text-indigo-700 dark:text-indigo-300 text-sm font-semibold text-center'}>
+            {phase === 'break' ? '☕ Break time' : '🎯 Back to focus'}
+          </Text>
+        </View>
+      )}
+
       <View className="flex-row gap-2 mb-4">
         {MODE_KEYS.map((m) => (
           <Pressable

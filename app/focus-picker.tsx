@@ -17,7 +17,10 @@ export default function FocusPickerScreen() {
 
   const handleStart = () => {
     const task = incomplete.find((t) => t.id === selectedTaskId);
-    router?.push?.({ pathname: '/focus/session', params: { taskTitle: task?.title || '', durationMinutes: String(duration) } });
+    router?.push?.({
+      pathname: '/focus/session',
+      params: { taskId: task?.id || '', taskTitle: task?.title || '', durationMinutes: String(duration) },
+    });
   };
 
   return (

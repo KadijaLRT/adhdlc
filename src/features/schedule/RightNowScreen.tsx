@@ -28,7 +28,16 @@ export default function RightNowScreen() {
   // Same fix as ScheduleScreen: .find() alone walks storage order, not
   // chronological order, so this could show the wrong "current" item.
   const sortedTimedItems = [...todaysItems].filter((i) => i.time).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
-  const current = sortedTimedItems.find((i) => !i.isDone && (i.time || '') >= now) || todaysItems.find((i) => !i.isDone);
+  // Bug fix: this used to only look for the next item with time >=
+  // now, which means an earlier item still sitting undone (e.g. a
+  // 1:00pm task, not done, and it's 2:00pm) was silently skipped in
+  // favor of whatever's coming up next (a 3:00pm item) — a "Right Now"
+  // screen showing something that isn't due yet while something
+  // overdue goes unmentioned. Now the earliest overdue-and-undone item
+  // takes priority; only falls through to "what's coming up next" once
+  // nothing is actually overdue.
+  const overdue = sortedTimedItems.find((i) => !i.isDone && (i.time || '') < now);
+  const current = overdue || sortedTimedItems.find((i) => !i.isDone && (i.time || '') >= now) || todaysItems.find((i) => !i.isDone);
 
   const handleComplete = () => {
     if (current) toggleScheduleItemDone(current.id);

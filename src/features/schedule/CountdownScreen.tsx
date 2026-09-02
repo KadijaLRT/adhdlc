@@ -52,6 +52,16 @@ export default function CountdownScreen() {
 
   const handleAdd = async () => {
     if (!label.trim() || !dateInput.trim()) return;
+    // Bug fix: this only checked isNaN(parsed.getTime()) — but
+    // new Date() accepts loose formats like "9/6/2026" or "Sept 6"
+    // and parses them "successfully" into a plausible-but-wrong date
+    // with no error surfaced, silently creating a countdown to the
+    // wrong day (or a nonsensical one). Only the app's own YYYY-MM-DD
+    // format both round-trips correctly through parseLocalDate and
+    // means what it looks like it means, so it's now the only format
+    // accepted — anything else is rejected rather than guessed at.
+    const isStrictIsoDate = /^\d{4}-\d{2}-\d{2}$/.test(dateInput.trim());
+    if (!isStrictIsoDate) return;
     const parsed = parseLocalDate(dateInput.trim());
     if (isNaN(parsed.getTime())) return;
     await addCountdownEvent({
@@ -66,6 +76,8 @@ export default function CountdownScreen() {
     setIsRecurringYearly(false);
     setShowAddForm(false);
   };
+
+  const dateHasInvalidFormat = dateInput.trim().length > 0 && !/^\d{4}-\d{2}-\d{2}$/.test(dateInput.trim());
 
   return (
     <SafeAreaView className="flex-1 bg-stone-50 dark:bg-slate-950">
@@ -100,8 +112,11 @@ export default function CountdownScreen() {
                 onChangeText={setDateInput}
                 placeholder="Date (e.g. 2026-09-06)"
                 placeholderTextColor="#64748b"
-                className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3"
+                className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-1"
               />
+              {dateHasInvalidFormat && (
+                <Text className="text-red-500 text-xs mb-3">Use YYYY-MM-DD, like 2026-09-06.</Text>
+              )}
               <Pressable onPress={() => setIsRecurringYearly(!isRecurringYearly)} className="flex-row items-center gap-2 mb-4">
                 <View className={isRecurringYearly ? 'w-5 h-5 rounded-md bg-emerald-500 items-center justify-center' : 'w-5 h-5 rounded-md border-2 border-stone-300 dark:border-slate-700'}>
                   {isRecurringYearly && <Text className="text-white text-xs">✓</Text>}
@@ -109,7 +124,7 @@ export default function CountdownScreen() {
                 <Text className="text-slate-600 dark:text-slate-300 text-sm">Repeats every year (birthdays, holidays, anniversaries)</Text>
               </Pressable>
               <View className="flex-row gap-2">
-                <Pressable onPress={handleAdd} disabled={!label.trim() || !dateInput.trim()} className={label.trim() && dateInput.trim() ? 'flex-1 bg-emerald-500 rounded-xl py-2.5 items-center active:bg-emerald-400' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2.5 items-center'}>
+                <Pressable onPress={handleAdd} disabled={!label.trim() || !dateInput.trim() || dateHasInvalidFormat} className={label.trim() && dateInput.trim() && !dateHasInvalidFormat ? 'flex-1 bg-emerald-500 rounded-xl py-2.5 items-center active:bg-emerald-400' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2.5 items-center'}>
                   <Text className="text-white text-sm font-semibold">Add</Text>
                 </Pressable>
                 <Pressable onPress={() => setShowAddForm(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center">

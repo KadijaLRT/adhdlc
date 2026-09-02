@@ -93,12 +93,47 @@ export default function ScheduleScreen() {
   // by time first so "next up" is genuinely the next thing chronologically,
   // not just whichever matching item happens to be stored first.
   const sortedTimedItems = [...timedItems].sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  // Bug fix: this used to only look for the next item at or after the
+  // current time, so an earlier undone item (e.g. a 1:00pm task, still
+  // not done, at 2:00pm now) was silently skipped in favor of whatever
+  // was coming up next — "Next up" pointed at something later while an
+  // overdue item went unmentioned. Now the earliest overdue-and-undone
+  // item takes priority.
+  const overdueItem = isToday ? sortedTimedItems.find((i) => !i.isDone && (i.time || '') < now) : null;
   const nextUp = isToday
-    ? (sortedTimedItems.find((i) => !i.isDone && (i.time || '') >= now) || itemsForSelectedDay.find((i) => !i.isDone))
+    ? (overdueItem || sortedTimedItems.find((i) => !i.isDone && (i.time || '') >= now) || itemsForSelectedDay.find((i) => !i.isDone))
     : null;
+
+  // Bug fix: this accepted any free text with zero validation or
+  // feedback — typing "9am" or "930" silently landed in the Anytime
+  // bucket instead of the specific time slot the person clearly
+  // intended, since bucketForTime's Number(time.split(':')[0]) just
+  // falls back to 'anytime' on anything that doesn't parse. No error,
+  // no correction — the time was just quietly dropped. This normalizes
+  // as the person types (strips non-digits, inserts the colon) and
+  // blocks Add outright on a genuinely invalid time instead of saving
+  // something that silently didn't do what it looked like it would.
+  const handleTimeChange = (raw: string) => {
+    const digits = raw.replace(/[^0-9]/g, '').slice(0, 4);
+    if (digits.length <= 2) {
+      setNewTime(digits);
+    } else {
+      setNewTime(`${digits.slice(0, 2)}:${digits.slice(2)}`);
+    }
+  };
+
+  const isValidTime = (value: string): boolean => {
+    if (!value) return true; // blank is valid — means "Anytime", not an error
+    const match = value.match(/^(\d{1,2}):(\d{2})$/);
+    if (!match) return false;
+    const hour = Number(match[1]);
+    const minute = Number(match[2]);
+    return hour >= 0 && hour <= 23 && minute >= 0 && minute <= 59;
+  };
 
   const handleAdd = () => {
     if (!newLabel.trim()) return;
+    if (!isValidTime(newTime.trim())) return;
     addScheduleItem({ id: generateId('sched'), label: newLabel.trim(), time: newTime.trim() || undefined, date: selectedDate, refKind: 'freeform' });
     setNewLabel('');
     setNewTime('');
@@ -230,7 +265,7 @@ export default function ScheduleScreen() {
           <>
             {nextUp && (
               <Pressable onPress={() => router?.push?.('/schedule/right-now')} className="bg-indigo-600 rounded-2xl p-5 mb-4 active:bg-indigo-500">
-                <Text className="text-indigo-100 text-xs uppercase tracking-wider mb-1">Next up{nextUp.time ? ` · ${nextUp.time}` : ''}</Text>
+                <Text className="text-indigo-100 text-xs uppercase tracking-wider mb-1">{overdueItem ? 'Overdue' : 'Next up'}{nextUp.time ? ` · ${nextUp.time}` : ''}</Text>
                 <Text className="text-white text-lg font-semibold">{nextUp.label}</Text>
               </Pressable>
             )}
@@ -266,9 +301,11 @@ export default function ScheduleScreen() {
               <View className="flex-row gap-2">
                 <TextInput
                   value={newTime}
-                  onChangeText={setNewTime}
+                  onChangeText={handleTimeChange}
                   placeholder="HH:MM"
                   placeholderTextColor="#64748b"
+                  keyboardType="numeric"
+                  maxLength={5}
                   className="w-20 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 text-center dark:text-slate-100 dark:bg-slate-800"
                 />
                 <TextInput

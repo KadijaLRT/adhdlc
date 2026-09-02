@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, FlatList, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAppStore, selectTasks, selectEnergyLevel, type TaskCategory, type TaskPriority, type MotivatorTag } from '@/store/index';
+import { useAppStore, selectTasks, selectEnergyLevel, type TaskCategory, type TaskPriority, type MotivatorTag, type EnergyLevel } from '@/store/index';
 import { MOTIVATOR_OPTIONS } from '@/content/toolkitContent';
 import { suggestNextTask } from './suggestNextTask';
 import { Heading } from '@/shared/components/Heading';
@@ -11,11 +11,10 @@ import { useSafeTopInset } from '@/shared/hooks/useSafeTopInset';
 const CATEGORY_OPTIONS: { id: TaskCategory; label: string; emoji: string }[] = [
   { id: 'general', label: 'All', emoji: '📋' },
   { id: 'home', label: 'Home', emoji: '🏠' },
-  { id: 'work', label: 'Work', emoji: '💼' },
   { id: 'school', label: 'School', emoji: '📚' },
   { id: 'health', label: 'Health', emoji: '❤️' },
   { id: 'errands', label: 'Errands', emoji: '🛒' },
-  { id: 'adhd', label: 'ADHD', emoji: '🧠' },
+  { id: 'car', label: 'Car', emoji: '🚗' },
 ];
 
 const PRIORITY_DOT: Record<TaskPriority, string> = {
@@ -82,6 +81,7 @@ export default function TasksScreen() {
 
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('nice');
+  const [newTaskEnergy, setNewTaskEnergy] = useState<EnergyLevel>('medium');
   const [selectedCategory, setSelectedCategory] = useState<TaskCategory>('general');
   const [selectedMotivator, setSelectedMotivator] = useState<MotivatorTag | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'priority' | 'matrix'>('list');
@@ -89,10 +89,41 @@ export default function TasksScreen() {
 
   const suggested = useMemo(() => suggestNextTask(tasks, energyLevel), [tasks, energyLevel]);
 
+  // Bug fix: "Today's Focus" used to always suggest from the full task
+  // list, completely ignoring the active category/motivator filter —
+  // filtering to "School" could still surface a Home task as the
+  // focus, which defeats the point of filtering. Now the focus card
+  // only shows when the suggested task actually matches the current
+  // filter; otherwise it's suppressed rather than shown out of context.
+  const suggestedMatchesFilter = useMemo(() => {
+    if (!suggested) return false;
+    if (selectedCategory !== 'general' && (suggested.category || 'general') !== selectedCategory) return false;
+    if (selectedMotivator && !(suggested.motivators || []).includes(selectedMotivator)) return false;
+    return true;
+  }, [suggested, selectedCategory, selectedMotivator]);
+  const visibleSuggestion = suggestedMatchesFilter ? suggested : null;
+
   const anyMotivatorsTagged = useMemo(() => (tasks || []).some((t) => (t.motivators?.length || 0) > 0), [tasks]);
 
+  // Bug fix: the motivator filter row only renders while
+  // anyMotivatorsTagged is true — if the last task carrying the
+  // currently-selected motivator got completed, edited, or deleted,
+  // the row (and the visible chip for it) disappears, but
+  // selectedMotivator itself was never cleared. That left the list
+  // silently filtered against a motivator with no visible active
+  // filter and no way to clear it short of reloading the app.
+  useEffect(() => {
+    if (selectedMotivator && !anyMotivatorsTagged) setSelectedMotivator(null);
+  }, [anyMotivatorsTagged, selectedMotivator]);
+
   const filteredTasks = useMemo(() => {
-    const withoutSuggested = (tasks || []).filter((t) => t.id !== suggested?.id);
+    // Bug fix: this used to always exclude the globally-suggested task
+    // from the list, even when it wasn't actually being shown as the
+    // "Today's Focus" card (because it didn't match the active
+    // filter) — a task could vanish from view entirely, neither shown
+    // as the focus nor in the list. Now it's only excluded from the
+    // list when it's genuinely the thing occupying the focus card.
+    const withoutSuggested = (tasks || []).filter((t) => t.id !== visibleSuggestion?.id);
     const byCategory = selectedCategory === 'general'
       ? withoutSuggested
       : withoutSuggested.filter((t) => (t.category || 'general') === selectedCategory);
@@ -102,7 +133,7 @@ export default function TasksScreen() {
     const incomplete = byMotivator.filter((t) => !t.isComplete);
     const complete = byMotivator.filter((t) => t.isComplete);
     return [...incomplete, ...complete];
-  }, [tasks, selectedCategory, selectedMotivator, suggested]);
+  }, [tasks, selectedCategory, selectedMotivator, visibleSuggestion]);
 
   const incompleteFiltered = useMemo(() => filteredTasks.filter((t) => !t.isComplete), [filteredTasks]);
 
@@ -142,13 +173,36 @@ export default function TasksScreen() {
   const completedCount = (tasks || []).filter((t) => t.isComplete).length;
   const progressPercent = totalCount ? Math.round((completedCount / totalCount) * 100) : 0;
 
+  // Bug fix: the empty state used to only ask "does a suggestion
+  // exist," completely ignoring whether a category/motivator filter
+  // was active — filtering to "Car" with zero car tasks showed "Add
+  // one small thing above" even when 20 tasks existed in other
+  // categories, which is actively misleading. Now it distinguishes
+  // "nothing anywhere" from "nothing matches your current filter."
+  const hasAnyFilterActive = selectedCategory !== 'general' || !!selectedMotivator;
+  const emptyStateMessage = totalCount === 0
+    ? 'Nothing here yet. Add one small thing above.'
+    : hasAnyFilterActive
+    ? 'Nothing matches this filter — try a different category or tap it again to clear it.'
+    : suggested
+    ? 'Nothing else here right now.'
+    : 'Nothing here yet. Add one small thing above.';
+
   const handleAdd = async () => {
     if (!newTaskTitle?.trim()) return;
     await addTask({
       id: generateId('task'),
       title: newTaskTitle.trim(),
       isComplete: false,
-      energyRequired: energyLevel,
+      // Bug fix: this used to silently stamp whatever the person's
+      // *current* energy level happened to be as the task's permanent
+      // energyRequired — a 2-minute errand added on a high-energy
+      // afternoon got tagged "high energy," then wrongly deprioritized
+      // by suggestNextTask's energy-matching on every future low-energy
+      // day, for no reason connected to the task itself. Now it's an
+      // explicit choice with a neutral 'medium' default, matching how
+      // priority already works.
+      energyRequired: newTaskEnergy,
       priority: newTaskPriority,
       category: selectedCategory === 'general' ? 'general' : selectedCategory,
       createdAt: new Date().toISOString(),
@@ -156,6 +210,7 @@ export default function TasksScreen() {
     });
     setNewTaskTitle('');
     setNewTaskPriority('nice');
+    setNewTaskEnergy('medium');
   };
 
   return (
@@ -173,18 +228,18 @@ export default function TasksScreen() {
         </View>
       )}
 
-      {suggested && (
+      {visibleSuggestion && (
         <Pressable
-          onPress={() => router?.push?.(`/task/${suggested.id}`)}
+          onPress={() => router?.push?.(`/task/${visibleSuggestion.id}`)}
           className="bg-indigo-600/10 border-2 border-indigo-500 rounded-2xl p-4 mb-4"
         >
           <Text className="text-indigo-700 text-xs uppercase tracking-wider mb-1 dark:text-indigo-300">Today's focus</Text>
           <Text className="text-slate-900 text-lg font-medium mb-1 dark:text-slate-100">
-            {PRIORITY_DOT[suggested.priority || 'nice']} {suggested.title}
+            {PRIORITY_DOT[visibleSuggestion.priority || 'nice']} {visibleSuggestion.title}
           </Text>
-          {(suggested.estimatedMinutes || suggested.realMinutes) && (
+          {(visibleSuggestion.estimatedMinutes || visibleSuggestion.realMinutes) && (
             <Text className="text-slate-500 text-xs">
-              About {suggested.realMinutes || suggested.estimatedMinutes} min
+              About {visibleSuggestion.realMinutes || visibleSuggestion.estimatedMinutes} min
             </Text>
           )}
         </Pressable>
@@ -204,29 +259,60 @@ export default function TasksScreen() {
         </Pressable>
       </View>
 
-      {newTaskTitle.trim().length > 0 && (
-        <View className="flex-row gap-2 mb-4">
-          {(['nice', 'important', 'critical'] as TaskPriority[]).map((p) => {
-            const isActive = newTaskPriority === p;
-            return (
-              <Pressable
-                key={p}
-                onPress={() => setNewTaskPriority(p)}
-                className={isActive ? 'bg-stone-100 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white border-2 border-transparent rounded-full py-1.5 px-3'}
-              >
-                <Text className="text-slate-700 text-xs dark:text-slate-300">{PRIORITY_DOT[p]} {p}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
-      )}
+      {/*
+        Bug fix: this whole row used to only mount once the person had
+        typed a character, so a fresh block of 3 buttons popped in and
+        pushed everything below it down mid-keystroke — jarring layout
+        shift on a small screen. It's now always present so the layout
+        is stable from the first character. It also fixes a second,
+        more important bug: new tasks silently inherited whatever
+        category filter chip happened to be selected (e.g. filtering to
+        "Car" then adding an unrelated task would silently tag it
+        "car"), with zero visible indication. This line makes that
+        assignment visible and gives the person a way to catch it
+        before saving, the same way priority already was visible.
+      */}
+      <Text className="text-slate-400 text-[11px] mb-2">
+        Adding as <Text className="font-semibold">{PRIORITY_DOT[newTaskPriority]} {newTaskPriority}</Text>
+        {selectedCategory !== 'general' && (
+          <> · <Text className="font-semibold">{CATEGORY_OPTIONS.find((c) => c.id === selectedCategory)?.emoji} {CATEGORY_OPTIONS.find((c) => c.id === selectedCategory)?.label}</Text></>
+        )}
+      </Text>
+      <View className="flex-row gap-2 mb-4 flex-wrap">
+        {(['nice', 'important', 'critical'] as TaskPriority[]).map((p) => {
+          const isActive = newTaskPriority === p;
+          return (
+            <Pressable
+              key={p}
+              onPress={() => setNewTaskPriority(p)}
+              className={isActive ? 'bg-stone-100 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white border-2 border-transparent rounded-full py-1.5 px-3'}
+            >
+              <Text className="text-slate-700 text-xs dark:text-slate-300">{PRIORITY_DOT[p]} {p}</Text>
+            </Pressable>
+          );
+        })}
+        {(['low', 'medium', 'high'] as EnergyLevel[]).map((e) => {
+          const isActive = newTaskEnergy === e;
+          const label = e === 'low' ? '🔋 low energy' : e === 'high' ? '🔋 high energy' : '🔋 medium energy';
+          return (
+            <Pressable
+              key={e}
+              onPress={() => setNewTaskEnergy(e)}
+              className={isActive ? 'bg-stone-100 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white border-2 border-transparent rounded-full py-1.5 px-3'}
+            >
+              <Text className="text-slate-700 text-xs dark:text-slate-300">{label}</Text>
+            </Pressable>
+          );
+        })}
+      </View>
 
       <FlatList
         horizontal
         showsHorizontalScrollIndicator={false}
         data={CATEGORY_OPTIONS}
         keyExtractor={(item) => item.id}
-        contentContainerStyle={{ gap: 8, marginBottom: 12 }}
+        style={{ height: 40, flexGrow: 0, marginBottom: 12 }}
+        contentContainerStyle={{ gap: 8, alignItems: 'center' }}
         renderItem={({ item }) => {
           const isActive = selectedCategory === item.id;
           return (
@@ -246,7 +332,8 @@ export default function TasksScreen() {
           showsHorizontalScrollIndicator={false}
           data={MOTIVATOR_OPTIONS}
           keyExtractor={(item) => item.id}
-          contentContainerStyle={{ gap: 8, marginBottom: 12 }}
+          style={{ height: 40, flexGrow: 0, marginBottom: 12 }}
+          contentContainerStyle={{ gap: 8, alignItems: 'center' }}
           renderItem={({ item }) => {
             const isActive = selectedMotivator === item.id;
             return (
@@ -286,9 +373,7 @@ export default function TasksScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={{ paddingBottom: 100, gap: 10 }}
           ListEmptyComponent={
-            <Text className="text-slate-500 text-center mt-10">
-              {suggested ? 'Nothing else here right now.' : 'Nothing here yet. Add one small thing above.'}
-            </Text>
+            <Text className="text-slate-500 text-center mt-10">{emptyStateMessage}</Text>
           }
           renderItem={({ item }) => (
             <TaskRow task={item} onPress={() => router?.push?.(`/task/${item.id}`)} onToggle={() => toggleTaskComplete(item.id)} />
@@ -299,7 +384,7 @@ export default function TasksScreen() {
       {viewMode === 'priority' && (
         <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
           {incompleteFiltered.length === 0 && (
-            <Text className="text-slate-500 text-center mt-10">Nothing here yet. Add one small thing above.</Text>
+            <Text className="text-slate-500 text-center mt-10">{emptyStateMessage}</Text>
           )}
           <View className="gap-4">
             {PRIORITY_ORDER.map((priority) => {
@@ -330,7 +415,7 @@ export default function TasksScreen() {
       {viewMode === 'matrix' && (
         <ScrollView contentContainerStyle={{ paddingBottom: 100 }}>
           {incompleteFiltered.length === 0 ? (
-            <Text className="text-slate-500 text-center mt-10">Nothing here yet. Add one small thing above.</Text>
+            <Text className="text-slate-500 text-center mt-10">{emptyStateMessage}</Text>
           ) : (
             <View className="gap-4">
               {[

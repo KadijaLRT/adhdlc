@@ -35,6 +35,19 @@ export const createStreakSlice: StateCreator<
 
   recordRoutineCompletion: async (routineId) => {
     const existing = (get().streaks || []).find((s) => s.routineId === routineId);
+    // Bug fix: this used to unconditionally increment count and award
+    // XP every time it was called — RoutinesScreen's auto-complete
+    // path (checking the last remaining step) and RoutineRunner's
+    // finish-the-last-step path could both call this for a routine
+    // already completed today (e.g. unchecking and rechecking the
+    // final step, or finishing via the runner after already
+    // completing it through the checklist). Same category of bug the
+    // task-completion code already guards against via rewardedAt —
+    // this is the routine-streak equivalent: already-completed-today
+    // is a no-op, not a second reward.
+    const alreadyCompletedToday = existing?.lastCompletedDate === today();
+    if (alreadyCompletedToday) return { isRecovery: false };
+
     const isRecovery = !!(existing?.lastCompletedDate && daysBetween(existing.lastCompletedDate, today()) >= 2);
 
     const next = existing

@@ -26,6 +26,7 @@ export default function RoutinesScreen() {
   const [showCustomForm, setShowCustomForm] = useState(false);
   const [newTitle, setNewTitle] = useState('');
   const [newEmoji, setNewEmoji] = useState(EMOJI_OPTIONS[0] || '⭐');
+  const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(null);
 
   const handleAddTemplate = async (template: (typeof ROUTINE_TEMPLATES)[number]) => {
     await addRoutine({
@@ -137,10 +138,26 @@ export default function RoutinesScreen() {
               <View key={routine.id} className="bg-white rounded-2xl p-4 dark:bg-slate-900">
                 <View className="flex-row items-center justify-between mb-2">
                   <Text className="text-slate-900 font-medium dark:text-slate-100">{routine.emoji} {routine.title}</Text>
-                  <Pressable onPress={() => removeRoutine(routine.id)}>
-                    <Text className="text-slate-600 text-xs dark:text-slate-300">Remove</Text>
-                  </Pressable>
+                  {confirmingRemoveId === routine.id ? (
+                    <View className="flex-row items-center gap-2">
+                      <Pressable onPress={() => { removeRoutine(routine.id); setConfirmingRemoveId(null); }}>
+                        <Text className="text-red-500 text-xs font-semibold">Remove</Text>
+                      </Pressable>
+                      <Pressable onPress={() => setConfirmingRemoveId(null)}>
+                        <Text className="text-slate-400 text-xs">Cancel</Text>
+                      </Pressable>
+                    </View>
+                  ) : (
+                    <Pressable onPress={() => setConfirmingRemoveId(routine.id)}>
+                      <Text className="text-slate-600 text-xs dark:text-slate-300">Remove</Text>
+                    </Pressable>
+                  )}
                 </View>
+                {confirmingRemoveId === routine.id && (streak?.count || 0) > 0 && (
+                  <Text className="text-amber-600 dark:text-amber-400 text-xs mb-2">
+                    {streak?.count} completion{streak?.count === 1 ? '' : 's'} tracked for this routine will be lost.
+                  </Text>
+                )}
                 <Text className="text-slate-500 text-xs mb-3">
                   {streak?.count || 0} completions{streak?.isFrozen ? ' · frozen today' : ''}
                   {streak ? ` · ${streak.freezesAvailable} freeze${streak.freezesAvailable === 1 ? '' : 's'} left` : ''}

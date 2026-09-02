@@ -105,6 +105,7 @@ export default function WorkoutDaySession({
   const [showAddExercise, setShowAddExercise] = useState(false);
   const [exerciseSearch, setExerciseSearch] = useState('');
   const [swappingId, setSwappingId] = useState<string | null>(null);
+  const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(null);
   const [showWarmup, setShowWarmup] = useState(false);
 
   // Derived from the session's own exercises rather than passed in as a
@@ -288,6 +289,24 @@ export default function WorkoutDaySession({
       return next;
     });
     if (expandedId === exerciseId) setExpandedId(null);
+    setConfirmingRemoveId(null);
+  };
+
+  // Bug fix: the small ✕ next to an exercise instantly deleted it and
+  // every logged set for it today — one tap, no undo, sitting right
+  // next to three other tiny icons (▲ ▼ 🔄) it's easy to fat-finger.
+  // Now it only interrupts with a confirm when there's actually
+  // something to lose (at least one set already checked off); removing
+  // an untouched exercise stays instant, since nothing is at risk.
+  const requestRemoveExercise = (exerciseId: string) => {
+    const rows = rowsByExercise[exerciseId] || [];
+    const hasLoggedSets = rows.some((r) => r.done);
+    if (hasLoggedSets) {
+      setSwappingId(null);
+      setConfirmingRemoveId(exerciseId);
+    } else {
+      handleRemoveExercise(exerciseId);
+    }
   };
 
   const handleMoveExercise = (exerciseId: string, direction: 'up' | 'down') => {
@@ -533,7 +552,7 @@ export default function WorkoutDaySession({
                   <Pressable onPress={() => { setSwappingId(exerciseId); setShowAddExercise(false); setExerciseSearch(''); }} className="px-2">
                     <Text className="text-slate-400 text-xs">🔄</Text>
                   </Pressable>
-                  <Pressable onPress={() => handleRemoveExercise(exerciseId)} className="px-2">
+                  <Pressable onPress={() => requestRemoveExercise(exerciseId)} className="px-2">
                     <Text className="text-slate-400 text-xs">✕</Text>
                   </Pressable>
                   <Text className="text-slate-400 text-xs">{isExpanded ? '▲' : '▼'}</Text>
@@ -570,7 +589,26 @@ export default function WorkoutDaySession({
                   </View>
                 )}
 
-                {isExpanded && swappingId !== exerciseId && (
+                {confirmingRemoveId === exerciseId && (
+                  <View className="px-4 pb-4">
+                    <View className="bg-red-400/10 border border-red-400/40 rounded-xl p-3">
+                      <Text className="text-red-500 text-xs font-semibold mb-1">Remove {exercise.name}?</Text>
+                      <Text className="text-slate-500 text-xs mb-3">
+                        {rowsByExercise[exerciseId]?.filter((r) => r.done).length || 0} logged set{(rowsByExercise[exerciseId]?.filter((r) => r.done).length || 0) === 1 ? '' : 's'} for this exercise today will be removed too.
+                      </Text>
+                      <View className="flex-row gap-2">
+                        <Pressable onPress={() => setConfirmingRemoveId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center">
+                          <Text className="text-slate-600 dark:text-slate-300 text-xs font-semibold">Cancel</Text>
+                        </Pressable>
+                        <Pressable onPress={() => handleRemoveExercise(exerciseId)} className="flex-1 bg-red-500 rounded-lg py-2 items-center active:bg-red-400">
+                          <Text className="text-white text-xs font-semibold">Remove</Text>
+                        </Pressable>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {isExpanded && swappingId !== exerciseId && confirmingRemoveId !== exerciseId && (
                   <View className="px-4 pb-4">
                     {!adhdFocusModeEnabled && <Text className="text-slate-500 text-xs mb-3">{exercise.cues}</Text>}
 
@@ -616,7 +654,7 @@ export default function WorkoutDaySession({
                             <TextInput
                               value={row.reps}
                               onChangeText={(v) => updateRow(exerciseId, index, { reps: v })}
-                              keyboardType="decimal-pad"
+                              keyboardType="numeric"
                               editable={!row.done}
                               className={row.done ? 'w-full bg-stone-100 dark:bg-slate-800 text-slate-400 text-center rounded-lg py-2' : 'w-full bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-center rounded-lg py-2'}
                             />

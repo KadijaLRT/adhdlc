@@ -43,7 +43,8 @@ export default function ExerciseBrowser() {
           showsHorizontalScrollIndicator={false}
           data={['all', ...groups]}
           keyExtractor={(item) => item}
-          contentContainerStyle={{ gap: 8, marginBottom: 12 }}
+          style={{ height: 40, flexGrow: 0, marginBottom: 12 }}
+          contentContainerStyle={{ gap: 8, alignItems: 'center' }}
           renderItem={({ item }) => {
             const isActive = item === 'all' ? selectedGroup === null : selectedGroup === item;
             return (

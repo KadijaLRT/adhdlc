@@ -6,7 +6,7 @@ import { Heading } from '@/shared/components/Heading';
 import { parseLocalDate } from '@/shared/formatDate';
 import { generateId } from '@/shared/generateId';
 import { calculateGPA } from './gpaCalculations';
-import { getCourseStatus, type CourseStatus } from '@/store/slices/schoolSlice';
+import { getCourseStatus, type CourseStatus, type Course } from '@/store/slices/schoolSlice';
 import SchoolProgramSetupCard from './SchoolProgramSetupCard';
 
 const COURSE_EMOJIS = ['📖', '🧮', '🧪', '🎨', '🌍', '💻'];
@@ -66,6 +66,7 @@ export default function SchoolScreen() {
   const [newCourseName, setNewCourseName] = useState('');
   const [newCourseEmoji, setNewCourseEmoji] = useState(COURSE_EMOJIS[0] || '📘');
   const [creditsGoalInput, setCreditsGoalInput] = useState('');
+  const [confirmingFailId, setConfirmingFailId] = useState<string | null>(null);
 
   const suggested = useMemo(() => suggestNextAssignment(assignments), [assignments]);
   const gpa = useMemo(() => calculateGPA(courses), [courses]);
@@ -85,6 +86,25 @@ export default function SchoolScreen() {
     if (!newCourseName.trim()) return;
     await addCourse({ id: generateId('course'), name: newCourseName.trim(), emoji: newCourseEmoji });
     setNewCourseName('');
+  };
+
+  // Bug fix: tapping the small status circle instantly cycled
+  // in_progress -> completed -> failed -> retaking with zero
+  // confirmation on any step — one mis-tap silently marked a course
+  // "Failed," which is both emotionally loaded to get wrong by
+  // accident and has a real effect (that course's credits stop
+  // counting toward degree progress in either the completed or
+  // in-progress bucket). Only the transition INTO "failed" now
+  // confirms; the other transitions (which are reversible with no
+  // real stakes either way) stay a free single tap.
+  const handleCycleStatus = (course: Course) => {
+    const status = getCourseStatus(course);
+    const next = nextCourseStatus(status);
+    if (next === 'failed') {
+      setConfirmingFailId(course.id);
+    } else {
+      updateCourse(course.id, { status: next, isCompleted: next === 'completed' });
+    }
   };
 
   return (
@@ -191,18 +211,38 @@ export default function SchoolScreen() {
             const status = getCourseStatus(course);
             const display = STATUS_DISPLAY[status];
             return (
-              <View key={course.id} className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900">
-                <Pressable onPress={() => updateCourse(course.id, { status: nextCourseStatus(status), isCompleted: nextCourseStatus(status) === 'completed' })}>
-                  <View className={`w-5 h-5 rounded-full items-center justify-center ${display.circleClass}`}>
-                    {display.icon && <Text className="text-white text-xs">{display.icon}</Text>}
+              <View key={course.id}>
+                <View className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900">
+                  <Pressable onPress={() => handleCycleStatus(course)}>
+                    <View className={`w-5 h-5 rounded-full items-center justify-center ${display.circleClass}`}>
+                      {display.icon && <Text className="text-white text-xs">{display.icon}</Text>}
+                    </View>
+                  </Pressable>
+                  <Pressable onPress={() => router?.push?.(`/school/course/${course.id}`)} className="flex-1 flex-row items-center justify-between">
+                    <Text className={`text-sm ${display.textClass}`}>{course.emoji} {course.name}</Text>
+                    <Text className={status === 'failed' ? 'text-red-500 text-xs font-medium' : status === 'retaking' ? 'text-amber-600 dark:text-amber-400 text-xs font-medium' : 'text-slate-500 text-xs'}>
+                      {status === 'in_progress' ? `${openCount} open` : display.label}
+                    </Text>
+                  </Pressable>
+                </View>
+                {confirmingFailId === course.id && (
+                  <View className="bg-red-400/10 border-2 border-red-400 rounded-xl p-3 mt-1">
+                    <Text className="text-red-500 text-xs font-medium mb-2">
+                      Mark {course.name} as failed? It'll stop counting toward degree progress until you change it back.
+                    </Text>
+                    <View className="flex-row gap-2">
+                      <Pressable
+                        onPress={() => { updateCourse(course.id, { status: 'failed', isCompleted: false }); setConfirmingFailId(null); }}
+                        className="flex-1 bg-red-500 rounded-lg py-2 items-center active:bg-red-400"
+                      >
+                        <Text className="text-white text-xs font-semibold">Mark failed</Text>
+                      </Pressable>
+                      <Pressable onPress={() => setConfirmingFailId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center">
+                        <Text className="text-slate-600 dark:text-slate-300 text-xs font-semibold">Cancel</Text>
+                      </Pressable>
+                    </View>
                   </View>
-                </Pressable>
-                <Pressable onPress={() => router?.push?.(`/school/course/${course.id}`)} className="flex-1 flex-row items-center justify-between">
-                  <Text className={`text-sm ${display.textClass}`}>{course.emoji} {course.name}</Text>
-                  <Text className={status === 'failed' ? 'text-red-500 text-xs font-medium' : status === 'retaking' ? 'text-amber-600 dark:text-amber-400 text-xs font-medium' : 'text-slate-500 text-xs'}>
-                    {status === 'in_progress' ? `${openCount} open` : display.label}
-                  </Text>
-                </Pressable>
+                )}
               </View>
             );
           })}

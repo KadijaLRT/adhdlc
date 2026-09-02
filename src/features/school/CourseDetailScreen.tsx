@@ -31,6 +31,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
   const [emojiInput, setEmojiInput] = useState('');
   const [confirmingDelete, setConfirmingDelete] = useState(false);
   const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(null);
+  const [confirmingRemoveCategoryId, setConfirmingRemoveCategoryId] = useState<string | null>(null);
   const [gradeSaved, setGradeSaved] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [newCategoryPoints, setNewCategoryPoints] = useState('');
@@ -108,6 +109,22 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
     // can't corrupt the grade; the person can just recategorize those
     // assignments if they want the points to count again.
     updateCourse(courseId, { gradeCategories: (course?.gradeCategories || []).filter((c) => c.id !== id) });
+    setConfirmingRemoveCategoryId(null);
+  };
+
+  // Bug fix: this used to fire instantly on tap with zero confirmation
+  // — removing a category with graded assignments already tied to it
+  // (e.g. "Exams" worth 400 points with several exams already graded)
+  // instantly dropped that entire chunk out of the visible cumulative
+  // grade, a large, sudden swing with no warning. Only categories that
+  // actually have graded assignments riding on them now require
+  // confirming; an empty, unused category still removes instantly.
+  const requestRemoveCategory = (id: string, categoryAssignmentCount: number) => {
+    if (categoryAssignmentCount > 0) {
+      setConfirmingRemoveCategoryId(id);
+    } else {
+      handleRemoveCategory(id);
+    }
   };
 
   const handleStartEditCourse = () => {
@@ -290,15 +307,35 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
           <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1.5">Grading categories</Text>
           {(course.gradeCategories?.length || 0) > 0 && (
             <View className="gap-1.5 mb-2">
-              {course.gradeCategories!.map((cat) => (
-                <View key={cat.id} className="flex-row items-center justify-between bg-stone-100 dark:bg-slate-800 rounded-lg px-3 py-2">
-                  <Text className="text-slate-700 dark:text-slate-300 text-xs flex-1">{cat.name}</Text>
-                  <Text className="text-slate-500 text-xs mr-3">{cat.totalPointsPossible} pts</Text>
-                  <Pressable onPress={() => handleRemoveCategory(cat.id)}>
-                    <Text className="text-red-500 text-xs">Remove</Text>
-                  </Pressable>
-                </View>
-              ))}
+              {course.gradeCategories!.map((cat) => {
+                const categoryAssignmentCount = courseAssignments.filter((a) => a.categoryId === cat.id && typeof a.pointsEarned === 'number').length;
+                return (
+                  <View key={cat.id}>
+                    <View className="flex-row items-center justify-between bg-stone-100 dark:bg-slate-800 rounded-lg px-3 py-2">
+                      <Text className="text-slate-700 dark:text-slate-300 text-xs flex-1">{cat.name}</Text>
+                      <Text className="text-slate-500 text-xs mr-3">{cat.totalPointsPossible} pts</Text>
+                      <Pressable onPress={() => requestRemoveCategory(cat.id, categoryAssignmentCount)}>
+                        <Text className="text-red-500 text-xs">Remove</Text>
+                      </Pressable>
+                    </View>
+                    {confirmingRemoveCategoryId === cat.id && (
+                      <View className="bg-red-400/10 border border-red-400/40 rounded-lg p-2.5 mt-1">
+                        <Text className="text-red-500 text-[11px] mb-2">
+                          {categoryAssignmentCount} graded assignment{categoryAssignmentCount === 1 ? '' : 's'} in "{cat.name}" will drop out of your grade calculation.
+                        </Text>
+                        <View className="flex-row gap-2">
+                          <Pressable onPress={() => handleRemoveCategory(cat.id)} className="flex-1 bg-red-500 rounded-md py-1.5 items-center active:bg-red-400">
+                            <Text className="text-white text-[11px] font-semibold">Remove</Text>
+                          </Pressable>
+                          <Pressable onPress={() => setConfirmingRemoveCategoryId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-md py-1.5 items-center">
+                            <Text className="text-slate-600 dark:text-slate-300 text-[11px] font-semibold">Cancel</Text>
+                          </Pressable>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
             </View>
           )}
 

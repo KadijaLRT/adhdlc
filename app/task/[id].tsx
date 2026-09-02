@@ -10,6 +10,7 @@ import {
   type TaskPriority,
   type TaskCategory,
   type MotivatorTag,
+  type EnergyLevel,
 } from '@/store/index';
 import { avivaBrain } from '@/core/ai/AvivaBrain';
 import { MOTIVATOR_OPTIONS } from '@/content/toolkitContent';
@@ -109,9 +110,34 @@ export default function TaskDetailScreen() {
             })}
           </View>
 
+          {/*
+            Bug fix: energy level was only displayed here ("About X min
+            · medium energy"), never editable — the only way to change
+            it was indirectly via "Break this down for me" overwriting
+            it as a side effect of AI decomposition, or (as of the
+            add-task fix) getting it right at creation time. If the
+            initial guess was wrong, there was previously no way to
+            correct it short of deleting and recreating the task.
+          */}
+          <Text className="text-slate-500 text-xs font-medium mb-2">Energy needed</Text>
+          <View className="flex-row gap-2 mb-4">
+            {(['low', 'medium', 'high'] as EnergyLevel[]).map((e) => {
+              const isActive = (task?.energyRequired || 'medium') === e;
+              return (
+                <Pressable
+                  key={e}
+                  onPress={() => updateTask(task.id, { energyRequired: e })}
+                  className={isActive ? 'flex-1 bg-stone-100 border-2 border-indigo-400 rounded-xl py-2 items-center' : 'flex-1 bg-white border-2 border-transparent rounded-xl py-2 items-center'}
+                >
+                  <Text className="text-slate-700 text-xs dark:text-slate-300 capitalize">🔋 {e}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+
           <Text className="text-slate-500 text-xs font-medium mb-2">Category</Text>
           <View className="flex-row flex-wrap gap-2 mb-6">
-            {(['general', 'home', 'work', 'school', 'health', 'errands', 'adhd'] as TaskCategory[]).map((cat) => {
+            {(['home', 'school', 'health', 'errands', 'car'] as TaskCategory[]).map((cat) => {
               const isActive = (task?.category || 'general') === cat;
               return (
                 <Pressable

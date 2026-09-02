@@ -41,6 +41,14 @@ export default function RSDProtocol({ onClose }: { onClose?: () => void }) {
     setTimerRunning(false);
   };
 
+  // Bug fix: "Next step" was always tappable, including during the
+  // 90-second-rule step before the timer had actually finished — one
+  // tap skipped straight past the entire point of that step (don't act
+  // for 90 seconds), defeating the exercise it exists to walk someone
+  // through. Only this specific step is gated; every other step still
+  // advances freely.
+  const isWaitingOnTimer = isTimerStep && timerRunning && secondsLeft > 0;
+
   if (!step) return null;
 
   return (
@@ -61,8 +69,10 @@ export default function RSDProtocol({ onClose }: { onClose?: () => void }) {
         </View>
       )}
 
-      <Pressable onPress={handleNext} className="bg-emerald-500 rounded-xl py-3 items-center active:bg-emerald-400">
-        <Text className="text-white text-sm font-semibold">{stepIndex >= RSD_STEPS.length - 1 ? 'Done' : 'Next step'}</Text>
+      <Pressable onPress={handleNext} disabled={isWaitingOnTimer} className={isWaitingOnTimer ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center' : 'bg-emerald-500 rounded-xl py-3 items-center active:bg-emerald-400'}>
+        <Text className={isWaitingOnTimer ? 'text-slate-500 text-sm font-semibold' : 'text-white text-sm font-semibold'}>
+          {isWaitingOnTimer ? `Wait for it (${secondsLeft}s)` : stepIndex >= RSD_STEPS.length - 1 ? 'Done' : 'Next step'}
+        </Text>
       </Pressable>
     </View>
   );

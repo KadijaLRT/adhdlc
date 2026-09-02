@@ -266,7 +266,7 @@ export default function SixTwelveTwentyFiveRunner({
                 <TextInput
                   value={reps}
                   onChangeText={setReps}
-                  keyboardType="decimal-pad"
+                  keyboardType="numeric"
                   className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-center text-xl rounded-xl py-3 border border-slate-200 dark:border-slate-800"
                 />
               </View>

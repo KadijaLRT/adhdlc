@@ -120,7 +120,8 @@ function GymSelectorCard() {
           showsHorizontalScrollIndicator={false}
           data={gyms}
           keyExtractor={(g) => g.id}
-          contentContainerStyle={{ gap: 8, marginBottom: 8 }}
+          style={{ height: 48, flexGrow: 0, marginBottom: 8 }}
+          contentContainerStyle={{ gap: 8, alignItems: 'center' }}
           renderItem={({ item }) => {
             const isActive = item.id === activeGymId;
             return (
@@ -165,6 +166,7 @@ export default function ProgramsScreen() {
   const [generating, setGenerating] = useState(false);
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(null);
+  const [confirmingSwitchId, setConfirmingSwitchId] = useState<string | null>(null);
 
   const activeProgram = getProgramById(activeProgramId, customPrograms || []);
   const currentWeek = activeProgram ? getCurrentProgramWeek(activeProgram, sessionsCompletedInProgram) : 0;
@@ -191,6 +193,22 @@ export default function ProgramsScreen() {
   };
 
   const allPrograms = [...PROGRAMS, ...(customPrograms || [])];
+
+  // Bug fix: startProgram (programSlice.ts) unconditionally resets
+  // sessionsCompletedInProgram to 0 — switching to a different program
+  // silently destroyed real, tracked progress (weeks in, sessions
+  // completed) with a single tap and zero confirmation, while the much
+  // lower-stakes "remove a custom program" action right next to it
+  // already asks first. Only interrupts when there's something to
+  // lose — no active program, or an active one with zero sessions
+  // logged yet, switches instantly.
+  const handleStartProgram = (id: string) => {
+    if (activeProgram && sessionsCompletedInProgram > 0) {
+      setConfirmingSwitchId(id);
+    } else {
+      startProgram(id);
+    }
+  };
 
   return (
     <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
@@ -294,9 +312,23 @@ export default function ProgramsScreen() {
                     <Text className="text-slate-600 dark:text-slate-300 text-xs font-semibold">Cancel</Text>
                   </Pressable>
                 </View>
+              ) : confirmingSwitchId === item.id ? (
+                <View>
+                  <Text className="text-amber-600 dark:text-amber-400 text-xs mb-2">
+                    You're {currentWeek} week{currentWeek === 1 ? '' : 's'} into {activeProgram?.title} with {sessionsCompletedInProgram} session{sessionsCompletedInProgram === 1 ? '' : 's'} logged — switching resets that progress.
+                  </Text>
+                  <View className="flex-row gap-2">
+                    <Pressable onPress={async () => { await startProgram(item.id); setConfirmingSwitchId(null); }} className="flex-1 bg-amber-500 rounded-full py-2 items-center active:bg-amber-400">
+                      <Text className="text-white text-xs font-semibold">Switch anyway</Text>
+                    </Pressable>
+                    <Pressable onPress={() => setConfirmingSwitchId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-full py-2 items-center">
+                      <Text className="text-slate-600 dark:text-slate-300 text-xs font-semibold">Cancel</Text>
+                    </Pressable>
+                  </View>
+                </View>
               ) : (
                 <View className="flex-row gap-2">
-                  <Pressable onPress={() => startProgram(item.id)} className="flex-1 bg-stone-100 rounded-full py-2 items-center active:bg-stone-200 dark:bg-slate-800">
+                  <Pressable onPress={() => handleStartProgram(item.id)} className="flex-1 bg-stone-100 rounded-full py-2 items-center active:bg-stone-200 dark:bg-slate-800">
                     <Text className="text-slate-800 text-xs font-medium dark:text-slate-200">Start this program</Text>
                   </Pressable>
                   {isCustom && (

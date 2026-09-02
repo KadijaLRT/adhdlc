@@ -85,7 +85,6 @@ export default function StuckFlow() {
         {extraTool === 'launch' && <View className="mb-6"><LaunchCountdown /></View>}
         {extraTool === 'dopamine' && <View className="mb-6"><DopamineMenuCard /></View>}
         {extraTool === 'pinch' && <View className="mb-6"><PinchToolCard /></View>}
-        {extraTool === 'pinch' && <View className="mb-6"><PinchToolCard /></View>}
 
         <Pressable onPress={handleDone} className="py-3">
           <Text className="text-slate-500 text-center text-sm">I&apos;m okay now, take me back</Text>

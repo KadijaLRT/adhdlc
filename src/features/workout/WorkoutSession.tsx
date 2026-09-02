@@ -224,7 +224,19 @@ export default function WorkoutSession({
       {/* Session header — elapsed time, calorie estimate, and overall
           set progress across the whole session, not just this exercise. */}
       <View className="w-full max-w-md self-center px-6 pt-2 pb-3 border-b border-slate-200 dark:border-slate-800">
-        <Pressable onPress={() => router?.back?.()} className="flex-row items-center mb-2 self-start py-1 -ml-1 pr-2">
+        {/*
+          Bug fix: unlike WorkoutDaySession.tsx (which autosaves a
+          resumable draft on every change), this single-exercise runner
+          has no draft persistence at all — tapping Back here used to
+          silently and permanently discard every set already logged
+          this session, with zero confirmation, the moment any set had
+          been completed. Now it only interrupts when there's actually
+          something to lose.
+        */}
+        <Pressable
+          onPress={() => (doneSetsIncludingCurrent > 0 ? setShowFinishConfirm(true) : router?.back?.())}
+          className="flex-row items-center mb-2 self-start py-1 -ml-1 pr-2"
+        >
           <Text className="text-slate-500 text-sm">‹ Back</Text>
         </Pressable>
         <View className="flex-row justify-between items-start">
@@ -293,7 +305,12 @@ export default function WorkoutSession({
                 <TextInput
                   value={reps}
                   onChangeText={setReps}
-                  keyboardType="decimal-pad"
+                  // Bug fix: reps are always whole numbers — a
+                  // decimal-pad let someone type "8.5 reps," which is
+                  // nonsensical and just gets mangled by Number(reps)
+                  // downstream. Weight legitimately needs decimals
+                  // (22.5 lb plates); reps never do.
+                  keyboardType="numeric"
                   className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-center text-xl rounded-xl py-3 border border-slate-200 dark:border-slate-800"
                 />
               </View>
@@ -384,12 +401,15 @@ export default function WorkoutSession({
         />
       )}
 
-      {showFinishConfirm && isFinalExercise && (
+      {showFinishConfirm && (
         <View className="absolute inset-0 bg-black/70 items-center justify-center px-6">
           <View className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm">
-            <Text className="text-slate-900 dark:text-slate-100 text-lg font-bold mb-2">You showed up. That counts.</Text>
+            <Text className="text-slate-900 dark:text-slate-100 text-lg font-bold mb-2">
+              {isFinalExercise ? 'You showed up. That counts.' : 'Leave this workout?'}
+            </Text>
             <Text className="text-slate-500 text-sm leading-5 mb-5">
               {formatElapsed(elapsedSeconds)} · {doneSetsIncludingCurrent}/{totalSetsThisSession} sets · ~{estimatedCalories} cal (estimate)
+              {!isFinalExercise ? ' — anything logged this session still counts, but the rest of the queue won\'t be started.' : ''}
             </Text>
             <View className="flex-row gap-3">
               <Pressable onPress={() => setShowFinishConfirm(false)} className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-xl py-3 items-center">

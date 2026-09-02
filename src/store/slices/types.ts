@@ -3,7 +3,7 @@ export type ThemeMode = 'dark' | 'dim';
 export type BodyDoublingRoom = 'eat' | 'work' | 'gym' | null;
 export type BloodType = 'O+' | 'O-' | 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-';
 export type TaskPriority = 'critical' | 'important' | 'nice';
-export type TaskCategory = 'home' | 'work' | 'school' | 'health' | 'errands' | 'adhd' | 'general';
+export type TaskCategory = 'home' | 'school' | 'health' | 'errands' | 'car' | 'general';
 // PINCH: what the ADHD brain actually finds compelling enough to get
 // activated (Dodson's "interest-based nervous system"), separate from
 // priority/category which are about what matters, not what motivates.
