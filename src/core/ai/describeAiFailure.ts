@@ -5,12 +5,12 @@ import type { GroqProxyError } from '@/core/ai/groqProxyClient';
  * regardless of cause — a missing GROQ_API_KEY on the deployment
  * looked exactly the same as a transient network blip, which cost
  * real debugging time to actually diagnose. Each reason gets its own
- * honest, specific, actionable message. Shared between
- * SyllabusUploadCard (assignment extraction) and CourseDetailScreen
- * (reading-to-notes summarization) — same underlying failure modes,
- * same messages, phrased generically enough ("couldn't be processed
- * right now") to fit either context without needing a caller-supplied
- * default per call site.
+ * honest, specific, actionable message. Shared across every AI-backed
+ * feature in the app (syllabus assignment extraction, task
+ * breakdown, etc.) — same underlying failure modes, same messages,
+ * phrased generically enough ("couldn't be processed right now") to
+ * fit any context without needing a caller-supplied default per call
+ * site.
  */
 export function describeAiFailure(reason: GroqProxyError['reason'] | null): string {
   switch (reason) {

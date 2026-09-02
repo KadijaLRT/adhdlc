@@ -1,6 +1,6 @@
 import { z } from 'zod';
 // @ts-ignore - plain JS by design, see file header.
-import { sanitizeString, sanitizePayload, MAX_PAYLOAD_LENGTH } from './groqSanitizer';
+import { sanitizeString, sanitizePayload } from './groqSanitizer';
 import { callGroqCompletion, GroqProxyError, type GroqMessage } from './groqProxyClient';
 
 export interface AvivaContext {
@@ -33,55 +33,6 @@ const BrainDumpResultSchema = z.object({
   items: z.array(BrainDumpItemSchema), reasoning: z.string(),
 });
 export type BrainDumpResult = z.infer<typeof BrainDumpResultSchema>;
-
-const FlashcardSchema = z.object({ front: z.string(), back: z.string() });
-const FlashcardSetSchema = z.object({ cards: z.array(FlashcardSchema) });
-export type FlashcardSet = z.infer<typeof FlashcardSetSchema>;
-
-const ReadingNotesSchema = z.object({
-  title: z.string().nullable(),
-  summary: z.string(),
-  keyPoints: z.array(z.string()),
-  wasTruncated: z.boolean(),
-});
-export type ReadingNotes = z.infer<typeof ReadingNotesSchema>;
-
-const ReadingListItemSchema = z.object({
-  // A short, human label for this source ("Arthur, D. (2012)", "the
-  // Guion reading") — used to show the person which item they're
-  // matching a file to, and as a fuzzy-match anchor if the uploaded
-  // file's own name/title doesn't line up exactly.
-  sourceLabel: z.string(),
-  // Real page numbers only make sense for a PDF (a fixed, paginated
-  // layout) — null for anything else, since "page 120" is meaningless
-  // in a reflowable DOCX/EPUB where page breaks depend entirely on the
-  // viewer/font/screen size, not the document itself.
-  startPage: z.number().int().positive().nullable(),
-  endPage: z.number().int().positive().nullable(),
-  // A chapter/section title as text — the fallback that actually
-  // works for DOCX/EPUB, matched later against real heading text
-  // rather than a fixed page position. Also what a screenshot like
-  // "Chapters 1-3: Recruitment Challenges..." naturally provides
-  // instead of numeric pages.
-  sectionLabel: z.string().nullable(),
-  // If the item is itself a link (not something to be uploaded as a
-  // file), the raw URL text as shown — null when it's a book/PDF
-  // reference instead.
-  url: z.string().nullable(),
-});
-const ReadingListSchema = z.object({
-  items: z.array(ReadingListItemSchema),
-  // The model's own honesty check: did the screenshot clearly show
-  // one or more specific, identifiable readings, or is this a guess?
-  // A low-confidence result means the person should fall back to
-  // summarizing whatever document(s) they upload in full, rather than
-  // the app silently scoping to a list that might be wrong or
-  // incomplete.
-  confident: z.boolean(),
-  reasoning: z.string(),
-});
-export type ReadingListItem = z.infer<typeof ReadingListItemSchema>;
-export type ReadingList = z.infer<typeof ReadingListSchema>;
 
 // Every real exercise group this app actually has content for —
 // constraining generation to these (rather than letting the model
@@ -176,14 +127,14 @@ function parseSyllabusResultLeniently(raw: string, context: string): SyllabusPar
 export class AvivaBrain {
   /**
    * Set whenever the most recent call fails with a GroqProxyError —
-   * read by SyllabusUploadCard right after a failed extraction to show
+   * read by CourseDetailScreen right after a failed extraction to show
    * a real, specific reason ("AI service isn't configured" vs. "too
    * many requests" vs. a network problem) instead of one generic
    * "couldn't extract" message that looked identical for every
    * possible cause. Deliberately not part of each method's return
    * type — that would mean touching every existing call site in the
-   * app (decomposeTask, generateFlashcards, etc.) for a distinction
-   * only the syllabus feature currently needs to surface.
+   * app (decomposeTask, etc.) for a distinction only a subset of
+   * features currently need to surface.
    */
   lastErrorReason: GroqProxyError['reason'] | null = null;
 
@@ -264,153 +215,6 @@ Time of day: ${cleanContext.timeOfDay}${cleanContext.recentReflection ? `\nTheir
     // problem as a task breakdown, just entered from School instead of
     // Tasks. No duplicated AI logic.
     return this.decomposeTask(assignmentTitle, context);
-  }
-
-  async generateFlashcards(notesText: string): Promise<FlashcardSet | null> {
-    const cleanNotes = sanitizeString(notesText);
-    if (!cleanNotes) return null;
-
-    const systemPrompt = `You create simple study flashcards from a student's notes.
-Extract the clearest, most testable facts or concepts. Keep each card short.
-Respond with ONLY valid JSON, no markdown fences:
-{"cards": [{"front": string, "back": string}]}`;
-
-    try {
-      const raw = await callGroqCompletion(
-        [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: `Notes: "${cleanNotes}"` },
-        ],
-        0.4
-      );
-      if (!raw) return null;
-      const validated = FlashcardSetSchema.safeParse(JSON.parse(raw));
-      if (!validated.success) {
-        console.error('AvivaBrain: flashcard generation schema validation failed', validated.error.flatten());
-        return null;
-      }
-      return validated.data;
-    } catch (error) {
-      console.error('AvivaBrain: generateFlashcards failed', error);
-      return null;
-    }
-  }
-
-  /**
-   * Reads a screenshot of a reading list (a "Readings & Resources"
-   * page, a syllabus section, a course page) and identifies every
-   * distinct source it lists — each with its own author/title label
-   * and its own chapter range or link, since a real reading list
-   * routinely names several separate books/PDFs rather than pointing
-   * into just one. Deliberately includes its own confidence check: a
-   * genuinely unclear screenshot shouldn't produce a made-up list —
-   * the caller falls back to a plain single-document upload when
-   * confident is false.
-   */
-  async identifyReadingList(imageDataUrl: string): Promise<ReadingList | null> {
-    this.lastErrorReason = null;
-    if (!imageDataUrl?.startsWith('data:image/')) return null;
-
-    const systemPrompt = `You read a screenshot of a reading list (a "Readings & Resources" page, a syllabus section, a course page) and identify every distinct source it lists.
-A reading list routinely names several separate sources — each gets its own item in your response, not one combined range. For each item:
-- sourceLabel: a short label identifying it (e.g. author/year, like "Arthur, D. (2012)", or a short title) — this is shown to the person to help them pick the matching file, so make it recognizable, not the full citation.
-- If real page numbers are visible for that item (e.g. "pages 120-145"), extract them as startPage/endPage.
-- If chapters are named instead (e.g. "Chapters 1-3: Recruitment Challenges..."), put that in sectionLabel and leave startPage/endPage null — a page number and a chapter name describe different things, don't guess one from the other.
-- If the item is itself a link/URL rather than a book or PDF to upload, put the link text in url and leave the rest null.
-If you can't confidently identify any real reading items — the image isn't a reading list, or it's too unclear to read — set confident to false, return an empty items array, and explain why in reasoning. Do not invent items that aren't actually there.
-Respond with ONLY valid JSON, no markdown fences:
-{"items": [{"sourceLabel": string, "startPage": number|null, "endPage": number|null, "sectionLabel": string|null, "url": string|null}], "confident": boolean, "reasoning": string}`;
-
-    const messages: GroqMessage[] = [
-      { role: 'system', content: systemPrompt },
-      {
-        role: 'user',
-        content: [
-          { type: 'text', text: 'What reading items does this screenshot list?' },
-          { type: 'image_url', image_url: { url: imageDataUrl } },
-        ],
-      },
-    ];
-
-    try {
-      const raw = await callGroqCompletion(messages, 0.1); // near-zero — this needs to read what's actually there, not guess creatively
-      if (!raw) return null;
-      const validated = ReadingListSchema.safeParse(JSON.parse(raw));
-      if (!validated.success) {
-        console.error('AvivaBrain: identifyReadingList schema validation failed', validated.error.flatten());
-        return null;
-      }
-      return validated.data;
-    } catch (error) {
-      console.error('AvivaBrain: identifyReadingList failed', error);
-      if (error instanceof GroqProxyError) this.lastErrorReason = error.reason;
-      return null;
-    }
-  }
-
-  /**
-   * Turns raw extracted reading text (from a PDF, DOCX, EPUB, photo,
-   * or link) into short, scannable study notes — a plain-language
-   * summary plus bulleted key points, not the raw transcript dumped
-   * into the notes field. A wall of unprocessed reading text is
-   * exactly the kind of dense, low-signal content this app's own
-   * design principles (low cognitive load, progressive disclosure)
-   * exist to avoid.
-   *
-   * sanitizeString truncates at MAX_PAYLOAD_LENGTH after also
-   * collapsing whitespace/newlines — this checks whether the sanitized
-   * output actually hit that cutoff, not a raw before/after length
-   * delta (an earlier version compared lengths directly and produced
-   * false positives on readings that were never truncated at all,
-   * purely from whitespace normalization shrinking the string). The
-   * caller gets that same honesty back via wasTruncated, to surface in the UI.
-   */
-  async summarizeReadingToNotes(readingText: string, sourceLabel: string): Promise<ReadingNotes | null> {
-    this.lastErrorReason = null;
-    const cleanText = sanitizeString(readingText);
-    if (!cleanText) return null;
-    // sanitizeString also collapses whitespace/newlines before
-    // truncating — comparing sanitized length against the raw
-    // original length (what this used to do) produces false
-    // positives purely from that normalization, on readings that were
-    // never actually truncated at all (verified: a ~2200-character
-    // reading with realistic paragraph breaks shrank to ~2200 from
-    // whitespace collapsing alone, well under the 8000 cutoff, but
-    // still registered as "shorter than original"). The only reliable
-    // signal that real truncation happened is the sanitized output
-    // actually landing exactly at the cutoff length.
-    const wasTruncated = cleanText.length >= MAX_PAYLOAD_LENGTH;
-
-    const systemPrompt = `You turn a piece of assigned course reading into short, scannable study notes for a student with ADHD.
-Write a plain-language summary in a few sentences — what this reading is actually about and why it matters, not a restatement of every detail.
-Pull out the key points as short, individually scannable bullet items — concrete facts, definitions, or arguments a student would actually need to know, not vague generalities.
-${wasTruncated ? 'IMPORTANT: the text you were given is a truncated excerpt of a longer document — it was cut off partway through. Only summarize what you actually have, and set wasTruncated to true. Do not imply this covers the whole reading.' : 'Set wasTruncated to false — you were given the complete text.'}
-Respond with ONLY valid JSON, no markdown fences:
-{"title": string|null, "summary": string, "keyPoints": [string], "wasTruncated": boolean}`;
-
-    const userPrompt = `Source: ${sourceLabel}\n\nReading text:\n"${cleanText}"`;
-
-    try {
-      const raw = await callGroqCompletion(
-        [{ role: 'system', content: systemPrompt }, { role: 'user', content: userPrompt }],
-        0.3
-      );
-      if (!raw) return null;
-      const validated = ReadingNotesSchema.safeParse(JSON.parse(raw));
-      if (!validated.success) {
-        console.error('AvivaBrain: summarizeReadingToNotes schema validation failed', validated.error.flatten());
-        return null;
-      }
-      // Belt and suspenders: even if the model didn't correctly set
-      // wasTruncated itself, this app already knows the definitive
-      // answer from its own length comparison above — that should
-      // never be silently overridden by a model that got it wrong.
-      return { ...validated.data, wasTruncated: validated.data.wasTruncated || wasTruncated };
-    } catch (error) {
-      console.error('AvivaBrain: summarizeReadingToNotes failed', error);
-      if (error instanceof GroqProxyError) this.lastErrorReason = error.reason;
-      return null;
-    }
   }
 
   /**

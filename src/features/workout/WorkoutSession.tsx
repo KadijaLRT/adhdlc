@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAppStore, selectAdhdFocusModeEnabled, selectFitnessPreferences } from '@/store/index';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
+import { getCommonFaults } from '@/content/kinesiology';
 import { Heading } from '@/shared/components/Heading';
 
 const REST_COACHING_LINES = [
@@ -86,6 +87,11 @@ export default function WorkoutSession({
   const [swappedExerciseId, setSwappedExerciseId] = useState(exerciseId);
   const [localQueue, setLocalQueue] = useState<string[]>(queue || []);
   const exercise = WORKOUT_EXERCISES?.[swappedExerciseId];
+  // Only the single top fault, not the full list from ExerciseBrowser —
+  // mid-set is a moment for one quick catch, not a study session; the
+  // full breakdown with every fault plus muscle/joint detail is one tap
+  // away in the exercise browser for anyone who wants it.
+  const topFault = useMemo(() => (exercise ? getCommonFaults(exercise)[0] : undefined), [exercise]);
   const logSet = useAppStore((s) => s.logSet);
   const adhdFocusModeEnabled = useAppStore(selectAdhdFocusModeEnabled);
   const setAdhdFocusMode = useAppStore((s) => s.setAdhdFocusMode);
@@ -261,6 +267,12 @@ export default function WorkoutSession({
 
             {!adhdFocusModeEnabled && (
               <Text className="text-slate-500 text-xs text-center mb-6">{exercise.cues}</Text>
+            )}
+            {!adhdFocusModeEnabled && topFault && (
+              <View className="bg-stone-50 dark:bg-slate-800 rounded-xl px-3 py-2 mb-6 -mt-3">
+                <Text className="text-red-500 text-[11px] text-center">✗ {topFault.fault}</Text>
+                <Text className="text-emerald-600 dark:text-emerald-400 text-[11px] text-center">✓ {topFault.fix}</Text>
+              </View>
             )}
             {adhdFocusModeEnabled && <View className="mb-6" />}
 

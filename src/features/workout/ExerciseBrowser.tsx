@@ -3,7 +3,7 @@ import { View, Text, Pressable, FlatList } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAppStore, selectCompletedExerciseLog, selectFitnessPreferences } from '@/store/index';
 import { WORKOUT_EXERCISES, type Exercise } from '@/content/exercises';
-import { deriveMuscleInvolvement, getJointAction } from '@/content/kinesiology';
+import { deriveMuscleInvolvement, getJointAction, getCommonFaults } from '@/content/kinesiology';
 import { Heading } from '@/shared/components/Heading';
 
 // Secondary screen reached from "Browse all exercises" on the Workouts
@@ -77,6 +77,7 @@ function ExerciseCard({ exercise, exerciseId, completedCount, onLogCompletion }:
   const [showWhy, setShowWhy] = useState(false);
   const muscleInvolvement = useMemo(() => deriveMuscleInvolvement(exercise), [exercise]);
   const jointAction = useMemo(() => getJointAction(exercise), [exercise]);
+  const commonFaults = useMemo(() => getCommonFaults(exercise), [exercise]);
 
   return (
     <View className="bg-white rounded-2xl p-4 dark:bg-slate-900">
@@ -107,6 +108,18 @@ function ExerciseCard({ exercise, exerciseId, completedCount, onLogCompletion }:
           <Text className="text-slate-500 text-xs">
             <Text className="font-semibold text-slate-700 dark:text-slate-300">Plane of motion: </Text>{jointAction.plane}
           </Text>
+
+          {commonFaults.length > 0 && (
+            <View className="mt-2 pt-2 border-t border-stone-200 dark:border-slate-700">
+              <Text className="text-slate-700 dark:text-slate-300 text-xs font-semibold mb-1">Common faults to watch for</Text>
+              {commonFaults.map((f, i) => (
+                <View key={i} className="mb-1.5">
+                  <Text className="text-red-500 text-[11px]">✗ {f.fault}</Text>
+                  <Text className="text-emerald-600 dark:text-emerald-400 text-[11px]">✓ {f.fix}</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
       )}
 
