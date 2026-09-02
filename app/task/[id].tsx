@@ -137,7 +137,7 @@ export default function TaskDetailScreen() {
 
           <Text className="text-slate-500 text-xs font-medium mb-2">Category</Text>
           <View className="flex-row flex-wrap gap-2 mb-6">
-            {(['home', 'school', 'health', 'errands', 'car'] as TaskCategory[]).map((cat) => {
+            {(['home', 'school', 'health', 'errands', 'car', 'personal'] as TaskCategory[]).map((cat) => {
               const isActive = (task?.category || 'general') === cat;
               return (
                 <Pressable

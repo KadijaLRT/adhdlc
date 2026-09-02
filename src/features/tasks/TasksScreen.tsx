@@ -15,6 +15,7 @@ const CATEGORY_OPTIONS: { id: TaskCategory; label: string; emoji: string }[] = [
   { id: 'health', label: 'Health', emoji: '❤️' },
   { id: 'errands', label: 'Errands', emoji: '🛒' },
   { id: 'car', label: 'Car', emoji: '🚗' },
+  { id: 'personal', label: 'Personal', emoji: '🧑' },
 ];
 
 const PRIORITY_DOT: Record<TaskPriority, string> = {
@@ -82,6 +83,7 @@ export default function TasksScreen() {
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('nice');
   const [newTaskEnergy, setNewTaskEnergy] = useState<EnergyLevel>('medium');
+  const [showAddOptions, setShowAddOptions] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<TaskCategory>('general');
   const [selectedMotivator, setSelectedMotivator] = useState<MotivatorTag | null>(null);
   const [viewMode, setViewMode] = useState<'list' | 'priority' | 'matrix'>('list');
@@ -211,6 +213,7 @@ export default function TasksScreen() {
     setNewTaskTitle('');
     setNewTaskPriority('nice');
     setNewTaskEnergy('medium');
+    setShowAddOptions(false);
   };
 
   return (
@@ -249,6 +252,7 @@ export default function TasksScreen() {
         <TextInput
           value={newTaskTitle}
           onChangeText={setNewTaskTitle}
+          onFocus={() => setShowAddOptions(true)}
           placeholder="Add a task..."
           placeholderTextColor="#64748b"
           onSubmitEditing={handleAdd}
@@ -260,51 +264,64 @@ export default function TasksScreen() {
       </View>
 
       {/*
-        Bug fix: this whole row used to only mount once the person had
-        typed a character, so a fresh block of 3 buttons popped in and
-        pushed everything below it down mid-keystroke — jarring layout
-        shift on a small screen. It's now always present so the layout
-        is stable from the first character. It also fixes a second,
-        more important bug: new tasks silently inherited whatever
-        category filter chip happened to be selected (e.g. filtering to
-        "Car" then adding an unrelated task would silently tag it
-        "car"), with zero visible indication. This line makes that
-        assignment visible and gives the person a way to catch it
-        before saving, the same way priority already was visible.
+        Bug fix: this block used to be permanently visible — 6 pill
+        buttons (3 priority + 3 energy) plus an "Adding as" line taking
+        up real vertical space even before anyone had started typing a
+        task, pushing the category filter and List/Priority/Matrix
+        toggle further down and making the whole screen feel cramped.
+        Now it only expands once the person actually focuses the input
+        (or has already typed something), collapsing back after Add —
+        so it's available exactly when relevant and out of the way
+        otherwise. The "silently inherited category" fix from before
+        stays in place — the Adding as line is still shown whenever
+        this is open, just no longer pinned open all the time.
       */}
-      <Text className="text-slate-400 text-[11px] mb-2">
-        Adding as <Text className="font-semibold">{PRIORITY_DOT[newTaskPriority]} {newTaskPriority}</Text>
-        {selectedCategory !== 'general' && (
-          <> · <Text className="font-semibold">{CATEGORY_OPTIONS.find((c) => c.id === selectedCategory)?.emoji} {CATEGORY_OPTIONS.find((c) => c.id === selectedCategory)?.label}</Text></>
-        )}
-      </Text>
-      <View className="flex-row gap-2 mb-4 flex-wrap">
-        {(['nice', 'important', 'critical'] as TaskPriority[]).map((p) => {
-          const isActive = newTaskPriority === p;
-          return (
-            <Pressable
-              key={p}
-              onPress={() => setNewTaskPriority(p)}
-              className={isActive ? 'bg-stone-100 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white border-2 border-transparent rounded-full py-1.5 px-3'}
-            >
-              <Text className="text-slate-700 text-xs dark:text-slate-300">{PRIORITY_DOT[p]} {p}</Text>
-            </Pressable>
-          );
-        })}
-        {(['low', 'medium', 'high'] as EnergyLevel[]).map((e) => {
-          const isActive = newTaskEnergy === e;
-          const label = e === 'low' ? '🔋 low energy' : e === 'high' ? '🔋 high energy' : '🔋 medium energy';
-          return (
-            <Pressable
-              key={e}
-              onPress={() => setNewTaskEnergy(e)}
-              className={isActive ? 'bg-stone-100 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white border-2 border-transparent rounded-full py-1.5 px-3'}
-            >
-              <Text className="text-slate-700 text-xs dark:text-slate-300">{label}</Text>
-            </Pressable>
-          );
-        })}
-      </View>
+      {(showAddOptions || newTaskTitle.trim().length > 0) && (
+        <>
+          <View className="flex-row items-center justify-between mb-2">
+            <Text className="text-slate-400 text-[11px]">
+              Adding as <Text className="font-semibold">{PRIORITY_DOT[newTaskPriority]} {newTaskPriority}</Text>
+              {selectedCategory !== 'general' && (
+                <> · <Text className="font-semibold">{CATEGORY_OPTIONS.find((c) => c.id === selectedCategory)?.emoji} {CATEGORY_OPTIONS.find((c) => c.id === selectedCategory)?.label}</Text></>
+              )}
+            </Text>
+            {newTaskTitle.trim().length === 0 && (
+              <Pressable onPress={() => setShowAddOptions(false)}>
+                <Text className="text-slate-400 text-[11px]">Hide ▴</Text>
+              </Pressable>
+            )}
+          </View>
+          <View className="flex-row flex-wrap gap-2 mb-1">
+            {(['nice', 'important', 'critical'] as TaskPriority[]).map((p) => {
+              const isActive = newTaskPriority === p;
+              return (
+                <Pressable
+                  key={p}
+                  onPress={() => setNewTaskPriority(p)}
+                  className={isActive ? 'bg-stone-100 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white border-2 border-transparent rounded-full py-1.5 px-3'}
+                >
+                  <Text className="text-slate-700 text-xs dark:text-slate-300">{PRIORITY_DOT[p]} {p}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+          <View className="flex-row flex-wrap gap-2 mb-4">
+            {(['low', 'medium', 'high'] as EnergyLevel[]).map((e) => {
+              const isActive = newTaskEnergy === e;
+              const label = e === 'low' ? '🔋 low energy' : e === 'high' ? '🔋 high energy' : '🔋 medium energy';
+              return (
+                <Pressable
+                  key={e}
+                  onPress={() => setNewTaskEnergy(e)}
+                  className={isActive ? 'bg-stone-100 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white border-2 border-transparent rounded-full py-1.5 px-3'}
+                >
+                  <Text className="text-slate-700 text-xs dark:text-slate-300">{label}</Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </>
+      )}
 
       <FlatList
         horizontal
