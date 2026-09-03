@@ -19,6 +19,7 @@ import {
 } from './bodyTrendCalculations';
 import { calculateRequiredRate, describeRigor } from './requiredRate';
 import AppleHealthImportCard from '@/features/settings/AppleHealthImportCard';
+import { DateInput } from '@/shared/components/DateInput';
 import { convertWeightForDisplay, parseWeightToLbs, weightUnitLabel, convertLengthForDisplay, parseLengthToInches, lengthUnitLabel } from '@/shared/formatUnits';
 import { formatDate, toLocalDateString } from '@/shared/formatDate';
 
@@ -47,6 +48,7 @@ export default function BodyProgressScreen() {
 
   const [weightInput, setWeightInput] = useState('');
   const [goalInput, setGoalInput] = useState(weightGoalLbs ? String(convertWeightForDisplay(weightGoalLbs, unitSystem)) : '');
+  const [goalDateInput, setGoalDateInput] = useState(weightGoalDate || '');
   const [selectedSite, setSelectedSite] = useState<MeasurementSite>('waist');
   const [measurementInput, setMeasurementInput] = useState('');
 
@@ -57,8 +59,16 @@ export default function BodyProgressScreen() {
   const goalDate = projectGoalDate(weightLog, weightGoalLbs);
 
   const daysLogged = new Set((weightLog || []).map((w) => w.date)).size;
-  const totalLost = weightLog.length >= 2
-    ? ([...weightLog].sort((a, b) => a.date.localeCompare(b.date))[0]?.weightLbs || 0) - (latest || 0)
+  // Bug fix: this used to be firstEverEntry - latest, which is only
+  // positive for someone losing weight — for anyone gaining (e.g.
+  // bulking), it goes negative and totalLost >= 5 below could never
+  // fire, permanently locking out the "First 5 lb change" milestone
+  // for exactly the people making just as much real progress in the
+  // other direction. Math.abs makes the milestone direction-agnostic,
+  // consistent with how getThirtyDayChange/the 30-day change tile
+  // already treat both directions as equally valid progress.
+  const totalChange = weightLog.length >= 2
+    ? Math.abs(([...weightLog].sort((a, b) => a.date.localeCompare(b.date))[0]?.weightLbs || 0) - (latest || 0))
     : 0;
 
   const handleLogWeight = () => {
@@ -84,7 +94,21 @@ export default function BodyProgressScreen() {
     // (setWeightGoal(null)), but a genuinely negative or non-finite
     // typed value shouldn't silently become a valid goal weight.
     const isValidPositive = Number.isFinite(val) && val > 0;
-    setWeightGoal(isValidPositive ? parseWeightToLbs(val, unitSystem) : null);
+    // Bug fix: this used to call setWeightGoal with only the weight
+    // argument — the goal date could only ever be set once, during
+    // onboarding, and there was no way to change it afterward (the
+    // date shown further down as "Projected goal date" is a computed
+    // trend projection, not this stored value, so it looked like a
+    // date existed here to edit when there was actually no control for
+    // it at all). Now the date input's value is passed through too, so
+    // it's genuinely editable, and clearing the date field alone
+    // (without clearing the weight) is respected rather than silently
+    // reverting to whatever was set at onboarding.
+    // Passing the date through as the second argument at all is the
+    // actual fix — this used to only ever call setWeightGoal(weight),
+    // so the date could never be changed after onboarding no matter
+    // what was typed here.
+    setWeightGoal(isValidPositive ? parseWeightToLbs(val, unitSystem) : null, goalDateInput.trim() || undefined);
   };
 
   return (
@@ -150,7 +174,7 @@ export default function BodyProgressScreen() {
               <Text className="text-white text-sm font-semibold">Log</Text>
             </Pressable>
           </View>
-          <View className="flex-row gap-2">
+          <View className="flex-row gap-2 mb-2">
             <TextInput
               value={goalInput}
               onChangeText={setGoalInput}
@@ -160,10 +184,12 @@ export default function BodyProgressScreen() {
               onSubmitEditing={handleSaveGoal}
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
-            <Pressable onPress={handleSaveGoal} className="bg-stone-100 rounded-xl px-4 justify-center dark:bg-slate-800">
-              <Text className="text-slate-700 text-sm font-medium dark:text-slate-300">Set goal</Text>
-            </Pressable>
           </View>
+          <Text className="text-slate-500 text-xs mb-1">Goal date</Text>
+          <DateInput value={goalDateInput} onChange={setGoalDateInput} dark={false} />
+          <Pressable onPress={handleSaveGoal} className="bg-stone-100 rounded-xl px-4 py-2.5 items-center mt-2 dark:bg-slate-800">
+            <Text className="text-slate-700 text-sm font-medium dark:text-slate-300">Set goal</Text>
+          </Pressable>
         </View>
 
         <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
@@ -203,7 +229,7 @@ export default function BodyProgressScreen() {
         <Text className="text-slate-900 text-lg font-semibold mb-3 dark:text-slate-100">Milestones</Text>
         <View className="gap-2">
           {daysLogged >= 1 && <MilestoneRow label="First weight logged" achieved />}
-          {totalLost >= 5 && <MilestoneRow label={`First ${convertWeightForDisplay(5, unitSystem)} ${wUnit} change`} achieved />}
+          {totalChange >= 5 && <MilestoneRow label={`First ${convertWeightForDisplay(5, unitSystem)} ${wUnit} change`} achieved />}
           {daysLogged >= 30 && <MilestoneRow label="Logged weight for 30 days" achieved />}
           {daysLogged === 0 && <Text className="text-slate-500 text-sm">Log your first weight to start unlocking milestones.</Text>}
         </View>

@@ -7,12 +7,14 @@ import {
   selectTasks,
   selectEnergyLevel,
   selectIsOverwhelmed,
+  selectProfile,
   type TaskPriority,
   type TaskCategory,
   type MotivatorTag,
   type EnergyLevel,
 } from '@/store/index';
 import { avivaBrain } from '@/core/ai/AvivaBrain';
+import { resolveBrainTypeTraits } from '@/content/brainTypes';
 import { MOTIVATOR_OPTIONS } from '@/content/toolkitContent';
 import { Heading } from '@/shared/components/Heading';
 import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
@@ -23,6 +25,7 @@ export default function TaskDetailScreen() {
   const tasks = useAppStore(selectTasks);
   const energyLevel = useAppStore(selectEnergyLevel);
   const isOverwhelmed = useAppStore(selectIsOverwhelmed);
+  const profile = useAppStore(selectProfile);
   const toggleTaskComplete = useAppStore((s) => s.toggleTaskComplete);
   const toggleSubStep = useAppStore((s) => s.toggleSubStep);
   const updateTask = useAppStore((s) => s.updateTask);
@@ -56,6 +59,8 @@ export default function TaskDetailScreen() {
       currentEnergyLevel: energyLevel,
       isOverwhelmed,
       timeOfDay,
+      coachingStyle: profile?.coachingStyle,
+      brainTypeTraits: resolveBrainTypeTraits(profile?.brainTypes),
     });
 
     if (decomposition) {

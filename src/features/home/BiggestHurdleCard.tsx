@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { useAppStore } from '@/store/index';
 import { avivaBrain } from '@/core/ai/AvivaBrain';
+import { resolveBrainTypeTraits } from '@/content/brainTypes';
 import { generateId } from '@/shared/generateId';
 
 /**
@@ -14,6 +15,7 @@ import { generateId } from '@/shared/generateId';
 export default function BiggestHurdleCard() {
   const energyLevel = useAppStore((s) => s.energyLevel);
   const isOverwhelmed = useAppStore((s) => s.isOverwhelmed);
+  const profile = useAppStore((s) => s.profile);
   const addTask = useAppStore((s) => s.addTask);
 
   const [text, setText] = useState('');
@@ -28,7 +30,7 @@ export default function BiggestHurdleCard() {
     const timeOfDay = hour < 12 ? 'morning' : hour < 17 ? 'afternoon' : hour < 21 ? 'evening' : 'night';
 
     const decomposition = await Promise.race([
-      avivaBrain.decomposeTask(text, { currentEnergyLevel: energyLevel, isOverwhelmed, timeOfDay }),
+      avivaBrain.decomposeTask(text, { currentEnergyLevel: energyLevel, isOverwhelmed, timeOfDay, coachingStyle: profile?.coachingStyle, brainTypeTraits: resolveBrainTypeTraits(profile?.brainTypes) }),
       new Promise<null>((resolve) => setTimeout(() => resolve(null), 6000)),
     ]);
 

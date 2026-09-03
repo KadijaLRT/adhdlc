@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAppStore } from '@/store/index';
+import { useAppStore, selectProfile } from '@/store/index';
 import { STUCK_PROMPTS, getRandomPrompt } from '@/content/stuckPrompts';
 import { Heading } from '@/shared/components/Heading';
 import LaunchCountdown from '@/features/toolkit/LaunchCountdown';
@@ -20,12 +20,19 @@ export default function StuckFlow() {
   const setOverwhelmed = useAppStore((s) => s.setOverwhelmed);
   const incrementMilestone = useAppStore((s) => s.incrementMilestone);
   const awardProgress = useAppStore((s) => s.awardProgress);
+  const profile = useAppStore(selectProfile);
+  const preferredHelpers = profile?.emotionalRegulationHelpers;
 
-  const [currentPrompt, setCurrentPrompt] = useState(STUCK_PROMPTS?.[0] || { id: 'water', text: 'Take a sip of water.' });
+  // Bug fix: this always started on STUCK_PROMPTS[0] ("Take a sip of
+  // water") regardless of what the person said helps them during
+  // onboarding — the very first thing shown ignored their own answer.
+  // Now it leads with a prompt matching one of their picks when
+  // possible, same as every subsequent "what's next" step below.
+  const [currentPrompt, setCurrentPrompt] = useState(() => getRandomPrompt(undefined, preferredHelpers));
   const [extraTool, setExtraTool] = useState<ExtraTool>(null);
 
   const handleNextStep = () => {
-    setCurrentPrompt(getRandomPrompt(currentPrompt?.id));
+    setCurrentPrompt(getRandomPrompt(currentPrompt?.id, preferredHelpers));
     incrementMilestone('stuck_flow_used');
     awardProgress('confidence', 3, 1);
   };

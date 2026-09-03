@@ -21,7 +21,23 @@ export interface AgentContext {
   isOverwhelmed: boolean;
   timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
   recentReflection?: string; // the person's own most recent evening check-in note, so Aviva can actually reference it instead of it sitting unread
+  // Bug fix: onboarding's final screen collects this and its own copy
+  // literally says "This shapes Aviva's tone in every conversation" —
+  // but nothing downstream ever read it, so every conversation got the
+  // exact same tone regardless of what was chosen. Optional so every
+  // existing call site (and anyone who skipped that onboarding
+  // question) keeps working unchanged.
+  coachingStyle?: 'gentle' | 'funny' | 'reality_check' | 'friend' | 'scientific';
+  brainTypeTraits?: string[];
 }
+
+const COACHING_STYLE_INSTRUCTIONS: Record<NonNullable<AgentContext['coachingStyle']>, string> = {
+  gentle: 'Tone: gentle and supportive. Soft language, no pressure, warmth over directness.',
+  funny: 'Tone: light and funny where it fits naturally. Humor should never undercut genuinely serious moments.',
+  reality_check: 'Tone: direct and matter-of-fact. Skip the cushioning — say the real thing plainly, still kindly.',
+  friend: 'Tone: like a close, casual friend talking it through with them, not a formal coach.',
+  scientific: "Tone: grounded in the actual mechanism when it's relevant (e.g. briefly why a technique works for ADHD brains), still plain-language and concrete.",
+};
 
 /**
  * One factory backs every agent persona, so adding a 10th agent later
@@ -39,6 +55,8 @@ export function createAgent(config: AgentConfig) {
 
       const fullSystemPrompt = `${config.systemPrompt}
 Never use guilt, urgency, or shaming language. Keep responses short and concrete.
+${cleanContext.coachingStyle ? COACHING_STYLE_INSTRUCTIONS[cleanContext.coachingStyle] : ''}
+${cleanContext.brainTypeTraits?.length ? `This person identifies with these ADHD traits: ${cleanContext.brainTypeTraits.join(', ')}. Let this inform your approach where relevant, without labeling or diagnosing them back.` : ''}
 If a recent reflection note is provided, you may reference it naturally if it's relevant to what the person is asking — but never quote it back verbatim or make it the focus unless they bring it up themselves.
 Respond with ONLY valid JSON, no markdown fences:
 {"message": string, "reasoning": string, "suggestedNextStep": string}`;

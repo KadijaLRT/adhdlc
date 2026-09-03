@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { View, Text, Pressable, TextInput } from 'react-native';
+import { useAppStore, selectThoughtReframes, selectFrustrationEntries, selectSabotageChecks } from '@/store/index';
 
 const DISTORTIONS = [
   'All-or-nothing thinking', 'Catastrophizing', 'Mind reading', 'Personalization',
@@ -21,11 +22,18 @@ type WorkbookTab = 'reframe' | 'frustration' | 'sabotage';
 
 export default function WorkbookCard() {
   const [tab, setTab] = useState<WorkbookTab>('reframe');
+  const thoughtReframes = useAppStore(selectThoughtReframes);
+  const frustrationEntries = useAppStore(selectFrustrationEntries);
+  const sabotageChecks = useAppStore(selectSabotageChecks);
+  const saveThoughtReframe = useAppStore((s) => s.saveThoughtReframe);
+  const saveFrustrationEntry = useAppStore((s) => s.saveFrustrationEntry);
+  const saveSabotageCheck = useAppStore((s) => s.saveSabotageCheck);
 
   // Thought reframe
   const [thought, setThought] = useState('');
   const [distortion, setDistortion] = useState<string | null>(null);
   const [reframe, setReframe] = useState('');
+  const [reframeSaved, setReframeSaved] = useState(false);
 
   // Frustration processing
   const [frustLevel, setFrustLevel] = useState(5);
@@ -34,9 +42,30 @@ export default function WorkbookCard() {
 
   // Self-sabotage check
   const [sabotageSelected, setSabotageSelected] = useState<string[]>([]);
+  const [sabotageSaved, setSabotageSaved] = useState(false);
 
   const toggleSabotage = (id: string) => {
     setSabotageSelected((prev) => (prev.includes(id) ? prev.filter((p) => p !== id) : [...prev, id]));
+    setSabotageSaved(false);
+  };
+
+  // Bug fix: none of these three exercises ever wrote anywhere —
+  // everything below was local component state only, so filling out a
+  // reframe, logging a frustration entry (complete with a "Logged."
+  // message implying it had been saved), or checking off self-sabotage
+  // patterns was silently lost the moment the screen unmounted. All
+  // three now persist through workbookSlice.ts.
+  const handleSaveReframe = async () => {
+    if (!thought.trim() && !reframe.trim()) return;
+    await saveThoughtReframe(thought.trim(), distortion, reframe.trim());
+    setReframeSaved(true);
+    setTimeout(() => setReframeSaved(false), 2000);
+  };
+
+  const handleSaveSabotageCheck = async () => {
+    if (!sabotageSelected.length) return;
+    await saveSabotageCheck(sabotageSelected);
+    setSabotageSaved(true);
   };
 
   return (
@@ -89,8 +118,14 @@ export default function WorkbookCard() {
             placeholder="What would you tell a friend thinking this?"
             placeholderTextColor="#64748b"
             multiline
-            className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl p-3 min-h-[60px]"
+            className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl p-3 min-h-[60px] mb-3"
           />
+          <Pressable onPress={handleSaveReframe} className="bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500">
+            <Text className="text-white text-sm font-semibold">{reframeSaved ? 'Saved ✓' : 'Save this reframe'}</Text>
+          </Pressable>
+          {thoughtReframes.length > 0 && (
+            <Text className="text-slate-400 text-[11px] mt-2">{thoughtReframes.length} reframe{thoughtReframes.length === 1 ? '' : 's'} saved so far.</Text>
+          )}
         </View>
       )}
 
@@ -100,6 +135,9 @@ export default function WorkbookCard() {
             <View className="items-center py-4">
               <Text className="text-emerald-600 dark:text-emerald-400 text-sm font-medium mb-1">Logged.</Text>
               <Text className="text-slate-500 text-xs text-center mb-3">Naming it is the first step to it passing.</Text>
+              {frustrationEntries.length > 0 && (
+                <Text className="text-slate-400 text-[11px] mb-3">{frustrationEntries.length} entr{frustrationEntries.length === 1 ? 'y' : 'ies'} saved so far.</Text>
+              )}
               <Pressable onPress={() => { setFrustLogged(false); setFrustTrigger(''); setFrustLevel(5); }} className="py-2">
                 <Text className="text-slate-500 text-xs">Log another</Text>
               </Pressable>
@@ -120,7 +158,7 @@ export default function WorkbookCard() {
                 placeholderTextColor="#64748b"
                 className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3"
               />
-              <Pressable onPress={() => setFrustLogged(true)} className="bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500">
+              <Pressable onPress={() => { setFrustLogged(true); saveFrustrationEntry(frustLevel, frustTrigger.trim()); }} className="bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500">
                 <Text className="text-white text-sm font-semibold">Log it</Text>
               </Pressable>
             </>
@@ -146,9 +184,17 @@ export default function WorkbookCard() {
             })}
           </View>
           {sabotageSelected.length > 0 && (
-            <Text className="text-slate-500 text-xs mt-3">
-              {sabotageSelected.length} pattern{sabotageSelected.length > 1 ? 's' : ''} noticed. Awareness is the first step — no pattern here needs fixing today, just noticing.
-            </Text>
+            <>
+              <Text className="text-slate-500 text-xs mt-3 mb-3">
+                {sabotageSelected.length} pattern{sabotageSelected.length > 1 ? 's' : ''} noticed. Awareness is the first step — no pattern here needs fixing today, just noticing.
+              </Text>
+              <Pressable onPress={handleSaveSabotageCheck} className="bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500">
+                <Text className="text-white text-sm font-semibold">{sabotageSaved ? 'Saved ✓' : 'Save this check-in'}</Text>
+              </Pressable>
+            </>
+          )}
+          {sabotageChecks.length > 0 && (
+            <Text className="text-slate-400 text-[11px] mt-2">{sabotageChecks.length} check-in{sabotageChecks.length === 1 ? '' : 's'} saved so far.</Text>
           )}
         </View>
       )}

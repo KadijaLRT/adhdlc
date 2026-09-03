@@ -1,10 +1,11 @@
 import { useMemo } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAppStore, selectSavedRecipeIds, selectEnergyLevel, selectWellnessPreferences, selectFoodLog } from '@/store/index';
+import { useAppStore, selectSavedRecipeIds, selectEnergyLevel, selectWellnessPreferences, selectFoodLog, selectPantryItems, selectMealPlan } from '@/store/index';
 import { RECIPES } from '@/content/recipes';
 import { getMealSuggestions } from '@/content/mealSuggestions';
 import { buildMergedGroceryList } from '@/content/groceryListBuilder';
+import { PLAN_DAYS, PLAN_MEAL_TYPES } from '@/features/nutrition/mealPlanGeneration';
 import { Heading, Subheading } from '@/shared/components/Heading';
 
 function todayLocal(): string {
@@ -22,6 +23,8 @@ export default function MealsHub() {
   const energyLevel = useAppStore(selectEnergyLevel);
   const wellnessPreferences = useAppStore(selectWellnessPreferences);
   const foodLog = useAppStore(selectFoodLog);
+  const pantryItems = useAppStore(selectPantryItems);
+  const mealPlan = useAppStore(selectMealPlan);
 
   const todaysCalories = useMemo(
     () => (foodLog || []).filter((f) => f.date === todayLocal()).reduce((sum, f) => sum + f.calories, 0),
@@ -35,7 +38,32 @@ export default function MealsHub() {
     return matches[0] || null;
   }, [energyLevel, wellnessPreferences]);
 
-  const groceryCount = useMemo(() => buildMergedGroceryList(savedRecipes, []).length, [savedRecipes]);
+  // Bug fix: this used to call buildMergedGroceryList(savedRecipes, [])
+  // — only saved recipes, and an empty pantry regardless of what was
+  // actually in it. GroceryScreen.tsx's real list also includes meal
+  // plan meals and excludes real pantry items, so this preview number
+  // would silently disagree with what the person actually sees the
+  // moment they tap in (higher than reality if pantry items existed,
+  // lower than reality if a meal plan was generated). Mirrors the same
+  // inputs GroceryScreen.tsx uses so the preview is honest.
+  const planMealsAsRecipeLike = useMemo(() => {
+    if (!mealPlan) return [];
+    const out: { n: string; g: string[] }[] = [];
+    for (const day of PLAN_DAYS) {
+      const dayPlan = mealPlan.days[day];
+      if (!dayPlan) continue;
+      for (const mealType of PLAN_MEAL_TYPES) {
+        const meal = dayPlan[mealType];
+        if (meal) out.push({ n: meal.name, g: meal.ingredients });
+      }
+    }
+    return out;
+  }, [mealPlan]);
+
+  const groceryCount = useMemo(
+    () => buildMergedGroceryList([...savedRecipes, ...planMealsAsRecipeLike], pantryItems).length,
+    [savedRecipes, planMealsAsRecipeLike, pantryItems]
+  );
 
   return (
     <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>

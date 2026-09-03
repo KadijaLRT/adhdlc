@@ -46,9 +46,18 @@ export function DateInput({ value, onChange, dark = true }: DateInputProps) {
     }
   };
 
+  // Bug fix: the `dark` prop's false branch hardcoded
+  // 'bg-stone-100 text-slate-900' with no dark: Tailwind variant at
+  // all — so on a screen using dark={false} (this component was
+  // previously only ever used with dark={true} from onboarding, which
+  // is unconditionally dark-themed), the actual app dark mode would
+  // render dark text on a pale background regardless of theme. Both
+  // branches now pair every class with its dark: variant, so `dark`
+  // just picks a sensible default that still respects the real
+  // system/app theme either way.
   const fieldClass = dark
     ? 'bg-slate-900 text-slate-100 rounded-xl px-3 py-3 text-center'
-    : 'bg-stone-100 text-slate-900 rounded-xl px-3 py-3 text-center';
+    : 'bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-3 text-center';
   const placeholderColor = '#64748b';
 
   return (
@@ -62,7 +71,7 @@ export function DateInput({ value, onChange, dark = true }: DateInputProps) {
         maxLength={2}
         className={`w-16 ${fieldClass}`}
       />
-      <Text className={dark ? 'text-slate-500 self-center' : 'text-slate-400 self-center'}>/</Text>
+      <Text className={dark ? 'text-slate-500 self-center' : 'text-slate-400 dark:text-slate-500 self-center'}>/</Text>
       <TextInput
         value={dd}
         onChangeText={(v) => { const c = v.replace(/\D/g, '').slice(0, 2); setDd(c); emitIfComplete(mm, c, yyyy); }}
@@ -72,7 +81,7 @@ export function DateInput({ value, onChange, dark = true }: DateInputProps) {
         maxLength={2}
         className={`w-16 ${fieldClass}`}
       />
-      <Text className={dark ? 'text-slate-500 self-center' : 'text-slate-400 self-center'}>/</Text>
+      <Text className={dark ? 'text-slate-500 self-center' : 'text-slate-400 dark:text-slate-500 self-center'}>/</Text>
       <TextInput
         value={yyyy}
         onChangeText={(v) => { const c = v.replace(/\D/g, '').slice(0, 4); setYyyy(c); emitIfComplete(mm, dd, c); }}

@@ -44,7 +44,20 @@ export default function ProgressHub() {
 
   const level = xpToLevel(totalXp || 0);
   const nextLevelXp = xpForNextLevel(level);
-  const levelProgressPercent = Math.min(((totalXp || 0) / nextLevelXp) * 100, 100);
+  // Bug fix: this used to be (totalXp / nextLevelXp) * 100 — but
+  // nextLevelXp is the ABSOLUTE XP threshold for the next level, which
+  // already includes every previous level's XP. That formula shows
+  // progress toward a cumulative total, not progress through the
+  // current level, so right after leveling up the bar could show ~31%
+  // full when real progress through the new level was only ~8% — and
+  // the gap widens at higher levels. This computes progress within
+  // just the current level's own XP span instead.
+  const currentLevelStartXp = level > 1 ? xpForNextLevel(level - 1) : 0;
+  const currentLevelSpan = nextLevelXp - currentLevelStartXp;
+  const xpIntoCurrentLevel = (totalXp || 0) - currentLevelStartXp;
+  const levelProgressPercent = currentLevelSpan > 0
+    ? Math.min((xpIntoCurrentLevel / currentLevelSpan) * 100, 100)
+    : 100;
 
   const unlockedMilestoneCount = (MILESTONE_DEFINITIONS || []).reduce((sum, def) => {
     const progress = (milestones || []).find((m) => m.trackedEvent === def.trackedEvent);
@@ -62,7 +75,7 @@ export default function ProgressHub() {
           <View className="h-2 bg-stone-100 dark:bg-slate-800 rounded-full overflow-hidden mb-2">
             <View className="h-2 bg-amber-400 rounded-full" style={{ width: `${levelProgressPercent}%` }} />
           </View>
-          <Text className="text-slate-500 text-xs">{totalXp || 0} / {nextLevelXp} XP to level {level + 1}</Text>
+          <Text className="text-slate-500 text-xs">{xpIntoCurrentLevel} / {currentLevelSpan} XP to level {level + 1}</Text>
         </View>
 
         <Subheading className="mb-3">Skills</Subheading>

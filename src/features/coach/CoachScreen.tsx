@@ -1,14 +1,16 @@
 import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator } from 'react-native';
-import { useAppStore, selectReflections } from '@/store/index';
+import { useAppStore, selectReflections, selectProfile } from '@/store/index';
 import { AGENTS } from '@/core/ai/agents';
 import { askOrchestrator } from '@/core/ai/orchestrator';
+import { resolveBrainTypeTraits } from '@/content/brainTypes';
 import { Heading } from '@/shared/components/Heading';
 
 export default function CoachScreen() {
   const energyLevel = useAppStore((s) => s.energyLevel);
   const isOverwhelmed = useAppStore((s) => s.isOverwhelmed);
   const reflections = useAppStore(selectReflections);
+  const profile = useAppStore(selectProfile);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
@@ -27,7 +29,7 @@ export default function CoachScreen() {
     try {
       const { agentLabel, response } = await askOrchestrator(
         message,
-        { energyLevel, isOverwhelmed, timeOfDay, recentReflection: mostRecentReflection?.note },
+        { energyLevel, isOverwhelmed, timeOfDay, recentReflection: mostRecentReflection?.note, coachingStyle: profile?.coachingStyle, brainTypeTraits: resolveBrainTypeTraits(profile?.brainTypes) },
         selectedAgentId || undefined
       );
 

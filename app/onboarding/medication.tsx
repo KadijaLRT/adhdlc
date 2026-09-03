@@ -2,7 +2,7 @@ import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
-import { OnboardingBackOnlyHeader } from '@/features/onboarding/OnboardingStepHeader';
+import { OnboardingStepHeader, OnboardingProgressBar } from '@/features/onboarding/OnboardingStepHeader';
 
 export default function MedicationScreen() {
   const router = useRouter();
@@ -11,12 +11,15 @@ export default function MedicationScreen() {
   const medicationTimes = useOnboardingStore((s) => s.medicationTimes);
   const setField = useOnboardingStore((s) => s.setField);
   const goToNextModuleScreen = useOnboardingStore((s) => s.goToNextModuleScreen);
+  const getStepInfo = useOnboardingStore((s) => s.getStepInfo);
+  const { step, total } = getStepInfo('/onboarding/medication');
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
+      <OnboardingProgressBar step={step} total={total} />
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         <View className="w-full max-w-md self-center">
-          <OnboardingBackOnlyHeader />
+          <OnboardingStepHeader step={step} total={total} />
           <Text className="text-slate-100 text-2xl font-semibold mb-6">Would you like medication reminders?</Text>
 
           <View className="flex-row gap-2 mb-6">

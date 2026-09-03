@@ -77,14 +77,36 @@ export default function BodyScreen() {
 
           <Text className="text-slate-100 text-base font-medium mb-2">Weight goal</Text>
           <View className="flex-row gap-2 mb-4">
-            {WEIGHT_GOALS.map((g) => <Pill key={g.id} label={`${g.emoji} ${g.label}`} active={o.weightGoalDirections.includes(g.id)} onPress={() => toggleInList('weightGoalDirections' as any, g.id)} />)}
+            {WEIGHT_GOALS.map((g) => (
+              <Pill
+                key={g.id}
+                label={`${g.emoji} ${g.label}`}
+                active={o.weightGoalDirections.includes(g.id)}
+                onPress={() => {
+                  // Bug fix: this used to call toggleInList with
+                  // 'weightGoalDirections' as any — weightGoalDirections
+                  // isn't part of toggleInList's typed key union at
+                  // all, so without the cast TypeScript would correctly
+                  // reject the call. Written out directly here instead,
+                  // fully type-safe, matching the same fix already
+                  // applied to the identical pattern in
+                  // EditFitnessPreferencesScreen.tsx.
+                  setField(
+                    'weightGoalDirections',
+                    o.weightGoalDirections.includes(g.id)
+                      ? o.weightGoalDirections.filter((d) => d !== g.id)
+                      : [...o.weightGoalDirections, g.id]
+                  );
+                }}
+              />
+            ))}
           </View>
           <TextInput
             value={o.startingWeightLbs}
             onChangeText={(v) => setField('startingWeightLbs', v)}
             placeholder="Starting weight (lbs)"
             placeholderTextColor="#64748b"
-            keyboardType="numeric"
+            keyboardType="decimal-pad"
             className="bg-slate-900 text-slate-100 rounded-xl px-4 py-3 mb-3"
           />
           {o.weightGoalDirections.length > 0 && o.weightGoalDirections[0] !== 'maintain' && (
@@ -94,7 +116,7 @@ export default function BodyScreen() {
                 onChangeText={(v) => setField('goalWeightLbs', v)}
                 placeholder="Goal weight (lbs) — powers your Progress trend"
                 placeholderTextColor="#64748b"
-                keyboardType="numeric"
+                keyboardType="decimal-pad"
                 className="bg-slate-900 text-slate-100 rounded-xl px-4 py-3 mb-3"
               />
               <Text className="text-slate-400 text-xs mb-2">Goal date (optional)</Text>

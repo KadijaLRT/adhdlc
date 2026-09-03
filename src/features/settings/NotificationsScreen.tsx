@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, Text, Switch, Platform } from 'react-native';
+import { View, Text, Switch, Platform, AppState } from 'react-native';
 import { useAppStore, selectNotificationsEnabled } from '@/store/index';
 import {
   getNotificationPermissionStatus,
@@ -17,6 +17,21 @@ export default function NotificationsScreen() {
     getNotificationPermissionStatus()
       .then(setPermissionStatus)
       .finally(() => setCheckingPermission(false));
+
+    // Bug fix: permission was only ever checked once, on mount. If
+    // someone denied notifications, later granted them from their
+    // device/browser's own settings outside the app, then came back to
+    // this screen, it kept showing the switch off and the "blocked"
+    // warning — genuinely stuck until a full app restart, even though
+    // permission was actually already granted. Re-checking whenever
+    // the app returns to the foreground catches that without needing
+    // any action inside the app itself.
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState === 'active') {
+        getNotificationPermissionStatus().then(setPermissionStatus);
+      }
+    });
+    return () => subscription.remove();
   }, []);
 
   const handleToggle = async (next: boolean) => {

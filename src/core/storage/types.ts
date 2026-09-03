@@ -6,6 +6,7 @@ import type {
 import type { RpgState } from '@/store/slices/rpgSlice';
 import type { SettingsState } from '@/store/slices/settingsSlice';
 import type { ReflectionState } from '@/store/slices/reflectionSlice';
+import type { WorkbookState } from '@/store/slices/workbookSlice';
 import type { ScheduleState } from '@/store/slices/scheduleSlice';
 import type { SchoolState } from '@/store/slices/schoolSlice';
 import type { BodyProgressState } from '@/store/slices/bodyProgressSlice';
@@ -61,6 +62,8 @@ export interface TaskRepository {
   saveSettingsState(state: SettingsState): Promise<void>;
   getReflectionState(): Promise<ReflectionState | null>;
   saveReflectionState(state: ReflectionState): Promise<void>;
+  getWorkbookState(): Promise<WorkbookState | null>;
+  saveWorkbookState(state: WorkbookState): Promise<void>;
   getScheduleState(): Promise<ScheduleState | null>;
   saveScheduleState(state: ScheduleState): Promise<void>;
   getSchoolState(): Promise<SchoolState | null>;

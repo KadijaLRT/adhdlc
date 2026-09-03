@@ -17,7 +17,6 @@ interface OnboardingState {
   adhdSymptoms: string[];
   brainTypes: string[];
   supportMethods: string[];
-  priorities: string[];
   gender: Gender;
   weightGoalDirections: WeightGoalDirection[];
   startingWeightLbs: string;
@@ -45,7 +44,7 @@ interface OnboardingState {
   moduleScreenCount: number;
 
   setField: <K extends string>(key: K, value: any) => void;
-  toggleInList: (key: 'adhdSymptoms' | 'brainTypes' | 'supportMethods' | 'priorities' | 'exerciseGoals' | 'focusAreas' | 'selectedModules' | 'sleepStruggles' | 'emotionalRegulationHelpers', value: string) => void;
+  toggleInList: (key: 'adhdSymptoms' | 'brainTypes' | 'supportMethods' | 'exerciseGoals' | 'focusAreas' | 'selectedModules' | 'sleepStruggles' | 'emotionalRegulationHelpers', value: string) => void;
   buildModuleScreenQueue: () => void;
   getStepInfo: (screenPath: string) => { step: number; total: number };
   goToNextModuleScreen: (router: { push: (href: string) => void; replace?: (href: string) => void }) => void;
@@ -69,7 +68,7 @@ const DEFAULTS = {
   selectedModules: [] as string[],
   energyBaseline: 'medium' as EnergyLevel, stressThreshold: 'medium' as EnergyLevel,
   adhdSymptoms: [] as string[], brainTypes: [] as string[],
-  supportMethods: [] as string[], priorities: [] as string[],
+  supportMethods: [] as string[],
   gender: null as Gender, weightGoalDirections: [] as WeightGoalDirection[],
   startingWeightLbs: '', goalWeightLbs: '', goalDate: '', bodyType: null as BodyType | null, activityLevel: null as ActivityLevel | null,
   exerciseGoals: [] as string[], focusAreas: [] as string[],

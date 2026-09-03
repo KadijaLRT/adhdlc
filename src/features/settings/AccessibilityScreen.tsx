@@ -139,39 +139,39 @@ export default function AccessibilityScreen() {
                 <Pressable
                   key={option.id}
                   onPress={() => setTextSize(option.id)}
-                  className={isActive ? 'flex-1 bg-emerald-100 border-2 border-emerald-500 rounded-xl py-4 items-center' : 'flex-1 bg-stone-50 border border-stone-200 rounded-xl py-4 items-center'}
+                  className={isActive ? 'flex-1 bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 rounded-xl py-4 items-center' : 'flex-1 bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl py-4 items-center'}
                 >
-                  <Text style={{ fontSize: 16 * option.scale }} className={isActive ? 'text-emerald-700 font-bold' : 'text-slate-800 font-bold'}>{option.label}</Text>
+                  <Text style={{ fontSize: 16 * option.scale }} className={isActive ? 'text-emerald-700 dark:text-emerald-300 font-bold' : 'text-slate-800 dark:text-slate-200 font-bold'}>{option.label}</Text>
                 </Pressable>
               );
             })}
           </View>
 
-          <View className="h-px bg-stone-200 my-4" />
+          <View className="h-px bg-stone-200 dark:bg-slate-800 my-4" />
 
           <View className="flex-row items-center justify-between mb-1">
             <View className="flex-1 pr-3">
-              <Text className="text-slate-900 text-base font-semibold">Reduce Motion</Text>
+              <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold">Reduce Motion</Text>
               <Text className="text-slate-500 text-xs">Turns off breathing animations and transitions</Text>
             </View>
             <Switch value={reduceMotion} onValueChange={setReduceMotion} trackColor={{ false: '#d6d3d1', true: '#4f46e5' }} thumbColor="#fff" />
           </View>
 
-          <View className="h-px bg-stone-200 my-4" />
+          <View className="h-px bg-stone-200 dark:bg-slate-800 my-4" />
 
           <View className="flex-row items-center justify-between mb-1">
             <View className="flex-1 pr-3">
-              <Text className="text-slate-900 text-base font-semibold">High Contrast</Text>
+              <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold">High Contrast</Text>
               <Text className="text-slate-500 text-xs">Boosts contrast on headings and section titles app-wide. Not every screen uses these shared text styles yet.</Text>
             </View>
             <Switch value={highContrast} onValueChange={setHighContrast} trackColor={{ false: '#d6d3d1', true: '#4f46e5' }} thumbColor="#fff" />
           </View>
 
-          <View className="h-px bg-stone-200 my-4" />
+          <View className="h-px bg-stone-200 dark:bg-slate-800 my-4" />
 
           <View className="flex-row items-center justify-between">
             <View className="flex-1 pr-3">
-              <Text className="text-slate-900 text-base font-semibold">Dyslexia-Friendly Font</Text>
+              <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold">Dyslexia-Friendly Font</Text>
               <Text className="text-slate-500 text-xs">Switches to Lexend, a font built for reading ease. Restart the app for it to fully apply.</Text>
             </View>
             <Switch value={dyslexiaFont} onValueChange={setDyslexiaFont} trackColor={{ false: '#d6d3d1', true: '#4f46e5' }} thumbColor="#fff" />

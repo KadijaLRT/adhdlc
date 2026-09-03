@@ -2,7 +2,7 @@ import { View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
-import { OnboardingBackOnlyHeader } from '@/features/onboarding/OnboardingStepHeader';
+import { OnboardingStepHeader, OnboardingProgressBar } from '@/features/onboarding/OnboardingStepHeader';
 
 const HELPERS = [
   { id: 'walking', label: 'Walking', emoji: '🚶' },
@@ -19,12 +19,15 @@ export default function EmotionalRegulationScreen() {
   const emotionalRegulationHelpers = useOnboardingStore((s) => s.emotionalRegulationHelpers);
   const toggleInList = useOnboardingStore((s) => s.toggleInList);
   const goToNextModuleScreen = useOnboardingStore((s) => s.goToNextModuleScreen);
+  const getStepInfo = useOnboardingStore((s) => s.getStepInfo);
+  const { step, total } = getStepInfo('/onboarding/emotional-regulation');
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
+      <OnboardingProgressBar step={step} total={total} />
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         <View className="w-full max-w-md self-center">
-          <OnboardingBackOnlyHeader />
+          <OnboardingStepHeader step={step} total={total} />
           <Text className="text-slate-100 text-2xl font-semibold mb-2">What usually helps?</Text>
           <Text className="text-slate-400 text-sm mb-6">Shapes what Overwhelmed Mode and Stuck Flow suggest first.</Text>
 

@@ -65,7 +65,7 @@ export interface UserProfile {
   displayName?: string; ageBracket?: AgeBracket;
   selectedModules?: string[];
   adhdSymptoms?: string[]; brainTypes?: string[];
-  supportMethods?: string[]; priorities?: string[];
+  supportMethods?: string[];
   reminderStyle?: ReminderStyle; coachingStyle?: CoachingStyle;
   sleepStruggles?: string[];
   wantsMedicationReminders?: boolean;

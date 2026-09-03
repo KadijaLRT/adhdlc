@@ -76,6 +76,7 @@ export default function FinalScreen() {
     setFinishing(true);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     const timezone = Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone || 'UTC';
+    const unparsedMedicationTimes: string[] = [];
 
     const profile = {
       timezone,
@@ -89,7 +90,6 @@ export default function FinalScreen() {
       adhdSymptoms: o.adhdSymptoms,
       brainTypes: o.brainTypes,
       supportMethods: o.supportMethods,
-      priorities: o.priorities,
       reminderStyle: o.reminderStyle || undefined,
       coachingStyle: o.coachingStyle || undefined,
       sleepStruggles: o.sleepStruggles,
@@ -151,6 +151,15 @@ export default function FinalScreen() {
               time: parsedTime,
               refKind: 'freeform',
             });
+          } else {
+            // Bug fix: an unparseable time (e.g. "whenever I remember"
+            // mixed in with "8am, 2pm") used to be silently dropped —
+            // no reminder created, and no indication to the person that
+            // anything had gone wrong. For a medication reminder,
+            // silently missing one is a real problem, not a cosmetic
+            // one. This surfaces on the Home screen once, right after
+            // onboarding, rather than vanishing without a trace.
+            unparsedMedicationTimes.push(rawTime);
           }
         }
       }
@@ -158,6 +167,28 @@ export default function FinalScreen() {
       console.error('onboarding: local save failed', error);
       // Continue anyway — whatever did save, saved; the person should
       // never be stuck here because of this.
+    }
+
+    // If any medication times couldn't be parsed, this becomes a real
+    // task on their list rather than a silently dropped reminder —
+    // something concrete pointing back at the exact problem, right
+    // where they'll actually see it (Home/Tasks), instead of vanishing
+    // with no trace.
+    if (unparsedMedicationTimes.length > 0) {
+      try {
+        await addTask({
+          id: `onboarding-medtime-fix-${Date.now()}`,
+          title: `Set exact times for medication reminders: "${unparsedMedicationTimes.join('", "')}" — couldn't tell what time you meant`,
+          isComplete: false,
+          energyRequired: 'low',
+          priority: 'important',
+          category: 'health',
+          createdAt: new Date().toISOString(),
+          subSteps: [],
+        });
+      } catch (error) {
+        console.error('onboarding: failed to add medication-time follow-up task', error);
+      }
     }
 
     // The AI-dependent first task is a nice-to-have, never a blocker.

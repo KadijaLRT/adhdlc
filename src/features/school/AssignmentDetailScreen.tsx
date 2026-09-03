@@ -1,8 +1,9 @@
 import { useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator, ScrollView, TextInput } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAppStore, selectAssignments, selectEnergyLevel, selectIsOverwhelmed, selectDateFormat, selectCourses } from '@/store/index';
+import { useAppStore, selectAssignments, selectEnergyLevel, selectIsOverwhelmed, selectDateFormat, selectCourses, selectProfile } from '@/store/index';
 import { avivaBrain } from '@/core/ai/AvivaBrain';
+import { resolveBrainTypeTraits } from '@/content/brainTypes';
 import { spreadStepsAcrossDays, groupStepsByDate } from './spreadWorkload';
 import { Heading } from '@/shared/components/Heading';
 import { formatDate } from '@/shared/formatDate';
@@ -13,6 +14,7 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
   const courses = useAppStore(selectCourses);
   const energyLevel = useAppStore(selectEnergyLevel);
   const isOverwhelmed = useAppStore(selectIsOverwhelmed);
+  const profile = useAppStore(selectProfile);
   const dateFormat = useAppStore(selectDateFormat);
   const toggleAssignmentComplete = useAppStore((s) => s.toggleAssignmentComplete);
   const toggleAssignmentSubStep = useAppStore((s) => s.toggleAssignmentSubStep);
@@ -67,6 +69,8 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
       currentEnergyLevel: energyLevel,
       isOverwhelmed,
       timeOfDay,
+      coachingStyle: profile?.coachingStyle,
+      brainTypeTraits: resolveBrainTypeTraits(profile?.brainTypes),
     });
 
     if (decomposition) {

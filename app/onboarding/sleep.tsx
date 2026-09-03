@@ -2,7 +2,7 @@ import { View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
-import { OnboardingBackOnlyHeader } from '@/features/onboarding/OnboardingStepHeader';
+import { OnboardingStepHeader, OnboardingProgressBar } from '@/features/onboarding/OnboardingStepHeader';
 
 const SLEEP_STRUGGLES = [
   { id: 'falling_asleep', label: 'Falling asleep', emoji: '🌙' },
@@ -16,12 +16,24 @@ export default function SleepScreen() {
   const sleepStruggles = useOnboardingStore((s) => s.sleepStruggles);
   const toggleInList = useOnboardingStore((s) => s.toggleInList);
   const goToNextModuleScreen = useOnboardingStore((s) => s.goToNextModuleScreen);
+  // Bug fix: this screen (and medication.tsx, emotional-regulation.tsx)
+  // used only OnboardingBackOnlyHeader — no step indicator at all —
+  // while sibling conditional module screens (body.tsx, food.tsx)
+  // correctly show "Step X of Y". Someone who selected fitness + sleep
+  // + medication would see the progress bar during fitness questions,
+  // watch it vanish for sleep and medication, then have it reappear at
+  // the final screen — an inconsistent, broken-feeling flow, even
+  // though getStepInfo already computes the exact right step for every
+  // one of these screens; they just weren't rendering it.
+  const getStepInfo = useOnboardingStore((s) => s.getStepInfo);
+  const { step, total } = getStepInfo('/onboarding/sleep');
 
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
+      <OnboardingProgressBar step={step} total={total} />
       <ScrollView contentContainerStyle={{ padding: 24 }}>
         <View className="w-full max-w-md self-center">
-          <OnboardingBackOnlyHeader />
+          <OnboardingStepHeader step={step} total={total} />
           <Text className="text-slate-100 text-2xl font-semibold mb-2">What do you struggle with?</Text>
           <Text className="text-slate-400 text-sm mb-6">Pick whatever's true. Shapes your wind-down and Evening check-in.</Text>
 

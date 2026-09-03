@@ -1,7 +1,8 @@
 import { useState } from 'react';
 import { View, Text, TextInput, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAppStore, selectReflections } from '@/store/index';
+import { useAppStore, selectReflections, selectProfile } from '@/store/index';
+import { getWindDownTip } from '@/content/windDownTips';
 
 /**
  * The evening half of the "three interface modes" idea: not a full
@@ -12,6 +13,8 @@ import { useAppStore, selectReflections } from '@/store/index';
 export default function ReflectionCard() {
   const router = useRouter();
   const reflections = useAppStore(selectReflections);
+  const profile = useAppStore(selectProfile);
+  const windDownTip = getWindDownTip(profile?.sleepStruggles);
   const saveReflectionForToday = useAppStore((s) => s.saveReflectionForToday);
   const today = (() => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; })();
   const todaysReflection = (reflections || []).find((r) => r.date === today);
@@ -35,6 +38,12 @@ export default function ReflectionCard() {
         )}
       </View>
       <Text className="text-slate-900 text-base font-medium mb-3 dark:text-slate-100">How was today?</Text>
+
+      {windDownTip && (
+        <View className="bg-indigo-600/10 rounded-xl p-3 mb-3">
+          <Text className="text-indigo-700 dark:text-indigo-300 text-xs">🌙 {windDownTip}</Text>
+        </View>
+      )}
 
       <TextInput
         value={note}

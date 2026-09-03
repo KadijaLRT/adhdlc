@@ -106,7 +106,10 @@ export const createNutritionFitnessSlice: StateCreator<NutritionFitnessSlice> = 
   },
 
   setNutritionPreferences: async (prefs) => {
-    const nextState = { ...currentState(get), nutritionPreferences: prefs, nutritionCardDismissed: true };
+    // Same defensive merge as setFitnessPreferences below — protects
+    // against a future field silently getting wiped by a caller that
+    // doesn't know to re-pass it.
+    const nextState = { ...currentState(get), nutritionPreferences: { ...currentState(get).nutritionPreferences, ...prefs }, nutritionCardDismissed: true };
     set(nextState);
     await persist(nextState);
   },
@@ -118,7 +121,16 @@ export const createNutritionFitnessSlice: StateCreator<NutritionFitnessSlice> = 
   },
 
   setFitnessPreferences: async (prefs) => {
-    const nextState = { ...currentState(get), fitnessPreferences: prefs, fitnessCardDismissed: true };
+    // Bug fix: this used to fully replace fitnessPreferences with
+    // exactly whatever the caller passed. Every current caller
+    // (EditFitnessPreferencesScreen.tsx, onboarding) happens to pass
+    // every field FitnessPreferences currently has, so there's no
+    // active data loss today — but the moment a new field gets added
+    // to that interface later, any caller that doesn't know to also
+    // pass it (easy to miss, since nothing enforces it) would silently
+    // wipe that field back to undefined on save. Merging with the
+    // existing value removes that whole failure mode.
+    const nextState = { ...currentState(get), fitnessPreferences: { ...currentState(get).fitnessPreferences, ...prefs }, fitnessCardDismissed: true };
     set(nextState);
     await persist(nextState);
   },

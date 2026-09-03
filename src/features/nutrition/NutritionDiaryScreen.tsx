@@ -118,6 +118,7 @@ export default function NutritionDiaryScreen() {
   const [qfPro, setQfPro] = useState('');
   const [qfCarb, setQfCarb] = useState('');
   const [qfFat, setQfFat] = useState('');
+  const [confirmingRemoveMealId, setConfirmingRemoveMealId] = useState<string | null>(null);
 
   const entriesForDay = useMemo(() => (foodLog || []).filter((f) => f.date === selectedDate), [foodLog, selectedDate]);
 
@@ -160,6 +161,26 @@ export default function NutritionDiaryScreen() {
       fat: suggestedTargets.fat,
     });
   };
+
+  // Bug fix: targetCalInput etc. were only ever initialized once, from
+  // dailyTargets at the moment this component first mounted — they
+  // never updated afterward. Accepting the "Suggested targets" banner
+  // above calls setDailyTargets directly, bypassing these inputs
+  // entirely, so tapping "Edit targets" right after accepting a
+  // suggestion showed blank/stale fields instead of the targets that
+  // were just set. Worse: tapping "Save targets" from that stale state
+  // would write calories: null (since an empty field maps to null),
+  // silently wiping out the targets just accepted. This keeps the
+  // inputs in sync with the real stored value whenever the person
+  // isn't actively mid-edit, so opening the editor always shows what's
+  // actually active.
+  useEffect(() => {
+    if (editingTargets) return;
+    setTargetCalInput(dailyTargets?.calories ? String(dailyTargets.calories) : '');
+    setTargetProInput(dailyTargets?.protein ? String(dailyTargets.protein) : '');
+    setTargetCarbInput(dailyTargets?.carbs ? String(dailyTargets.carbs) : '');
+    setTargetFatInput(dailyTargets?.fat ? String(dailyTargets.fat) : '');
+  }, [dailyTargets, editingTargets]);
 
   const searchResults = useMemo(() => searchFoodDatabase(search).slice(0, 12), [search]);
 
@@ -772,16 +793,41 @@ export default function NutritionDiaryScreen() {
                                 </View>
                               ) : (
                                 <View key={m.id} className="flex-row items-center justify-between py-2 border-b border-stone-100 dark:border-slate-800">
-                                  <Pressable onPress={() => setPickedMeal(m)} className="flex-1">
-                                    <Text className="text-slate-800 dark:text-slate-200 text-sm">{m.name}</Text>
-                                    <Text className="text-slate-500 text-xs">{m.ingredients.length} ingredient{m.ingredients.length === 1 ? '' : 's'} · {m.calories} cal · {m.protein}p / {m.carbs}c / {m.fat}f</Text>
-                                  </Pressable>
-                                  <Pressable onPress={() => handleStartEditMeal(m)} className="p-2">
-                                    <Text className="text-indigo-500 text-xs">Edit</Text>
-                                  </Pressable>
-                                  <Pressable onPress={() => removeCustomMeal(m.id)} className="p-2">
-                                    <Text className="text-slate-400 text-xs">✕</Text>
-                                  </Pressable>
+                                  {confirmingRemoveMealId === m.id ? (
+                                    <View className="flex-1 flex-row items-center justify-between">
+                                      <Text className="text-red-500 text-xs flex-1 pr-2">Remove "{m.name}"?</Text>
+                                      <View className="flex-row gap-2">
+                                        <Pressable onPress={() => { removeCustomMeal(m.id); setConfirmingRemoveMealId(null); }}>
+                                          <Text className="text-red-500 text-xs font-semibold">Remove</Text>
+                                        </Pressable>
+                                        <Pressable onPress={() => setConfirmingRemoveMealId(null)}>
+                                          <Text className="text-slate-400 text-xs">Cancel</Text>
+                                        </Pressable>
+                                      </View>
+                                    </View>
+                                  ) : (
+                                    <>
+                                      <Pressable onPress={() => setPickedMeal(m)} className="flex-1">
+                                        <Text className="text-slate-800 dark:text-slate-200 text-sm">{m.name}</Text>
+                                        <Text className="text-slate-500 text-xs">{m.ingredients.length} ingredient{m.ingredients.length === 1 ? '' : 's'} · {m.calories} cal · {m.protein}p / {m.carbs}c / {m.fat}f</Text>
+                                      </Pressable>
+                                      <Pressable onPress={() => handleStartEditMeal(m)} className="p-2">
+                                        <Text className="text-indigo-500 text-xs">Edit</Text>
+                                      </Pressable>
+                                      {/*
+                                        Bug fix: this used to remove the
+                                        meal instantly on tap, no
+                                        confirmation — a hand-built meal
+                                        (multiple ingredients entered one
+                                        by one via CustomMealBuilder) could
+                                        be lost with a single mis-tap right
+                                        next to Edit.
+                                      */}
+                                      <Pressable onPress={() => setConfirmingRemoveMealId(m.id)} className="p-2">
+                                        <Text className="text-slate-400 text-xs">✕</Text>
+                                      </Pressable>
+                                    </>
+                                  )}
                                 </View>
                               )
                             ))}

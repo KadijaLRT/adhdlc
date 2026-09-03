@@ -126,7 +126,29 @@ export default function EditFitnessPreferencesScreen() {
 
           <Text className="text-slate-900 dark:text-slate-100 text-base font-medium mb-2">Weight goal</Text>
           <View className="flex-row gap-2 mb-6">
-            {WEIGHT_GOALS.map((g) => <Pill key={g.id} label={`${g.emoji} ${g.label}`} active={weightGoalDirections.includes(g.id)} onPress={() => toggleIn(weightGoalDirections, setWeightGoalDirections as any, g.id)} />)}
+            {WEIGHT_GOALS.map((g) => (
+              <Pill
+                key={g.id}
+                label={`${g.emoji} ${g.label}`}
+                active={weightGoalDirections.includes(g.id)}
+                onPress={() => {
+                  // Bug fix: this used to call the shared toggleIn
+                  // helper with `setWeightGoalDirections as any` — an
+                  // unsafe cast papering over a real type mismatch
+                  // (toggleIn is typed for string[]/string, but this
+                  // setter is WeightGoalDirection[]-typed), unlike
+                  // every other toggle on this screen which type-checks
+                  // cleanly without a cast. Written out directly here
+                  // instead, so this one stays type-safe like the rest.
+                  setWeightGoalDirections(
+                    weightGoalDirections.includes(g.id)
+                      ? weightGoalDirections.filter((d) => d !== g.id)
+                      : [...weightGoalDirections, g.id]
+                  );
+                  setSaved(false);
+                }}
+              />
+            ))}
           </View>
           <Text className="text-slate-500 text-xs mb-6">Starting/goal weight live in Progress, not here.</Text>
 

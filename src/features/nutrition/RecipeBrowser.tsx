@@ -178,7 +178,8 @@ export default function RecipeBrowser() {
           showsHorizontalScrollIndicator={false}
           data={MEAL_TYPES}
           keyExtractor={(item) => item}
-          contentContainerStyle={{ gap: 8, marginBottom: 8 }}
+          style={{ height: 40, flexGrow: 0, marginBottom: 8 }}
+          contentContainerStyle={{ gap: 8, alignItems: 'center' }}
           renderItem={({ item }) => (
             <Pressable
               onPress={() => setMealType(item)}
@@ -193,7 +194,8 @@ export default function RecipeBrowser() {
           showsHorizontalScrollIndicator={false}
           data={CUISINES}
           keyExtractor={(item) => item}
-          contentContainerStyle={{ gap: 8, marginBottom: 10 }}
+          style={{ height: 40, flexGrow: 0, marginBottom: 10 }}
+          contentContainerStyle={{ gap: 8, alignItems: 'center' }}
           renderItem={({ item }) => (
             <Pressable
               onPress={() => setCuisine(item)}

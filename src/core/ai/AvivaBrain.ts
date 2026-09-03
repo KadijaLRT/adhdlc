@@ -8,7 +8,24 @@ export interface AvivaContext {
   isOverwhelmed: boolean;
   timeOfDay: 'morning' | 'afternoon' | 'evening' | 'night';
   recentReflection?: string; // the person's own most recent evening check-in note
+  // Bug fix: same coachingStyle onboarding collects and describes as
+  // shaping "Aviva's tone in every conversation" — previously never
+  // read here either. Optional so every existing call keeps working.
+  coachingStyle?: 'gentle' | 'funny' | 'reality_check' | 'friend' | 'scientific';
+  // Bug fix: same story as coachingStyle — collected during onboarding
+  // for personalization, never actually read anywhere. Passed through
+  // as plain trait labels (not ids) so the model gets real signal
+  // ("Overthinking, Daydreaming") without needing its own lookup table.
+  brainTypeTraits?: string[];
 }
+
+const AVIVA_COACHING_STYLE_INSTRUCTIONS: Record<NonNullable<AvivaContext['coachingStyle']>, string> = {
+  gentle: 'Tone: gentle and supportive. Soft language, no pressure, warmth over directness.',
+  funny: 'Tone: light and funny where it fits naturally. Humor should never undercut genuinely serious moments.',
+  reality_check: 'Tone: direct and matter-of-fact. Skip the cushioning — say the real thing plainly, still kindly.',
+  friend: 'Tone: like a close, casual friend talking it through with them, not a formal coach.',
+  scientific: "Tone: grounded in the actual mechanism when it's relevant (e.g. briefly why a technique works for ADHD brains), still plain-language and concrete.",
+};
 
 const SubStepSchema = z.object({
   id: z.string(), title: z.string(), estimatedMinutes: z.number().nonnegative(),
@@ -147,6 +164,8 @@ export class AvivaBrain {
 Break the user's task into small, concrete, low-friction sub-steps.
 Never use guilt, urgency, or shaming language.
 The ADHD brain is motivated by an interest-based nervous system, not an importance-based one. When it fits naturally, briefly note in your reasoning which of these five levers (PINCH) could make this specific task easier to start: Play (humor/gamifying), Interest, Novelty, Connection (competition/collaboration), or a real Hurry-Up deadline. Only mention it if genuinely relevant to this task — don't force it in.
+${cleanContext.coachingStyle ? AVIVA_COACHING_STYLE_INSTRUCTIONS[cleanContext.coachingStyle] : ''}
+${cleanContext.brainTypeTraits?.length ? `This person identifies with these ADHD traits: ${cleanContext.brainTypeTraits.join(', ')}. Let this inform your approach where relevant, without labeling or diagnosing them back.` : ''}
 Always explain your reasoning briefly and concretely.
 Respond with ONLY valid JSON matching this exact shape, no markdown fences:
 {"originalTask": string, "subSteps": [{"id": string, "title": string, "estimatedMinutes": number}], "estimatedRealMinutes": number, "estimatedIdealMinutes": number, "reasoning": string, "suggestedEnergyLevel": "low"|"medium"|"high"}`;
@@ -182,6 +201,8 @@ Time of day: ${cleanContext.timeOfDay}`;
     const systemPrompt = `You are Aviva, a compassionate executive-function assistant.
 The user will paste unstructured, chaotic thoughts. Break them into distinct,
 concrete items. Never add urgency or guilt language. Explain your reasoning briefly.
+${cleanContext.coachingStyle ? AVIVA_COACHING_STYLE_INSTRUCTIONS[cleanContext.coachingStyle] : ''}
+${cleanContext.brainTypeTraits?.length ? `This person identifies with these ADHD traits: ${cleanContext.brainTypeTraits.join(', ')}. Let this inform your approach where relevant, without labeling or diagnosing them back.` : ''}
 If a recent reflection note is provided, use it only as light context — never quote it back verbatim.
 Respond with ONLY valid JSON, no markdown fences:
 {"items": [{"id": string, "text": string, "category": "task"|"appointment"|"errand"|"phone_call"|"reminder"|"bill", "suggestedEnergyLevel": "low"|"medium"|"high", "suggestedTiming": "morning"|"afternoon"|"evening"|"no_preference"}], "reasoning": string}`;
