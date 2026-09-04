@@ -300,7 +300,13 @@ export function getEnergyAdjustedExerciseIds(
   }
   if (energyLevel === 'high') {
     const bonus = Object.entries(WORKOUT_EXERCISES || {})
-      .find(([id, ex]) => muscleGroups.includes((ex as any).group) && !exerciseIds.includes(id));
+      // Bug fix: (ex as any).group papered over what should just be a
+      // normal typed property access — WORKOUT_EXERCISES is already
+      // Record<string, Exercise>, so ex.group is already properly
+      // typed with no cast needed. Left as any, a typo like ex.grop
+      // would have silently compiled and returned undefined forever
+      // instead of being caught here.
+      .find(([id, ex]) => muscleGroups.includes(ex.group) && !exerciseIds.includes(id));
     return bonus ? [...exerciseIds, bonus[0]] : exerciseIds;
   }
   return exerciseIds;

@@ -84,7 +84,20 @@ export default function RecipeBrowser() {
     return foodsAvoided.some((a) => ingredients.some((i) => i.includes(a)));
   };
 
-  const filteredByPreferences = allRecipes.filter((r) => {
+  // Performance fix: this whole chain (allergy/avoided filtering,
+  // restriction+goal sorting, then cuisine/type/search/loved/blood-type
+  // filtering) used to be plain consts recomputed from scratch on
+  // every render — including every single keystroke in the search box,
+  // since search is component state and any state change re-renders
+  // this whole component. Each stage does full-array .filter()/.sort()
+  // with nested .some() calls for ingredient matching, so retyping a
+  // few characters quickly reran the entire pipeline that many times
+  // in a row. Wrapping in useMemo means it only actually recomputes
+  // when something in its dependency list changed, not on unrelated
+  // re-renders, and the search-only refinement is split into its own
+  // smaller memo so typing doesn't redo the more expensive
+  // allergy/restriction/goal passes every keystroke either.
+  const filteredByPreferences = useMemo(() => allRecipes.filter((r) => {
     const ingredients = (r.g || []).map((i) => i.toLowerCase());
     // Hard filter: never show a recipe containing a stated allergen.
     const hasAllergen = allergies.some((a) => ingredients.some((i) => i.includes(a)));
@@ -94,26 +107,28 @@ export default function RecipeBrowser() {
     // permanently hidden the way an allergen is.
     if (!showAvoided && recipeHasAvoided(r)) return false;
     return true;
-  });
+  }), [allRecipes, allergies, foodsAvoided, showAvoided]);
 
-  const sortedByRestrictions = restrictions.length || weightGoal
-    ? [...filteredByPreferences].sort((a, b) => {
-        // Soft boost only — dietary preference and weight goal reorder
-        // results, neither ever hides anything the way an allergy does.
-        // Restriction match is the primary key (it was here first and
-        // reflects a stated food need); goal match only breaks ties
-        // within that, so someone's restrictions are never overridden
-        // by a lighter/higher-calorie pick.
-        const aRestriction = restrictions.some((r) => (a.g || []).some((i) => i.toLowerCase().includes(r))) ? 0 : 1;
-        const bRestriction = restrictions.some((r) => (b.g || []).some((i) => i.toLowerCase().includes(r))) ? 0 : 1;
-        if (aRestriction !== bRestriction) return aRestriction - bRestriction;
-        const aGoal = recipeMatchesGoal(a) ? 0 : 1;
-        const bGoal = recipeMatchesGoal(b) ? 0 : 1;
-        return aGoal - bGoal;
-      })
-    : filteredByPreferences;
+  const sortedByRestrictions = useMemo(() => (
+    restrictions.length || weightGoal
+      ? [...filteredByPreferences].sort((a, b) => {
+          // Soft boost only — dietary preference and weight goal reorder
+          // results, neither ever hides anything the way an allergy does.
+          // Restriction match is the primary key (it was here first and
+          // reflects a stated food need); goal match only breaks ties
+          // within that, so someone's restrictions are never overridden
+          // by a lighter/higher-calorie pick.
+          const aRestriction = restrictions.some((r) => (a.g || []).some((i) => i.toLowerCase().includes(r))) ? 0 : 1;
+          const bRestriction = restrictions.some((r) => (b.g || []).some((i) => i.toLowerCase().includes(r))) ? 0 : 1;
+          if (aRestriction !== bRestriction) return aRestriction - bRestriction;
+          const aGoal = recipeMatchesGoal(a) ? 0 : 1;
+          const bGoal = recipeMatchesGoal(b) ? 0 : 1;
+          return aGoal - bGoal;
+        })
+      : filteredByPreferences
+  ), [filteredByPreferences, restrictions, weightGoal]);
 
-  const filtered = sortedByRestrictions.filter((r) => {
+  const filtered = useMemo(() => sortedByRestrictions.filter((r) => {
     const matchesCuisine = cuisine === 'all' || r.c === cuisine;
     const matchesType = mealType === 'all' || r.t === mealType;
     const matchesSearch = !search.trim() || (r.n || '').toLowerCase().includes(search.toLowerCase());
@@ -122,9 +137,9 @@ export default function RecipeBrowser() {
     const affinity = getBloodTypeAffinity(r, bloodType);
     const matchesBloodType = bloodTypeFilter === 'all' || affinity === bloodTypeFilter;
     return matchesCuisine && matchesType && matchesSearch && matchesLoved && matchesBloodType;
-  });
+  }), [sortedByRestrictions, cuisine, mealType, search, lovedFilter, foodsLoved, bloodTypeFilter, bloodType]);
 
-  const hiddenAvoidedCount = allRecipes.filter(recipeHasAvoided).length;
+  const hiddenAvoidedCount = useMemo(() => allRecipes.filter(recipeHasAvoided).length, [allRecipes, foodsAvoided]);
   const showGenerateButton = search.trim().length > 2 && filtered.length === 0;
 
   const handleGenerate = async () => {

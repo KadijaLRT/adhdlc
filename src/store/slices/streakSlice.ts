@@ -34,6 +34,15 @@ export const createStreakSlice: StateCreator<
   streaks: [],
 
   recordRoutineCompletion: async (routineId) => {
+    // Bug fix: today() used to be called four separate times across
+    // this function — if execution genuinely straddled a midnight
+    // boundary between calls (a slow/backgrounded device, astronomically
+    // rare but not impossible), the "already completed today" check,
+    // the recovery calculation, and the actual stored date could each
+    // see a different "today," producing an inconsistent result.
+    // Snapshotting it once means the whole function operates on one
+    // single, consistent notion of "today."
+    const todayStr = today();
     const existing = (get().streaks || []).find((s) => s.routineId === routineId);
     // Bug fix: this used to unconditionally increment count and award
     // XP every time it was called — RoutinesScreen's auto-complete
@@ -45,15 +54,15 @@ export const createStreakSlice: StateCreator<
     // task-completion code already guards against via rewardedAt —
     // this is the routine-streak equivalent: already-completed-today
     // is a no-op, not a second reward.
-    const alreadyCompletedToday = existing?.lastCompletedDate === today();
+    const alreadyCompletedToday = existing?.lastCompletedDate === todayStr;
     if (alreadyCompletedToday) return { isRecovery: false };
 
-    const isRecovery = !!(existing?.lastCompletedDate && daysBetween(existing.lastCompletedDate, today()) >= 2);
+    const isRecovery = !!(existing?.lastCompletedDate && daysBetween(existing.lastCompletedDate, todayStr) >= 2);
 
     const next = existing
       ? (get().streaks || []).map((s) => s.routineId === routineId
-          ? { ...s, count: s.count + 1, lastCompletedDate: today(), isFrozen: false } : s)
-      : [...(get().streaks || []), { routineId, count: 1, lastCompletedDate: today(), freezesAvailable: 2, isFrozen: false }];
+          ? { ...s, count: s.count + 1, lastCompletedDate: todayStr, isFrozen: false } : s)
+      : [...(get().streaks || []), { routineId, count: 1, lastCompletedDate: todayStr, freezesAvailable: 2, isFrozen: false }];
     set({ streaks: next });
     await persist(next);
     await get().incrementMilestone('routine_completed');

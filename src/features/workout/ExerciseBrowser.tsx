@@ -26,11 +26,16 @@ export default function ExerciseBrowser() {
 
   const availableEquipment = fitnessPreferences?.equipment || null;
 
-  const filteredByEquipment = availableEquipment
-    ? entries.filter(([, ex]) => (ex.eq || []).some((e) => availableEquipment.includes(e)))
-    : entries;
+  const filteredByEquipment = useMemo(() => (
+    availableEquipment
+      ? entries.filter(([, ex]) => (ex.eq || []).some((e) => availableEquipment.includes(e)))
+      : entries
+  ), [entries, availableEquipment]);
 
-  const filtered = filteredByEquipment.filter(([, ex]) => !selectedGroup || ex.group === selectedGroup);
+  const filtered = useMemo(
+    () => filteredByEquipment.filter(([, ex]) => !selectedGroup || ex.group === selectedGroup),
+    [filteredByEquipment, selectedGroup]
+  );
 
   return (
     <View className="flex-1">
@@ -50,9 +55,9 @@ export default function ExerciseBrowser() {
             return (
               <Pressable
                 onPress={() => setSelectedGroup(item === 'all' ? null : item)}
-                className={isActive ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-full py-2 px-4' : 'bg-white border-2 border-transparent rounded-full py-2 px-4'}
+                className={isActive ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-full py-2 px-4' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-full py-2 px-4'}
               >
-                <Text className={isActive ? 'text-indigo-700 text-xs capitalize' : 'text-slate-700 text-xs capitalize'}>{item}</Text>
+                <Text className={isActive ? 'text-indigo-700 dark:text-indigo-300 text-xs capitalize' : 'text-slate-700 dark:text-slate-300 text-xs capitalize'}>{item}</Text>
               </Pressable>
             );
           }}

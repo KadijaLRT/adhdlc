@@ -37,10 +37,10 @@ function DayStrip({
       renderItem={({ item, index }) => {
         const isActive = index === activeIndex;
         return (
-          <View className={isActive ? 'bg-indigo-600/10 border-2 border-indigo-500 rounded-2xl p-3 items-center w-24' : 'bg-white border-2 border-transparent rounded-2xl p-3 items-center w-24'}>
+          <View className={isActive ? 'bg-indigo-600/10 border-2 border-indigo-500 rounded-2xl p-3 items-center w-24' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-2xl p-3 items-center w-24'}>
             <Pressable onPress={() => onJumpTo(index)} className="items-center">
               <Text className={isActive ? 'text-indigo-700 text-xs font-bold' : 'text-slate-500 text-xs font-bold'}>{item.weekdayLabel}</Text>
-              <Text className={isActive ? 'text-indigo-700 text-sm font-semibold mt-1' : 'text-slate-700 text-sm mt-1'}>
+              <Text className={isActive ? 'text-indigo-700 text-sm font-semibold mt-1' : 'text-slate-700 dark:text-slate-300 text-sm mt-1'}>
                 {item.isRestDay ? 'Rest' : `Day ${item.dayLetter}`}
               </Text>
             </Pressable>

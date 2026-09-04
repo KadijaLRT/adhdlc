@@ -107,7 +107,7 @@ export default function TaskDetailScreen() {
                 <Pressable
                   key={p}
                   onPress={() => updateTask(task.id, { priority: p })}
-                  className={isActive ? 'flex-1 bg-stone-100 border-2 border-indigo-400 rounded-xl py-2 items-center' : 'flex-1 bg-white border-2 border-transparent rounded-xl py-2 items-center'}
+                  className={isActive ? 'flex-1 bg-stone-100 dark:bg-slate-800 border-2 border-indigo-400 rounded-xl py-2 items-center' : 'flex-1 bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl py-2 items-center'}
                 >
                   <Text className="text-slate-700 text-xs dark:text-slate-300">{dot} {p}</Text>
                 </Pressable>
@@ -132,7 +132,7 @@ export default function TaskDetailScreen() {
                 <Pressable
                   key={e}
                   onPress={() => updateTask(task.id, { energyRequired: e })}
-                  className={isActive ? 'flex-1 bg-stone-100 border-2 border-indigo-400 rounded-xl py-2 items-center' : 'flex-1 bg-white border-2 border-transparent rounded-xl py-2 items-center'}
+                  className={isActive ? 'flex-1 bg-stone-100 dark:bg-slate-800 border-2 border-indigo-400 rounded-xl py-2 items-center' : 'flex-1 bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl py-2 items-center'}
                 >
                   <Text className="text-slate-700 text-xs dark:text-slate-300 capitalize">🔋 {e}</Text>
                 </Pressable>
@@ -148,7 +148,7 @@ export default function TaskDetailScreen() {
                 <Pressable
                   key={cat}
                   onPress={() => updateTask(task.id, { category: cat })}
-                  className={isActive ? 'bg-stone-100 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white border-2 border-transparent rounded-full py-1.5 px-3'}
+                  className={isActive ? 'bg-stone-100 dark:bg-slate-800 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-full py-1.5 px-3'}
                 >
                   <Text className="text-slate-700 text-xs capitalize dark:text-slate-300">{cat}</Text>
                 </Pressable>

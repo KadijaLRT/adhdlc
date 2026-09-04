@@ -298,7 +298,7 @@ export default function TasksScreen() {
                 <Pressable
                   key={p}
                   onPress={() => setNewTaskPriority(p)}
-                  className={isActive ? 'bg-stone-100 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white border-2 border-transparent rounded-full py-1.5 px-3'}
+                  className={isActive ? 'bg-stone-100 dark:bg-slate-800 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-full py-1.5 px-3'}
                 >
                   <Text className="text-slate-700 text-xs dark:text-slate-300">{PRIORITY_DOT[p]} {p}</Text>
                 </Pressable>
@@ -313,7 +313,7 @@ export default function TasksScreen() {
                 <Pressable
                   key={e}
                   onPress={() => setNewTaskEnergy(e)}
-                  className={isActive ? 'bg-stone-100 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white border-2 border-transparent rounded-full py-1.5 px-3'}
+                  className={isActive ? 'bg-stone-100 dark:bg-slate-800 border-2 border-indigo-400 rounded-full py-1.5 px-3' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-full py-1.5 px-3'}
                 >
                   <Text className="text-slate-700 text-xs dark:text-slate-300">{label}</Text>
                 </Pressable>
@@ -335,9 +335,9 @@ export default function TasksScreen() {
           return (
             <Pressable
               onPress={() => setSelectedCategory(item.id)}
-              className={isActive ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-full py-2 px-4' : 'bg-white border-2 border-transparent rounded-full py-2 px-4'}
+              className={isActive ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-full py-2 px-4' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-full py-2 px-4'}
             >
-              <Text className={isActive ? 'text-indigo-700 text-xs' : 'text-slate-700 text-xs'}>{item.emoji} {item.label}</Text>
+              <Text className={isActive ? 'text-indigo-700 dark:text-indigo-300 text-xs' : 'text-slate-700 dark:text-slate-300 text-xs'}>{item.emoji} {item.label}</Text>
             </Pressable>
           );
         }}

@@ -49,13 +49,23 @@ export function buildMergedGroceryList(
   recipes: { n: string; g: string[] }[],
   pantryItems: string[]
 ): MergedGroceryItem[] {
-  const pantrySet = new Set((pantryItems || []).map((p) => p.toLowerCase().trim()));
+  const pantryLower = (pantryItems || []).map((p) => p.toLowerCase().trim()).filter(Boolean);
+  // Bug fix: this used to be an exact-string Set membership check —
+  // a pantry item typed as "eggs" never matched a recipe ingredient
+  // like "2 large eggs, beaten", since they're not byte-identical
+  // strings. That silently defeated the entire point of the pantry
+  // feature: the grocery list kept listing things the person had
+  // already explicitly said they own. Switched to the same
+  // substring-inclusion matching matchScore (GroceryScreen.tsx)
+  // already uses for recipe suggestions, so pantry matching behaves
+  // consistently everywhere it's used in this app.
+  const isInPantry = (ingredient: string) => pantryLower.some((p) => ingredient.includes(p));
   const merged = new Map<string, MergedGroceryItem>();
 
   for (const recipe of recipes || []) {
     for (const rawIngredient of recipe.g || []) {
       const ingredient = (rawIngredient || '').toLowerCase().trim();
-      if (!ingredient || pantrySet.has(ingredient)) continue;
+      if (!ingredient || isInPantry(ingredient)) continue;
 
       const existing = merged.get(ingredient);
       if (existing) {

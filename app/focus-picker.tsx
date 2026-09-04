@@ -34,15 +34,15 @@ export default function FocusPickerScreen() {
           <View className="gap-2 mb-6">
             <Pressable
               onPress={() => setSelectedTaskId(null)}
-              className={selectedTaskId === null ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-xl p-3' : 'bg-white border-2 border-transparent rounded-xl p-3'}
+              className={selectedTaskId === null ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-xl p-3' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl p-3'}
             >
-              <Text className={selectedTaskId === null ? 'text-indigo-700' : 'text-slate-700'}>No specific task, just time</Text>
+              <Text className={selectedTaskId === null ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-300'}>No specific task, just time</Text>
             </Pressable>
             {(incomplete || []).slice(0, 6).map((task) => {
               const isActive = selectedTaskId === task.id;
               return (
-                <Pressable key={task.id} onPress={() => setSelectedTaskId(task.id)} className={isActive ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-xl p-3' : 'bg-white border-2 border-transparent rounded-xl p-3'}>
-                  <Text className={isActive ? 'text-indigo-700' : 'text-slate-700'}>{task.title}</Text>
+                <Pressable key={task.id} onPress={() => setSelectedTaskId(task.id)} className={isActive ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-xl p-3' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl p-3'}>
+                  <Text className={isActive ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-300'}>{task.title}</Text>
                 </Pressable>
               );
             })}
@@ -53,8 +53,8 @@ export default function FocusPickerScreen() {
             {(DURATIONS || []).map((d) => {
               const isActive = duration === d;
               return (
-                <Pressable key={d} onPress={() => setDuration(d)} className={isActive ? 'flex-1 bg-indigo-600/20 border-2 border-indigo-400 rounded-xl py-3 items-center' : 'flex-1 bg-white border-2 border-transparent rounded-xl py-3 items-center'}>
-                  <Text className={isActive ? 'text-indigo-700' : 'text-slate-700'}>{d} min</Text>
+                <Pressable key={d} onPress={() => setDuration(d)} className={isActive ? 'flex-1 bg-indigo-600/20 border-2 border-indigo-400 rounded-xl py-3 items-center' : 'flex-1 bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl py-3 items-center'}>
+                  <Text className={isActive ? 'text-indigo-700 dark:text-indigo-300' : 'text-slate-700 dark:text-slate-300'}>{d} min</Text>
                 </Pressable>
               );
             })}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import {
   useAppStore,
@@ -49,6 +49,19 @@ export default function BodyProgressScreen() {
   const [weightInput, setWeightInput] = useState('');
   const [goalInput, setGoalInput] = useState(weightGoalLbs ? String(convertWeightForDisplay(weightGoalLbs, unitSystem)) : '');
   const [goalDateInput, setGoalDateInput] = useState(weightGoalDate || '');
+  const [editingGoal, setEditingGoal] = useState(false);
+
+  // Defensive sync, same reasoning as the nutrition targets fix
+  // elsewhere in the app: keeps these inputs matching the real stored
+  // value whenever the person isn't actively mid-edit, so if
+  // weightGoalLbs/weightGoalDate is ever written from anywhere else in
+  // the future, this screen can't silently show stale values and then
+  // overwrite a real update with them on the next Save.
+  useEffect(() => {
+    if (editingGoal) return;
+    setGoalInput(weightGoalLbs ? String(convertWeightForDisplay(weightGoalLbs, unitSystem)) : '');
+    setGoalDateInput(weightGoalDate || '');
+  }, [weightGoalLbs, weightGoalDate, unitSystem, editingGoal]);
   const [selectedSite, setSelectedSite] = useState<MeasurementSite>('waist');
   const [measurementInput, setMeasurementInput] = useState('');
 
@@ -109,6 +122,7 @@ export default function BodyProgressScreen() {
     // so the date could never be changed after onboarding no matter
     // what was typed here.
     setWeightGoal(isValidPositive ? parseWeightToLbs(val, unitSystem) : null, goalDateInput.trim() || undefined);
+    setEditingGoal(false);
   };
 
   return (
@@ -177,7 +191,7 @@ export default function BodyProgressScreen() {
           <View className="flex-row gap-2 mb-2">
             <TextInput
               value={goalInput}
-              onChangeText={setGoalInput}
+              onChangeText={(v) => { setGoalInput(v); setEditingGoal(true); }}
               placeholder={`Goal weight (${wUnit})`}
               placeholderTextColor="#64748b"
               keyboardType="decimal-pad"
@@ -186,7 +200,7 @@ export default function BodyProgressScreen() {
             />
           </View>
           <Text className="text-slate-500 text-xs mb-1">Goal date</Text>
-          <DateInput value={goalDateInput} onChange={setGoalDateInput} dark={false} />
+          <DateInput value={goalDateInput} onChange={(v) => { setGoalDateInput(v); setEditingGoal(true); }} dark={false} />
           <Pressable onPress={handleSaveGoal} className="bg-stone-100 rounded-xl px-4 py-2.5 items-center mt-2 dark:bg-slate-800">
             <Text className="text-slate-700 text-sm font-medium dark:text-slate-300">Set goal</Text>
           </Pressable>

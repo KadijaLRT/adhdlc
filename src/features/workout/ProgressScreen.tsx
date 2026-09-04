@@ -61,7 +61,18 @@ export default function ProgressScreen() {
                 className="w-full bg-indigo-500 rounded-t-md"
                 style={{ height: Math.max((point.volume / maxVolume) * 90, point.volume > 0 ? 6 : 2) }}
               />
-              <Text className="text-slate-500 text-[10px] mt-2">{point.weekLabel}</Text>
+              {/*
+                Bug fix: this fixed-height (140px) chart container had
+                no ceiling on how large this label's text could render
+                under OS-level accessibility font scaling (up to 200%+
+                on iOS) — at large enough scaling, the label could
+                genuinely clip against the container's fixed height. A
+                bar chart's proportions are meant to stay visually
+                compact regardless of text-size preference, so this
+                caps scaling on just this small label rather than
+                growing the whole chart to accommodate it.
+              */}
+              <Text className="text-slate-500 text-[10px] mt-2" maxFontSizeMultiplier={1.3}>{point.weekLabel}</Text>
             </View>
           ))}
         </View>

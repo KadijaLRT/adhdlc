@@ -65,7 +65,16 @@ export default function BrainDumpSheet({ visible, onClose }: { visible: boolean;
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View className="flex-1 justify-end bg-black/50">
-        <View className="bg-stone-50 rounded-t-3xl p-6 max-h-[85%] dark:bg-slate-950" style={{ paddingBottom: bottomInset }}>
+        {/*
+          Bug fix: this sheet had no width cap at all — on a tablet or
+          desktop browser it would stretch edge-to-edge, which looks
+          genuinely broken for a rounded, padded card-style sheet like
+          this (a 1400px-wide text input with a single-line button
+          underneath), unlike a deliberately full-bleed sheet design.
+          w-full max-w-md self-center matches the same constraint every
+          other screen in the app already uses.
+        */}
+        <View className="bg-stone-50 rounded-t-3xl p-6 max-h-[85%] w-full max-w-md self-center dark:bg-slate-950" style={{ paddingBottom: bottomInset }}>
           <Text className="text-slate-900 text-xl font-semibold mb-1 dark:text-slate-100">Brain Dump</Text>
           <Text className="text-slate-500 text-sm mb-4">Type whatever&apos;s in your head. Aviva will sort it out.</Text>
           <TextInput value={text} onChangeText={setText} placeholder="everything is chaos..." placeholderTextColor="#64748b" multiline

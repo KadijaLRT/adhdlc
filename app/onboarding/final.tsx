@@ -74,7 +74,8 @@ export default function FinalScreen() {
 
   const handleFinish = async () => {
     setFinishing(true);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    // Same fix — never let a haptics rejection go unhandled or block finishing onboarding.
+    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
     const timezone = Intl?.DateTimeFormat?.().resolvedOptions?.().timeZone || 'UTC';
     const unparsedMedicationTimes: string[] = [];
 

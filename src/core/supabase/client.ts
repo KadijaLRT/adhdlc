@@ -176,12 +176,33 @@ export async function restoreProfileFromCloud(): Promise<Record<string, unknown>
   try {
     if (Platform.OS === 'web' && typeof window === 'undefined') return null;
     const supabase = await getSupabaseClient();
-    const { data: sessionData } = await supabase.auth.getSession();
-    const userId = sessionData?.session?.user?.id;
+
+    // Bug fix: this had no timeout anywhere in the chain — if
+    // getSession() or the profiles query genuinely hung (a stalled or
+    // degraded connection, not even an error, just no response ever
+    // coming back), this promise never resolved. The only caller
+    // (app/index.tsx) gates the entire app's first screen behind this
+    // resolving, so a hang here meant a brand-new person could be
+    // stuck on the loading spinner forever, unable to reach either
+    // onboarding or the home screen — the worst possible place for an
+    // infinite loading loop to live. Races the real cloud check
+    // against a hard timeout so this always resolves one way or the
+    // other; on timeout, it behaves exactly like "not signed in,"
+    // which is always a safe fallback since local storage is this
+    // app's real source of truth and cloud sync is a pure bonus.
+    const withTimeout = <T,>(thenable: PromiseLike<T>, ms: number): Promise<T | null> =>
+      Promise.race([Promise.resolve(thenable), new Promise<null>((resolve) => setTimeout(() => resolve(null), ms))]);
+
+    const sessionResult = await withTimeout(supabase.auth.getSession(), 8000);
+    const userId = sessionResult?.data?.session?.user?.id;
     if (!userId) return null;
 
-    const { data, error } = await supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle();
-    if (error || !data) return null;
+    const queryResult = await withTimeout(
+      supabase.from('profiles').select('*').eq('user_id', userId).maybeSingle(),
+      8000
+    );
+    if (!queryResult || queryResult.error || !queryResult.data) return null;
+    const data = queryResult.data;
 
     if (data.profile_data && typeof data.profile_data === 'object') {
       return data.profile_data as Record<string, unknown>;

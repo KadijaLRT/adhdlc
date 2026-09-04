@@ -55,17 +55,17 @@ export default function CoachScreen() {
           <View className="flex-row gap-2">
             <Pressable
               onPress={() => setSelectedAgentId(null)}
-              className={selectedAgentId === null ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-full py-2 px-4' : 'bg-white border-2 border-transparent rounded-full py-2 px-4'}
+              className={selectedAgentId === null ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-full py-2 px-4' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-full py-2 px-4'}
             >
-              <Text className={selectedAgentId === null ? 'text-indigo-700 text-xs' : 'text-slate-700 text-xs'}>Auto</Text>
+              <Text className={selectedAgentId === null ? 'text-indigo-700 dark:text-indigo-300 text-xs' : 'text-slate-700 dark:text-slate-300 text-xs'}>Auto</Text>
             </Pressable>
             {(AGENTS || []).map((agent) => (
               <Pressable
                 key={agent.id}
                 onPress={() => setSelectedAgentId(agent.id)}
-                className={selectedAgentId === agent.id ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-full py-2 px-4' : 'bg-white border-2 border-transparent rounded-full py-2 px-4'}
+                className={selectedAgentId === agent.id ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-full py-2 px-4' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-full py-2 px-4'}
               >
-                <Text className={selectedAgentId === agent.id ? 'text-indigo-700 text-xs' : 'text-slate-700 text-xs'}>{agent.label}</Text>
+                <Text className={selectedAgentId === agent.id ? 'text-indigo-700 dark:text-indigo-300 text-xs' : 'text-slate-700 dark:text-slate-300 text-xs'}>{agent.label}</Text>
               </Pressable>
             ))}
           </View>

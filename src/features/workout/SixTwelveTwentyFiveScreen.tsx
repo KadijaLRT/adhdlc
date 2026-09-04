@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { useAppStore, selectFitnessPreferences, selectGyms, selectActiveGymId } from '@/store/index';
@@ -38,8 +38,26 @@ export default function SixTwelveTwentyFiveScreen() {
 
   const [showMore, setShowMore] = useState(false);
 
+  // Performance fix: pickSixTwelveTwentyFiveTemplate does
+  // Object.entries(WORKOUT_EXERCISES) (184 exercises) plus several
+  // chained .filter() passes — real work, not free. This screen used
+  // to call it fresh for all 10 muscle groups on every single render
+  // (once per grid tile, inline in the .map() below), so any
+  // unrelated state change on this screen — even just toggling
+  // "who is this for →" — recomputed all 10 exercise selections from
+  // scratch. The result only actually depends on `equipment`, which
+  // changes rarely, so this computes all 10 once and the render loop
+  // below just looks up by group id instead of recalculating.
+  const templatesByGroup = useMemo(() => {
+    const map = new Map<SixTwelveTwentyFiveGroup, ReturnType<typeof pickSixTwelveTwentyFiveTemplate>>();
+    for (const g of SIX_TWELVE_TWENTYFIVE_GROUPS) {
+      map.set(g.id, pickSixTwelveTwentyFiveTemplate(g.id, equipment));
+    }
+    return map;
+  }, [equipment]);
+
   const handlePickGroup = (group: SixTwelveTwentyFiveGroup) => {
-    const template = pickSixTwelveTwentyFiveTemplate(group, equipment);
+    const template = templatesByGroup.get(group) || [];
     if (!template.length) return; // no exercises available for this group with current equipment — nothing to start
     router?.push?.({
       pathname: '/workout/six-twelve-twentyfive/run',
@@ -85,7 +103,7 @@ export default function SixTwelveTwentyFiveScreen() {
 
         {incomingGroup && SIX_TWELVE_TWENTYFIVE_GROUPS.some((g) => g.id === incomingGroup) && (() => {
           const groupMeta = SIX_TWELVE_TWENTYFIVE_GROUPS.find((g) => g.id === incomingGroup)!;
-          const template = pickSixTwelveTwentyFiveTemplate(incomingGroup as SixTwelveTwentyFiveGroup, equipment);
+          const template = templatesByGroup.get(incomingGroup as SixTwelveTwentyFiveGroup) || [];
           if (!template.length) return null;
           return (
             <Pressable
@@ -104,7 +122,7 @@ export default function SixTwelveTwentyFiveScreen() {
         <Subheading className="mb-2">Choose a muscle group</Subheading>
         <View className="flex-row flex-wrap gap-2 mb-4">
           {SIX_TWELVE_TWENTYFIVE_GROUPS.map((g) => {
-            const template = pickSixTwelveTwentyFiveTemplate(g.id, equipment);
+            const template = templatesByGroup.get(g.id) || [];
             const disabled = template.length === 0;
             return (
               <Pressable

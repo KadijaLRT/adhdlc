@@ -197,7 +197,8 @@ export default function ScheduleScreen() {
             showsHorizontalScrollIndicator={false}
             data={weekDates}
             keyExtractor={(d) => d}
-            contentContainerStyle={{ gap: 8, marginBottom: 16 }}
+            style={{ height: 68, flexGrow: 0, marginBottom: 16 }}
+            contentContainerStyle={{ gap: 8, alignItems: 'center' }}
             renderItem={({ item: date, index }) => {
               const isActive = date === selectedDate;
               const isThisToday = date === today;

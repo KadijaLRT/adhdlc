@@ -24,7 +24,8 @@ export default function CalibrationScreen() {
   const { step, total } = getStepInfo('/onboarding/calibration');
 
   const handleContinue = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    // Same fix as welcome.tsx — never let a haptics rejection go unhandled.
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     router?.push?.('/onboarding/modules');
   };
 

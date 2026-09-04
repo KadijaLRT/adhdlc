@@ -126,8 +126,8 @@ function GymSelectorCard() {
             const isActive = item.id === activeGymId;
             return (
               <Pressable onPress={() => setActiveGym(item.id)} onLongPress={() => setManagingGymId(item.id)}
-                className={isActive ? 'bg-purple-100 border-2 border-purple-500 rounded-2xl py-3 px-4' : 'bg-white border-2 border-stone-200 rounded-2xl py-3 px-4'}>
-                <Text className={isActive ? 'text-purple-700 font-semibold text-sm' : 'text-slate-700 text-sm'}>{item.name}</Text>
+                className={isActive ? 'bg-purple-100 dark:bg-purple-500/20 border-2 border-purple-500 rounded-2xl py-3 px-4' : 'bg-white dark:bg-slate-900 border-2 border-stone-200 dark:border-slate-700 rounded-2xl py-3 px-4'}>
+                <Text className={isActive ? 'text-purple-700 dark:text-purple-300 font-semibold text-sm' : 'text-slate-700 dark:text-slate-300 text-sm'}>{item.name}</Text>
               </Pressable>
             );
           }}

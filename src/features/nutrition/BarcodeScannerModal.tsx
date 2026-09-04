@@ -21,6 +21,7 @@ export default function BarcodeScannerModal({
   const [scanning, setScanning] = useState(true);
   const [looking, setLooking] = useState(false);
   const [notFound, setNotFound] = useState(false);
+  const [mountError, setMountError] = useState(false);
 
   const handleScanned = async (result: BarcodeScanningResult) => {
     if (!scanning) return;
@@ -62,6 +63,26 @@ export default function BarcodeScannerModal({
     );
   }
 
+  // Bug fix: if permission is granted but the camera hardware itself
+  // fails to actually initialize (none present, in use by another app,
+  // a genuine hardware fault), CameraView had no error handling at
+  // all — the person was left staring at a plain black screen with the
+  // scan-frame overlay forever, no way to tell "still loading" from
+  // "broken," and no path forward except backing out of the whole
+  // flow via the unrelated Cancel button at the bottom.
+  if (mountError) {
+    return (
+      <View className="absolute inset-0 bg-black items-center justify-center px-8">
+        <Text className="text-white text-base text-center mb-4">
+          Couldn't access the camera on this device. You can add the item manually instead.
+        </Text>
+        <Pressable onPress={onClose} className="bg-indigo-600 rounded-full py-3 px-6 active:bg-indigo-500">
+          <Text className="text-white font-semibold">Back</Text>
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <View className="absolute inset-0 bg-black">
       <CameraView
@@ -69,6 +90,7 @@ export default function BarcodeScannerModal({
         facing="back"
         barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e'] }}
         onBarcodeScanned={scanning ? handleScanned : undefined}
+        onMountError={() => setMountError(true)}
       />
       <View className="absolute inset-0 items-center justify-center pointer-events-none">
         <View className="w-64 h-40 border-2 border-white/70 rounded-2xl" />
