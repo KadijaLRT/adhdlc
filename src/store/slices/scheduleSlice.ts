@@ -24,13 +24,29 @@ export interface ScheduleSlice extends ScheduleState {
   shiftRemainingSchedule: (minutes: number) => Promise<void>;
 }
 
-function addMinutesToTime(time: string, minutes: number): string {
+function addMinutesToTime(time: string, minutes: number): { time: string; dayOffset: number } {
   const [h, m] = (time || '00:00').split(':').map(Number);
   const total = (h || 0) * 60 + (m || 0) + minutes;
   const wrapped = ((total % 1440) + 1440) % 1440;
   const newH = Math.floor(wrapped / 60);
   const newM = wrapped % 60;
-  return `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
+  // Bug fix: this used to only return the wrapped time string, never
+  // how many days that wrap actually crossed — shifting a 23:45 item
+  // by 30 minutes correctly produced "00:15", but the item's `date`
+  // field was left untouched, so it stayed filed under today even
+  // though 00:15 is actually tomorrow. bucketForTime then read hour 0
+  // as "morning" and displayed it at the top of today's morning list,
+  // as if due first thing today rather than in 30 minutes, late
+  // tonight. dayOffset lets the caller correct the date to match.
+  const dayOffset = Math.floor(total / 1440);
+  return { time: `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`, dayOffset };
+}
+
+function shiftDateString(dateStr: string, dayOffset: number): string {
+  if (!dayOffset) return dateStr;
+  const d = new Date(`${dateStr}T00:00:00`);
+  d.setDate(d.getDate() + dayOffset);
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
 const persist = createWriteGuard(async (state: ScheduleState) => {
@@ -82,7 +98,15 @@ export const createScheduleSlice: StateCreator<ScheduleSlice> = (set, get) => ({
     // would be silently excluded from "I'm running behind today."
     const isToday = (i: ScheduleItem) => !i.date || i.date === todayStr;
     const next = (get().scheduleItems || [])
-      .map((i) => (i.isDone || !i.time || !isToday(i) ? i : { ...i, time: addMinutesToTime(i.time, minutes) }))
+      .map((i) => {
+        if (i.isDone || !i.time || !isToday(i)) return i;
+        const { time, dayOffset } = addMinutesToTime(i.time, minutes);
+        // isToday(i) above already established i.date is either unset
+        // (meaning today) or explicitly todayStr — shiftDateString
+        // needs a real starting date to shift from either way.
+        const nextDate = dayOffset ? shiftDateString(i.date || todayStr, dayOffset) : i.date;
+        return { ...i, time, date: nextDate };
+      })
       // Sort by date then time, matching addScheduleItem's own
       // ordering — sorting by time alone previously dropped the date
       // comparison entirely and could scramble multi-day ordering

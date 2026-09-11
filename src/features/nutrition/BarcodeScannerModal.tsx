@@ -23,12 +23,28 @@ export default function BarcodeScannerModal({
   const [notFound, setNotFound] = useState(false);
   const [mountError, setMountError] = useState(false);
 
-  const handleScanned = async (result: BarcodeScanningResult) => {
+  const handleScanned = async (result: BarcodeScanningResult | { nativeEvent: BarcodeScanningResult }) => {
     if (!scanning) return;
+    // Bug fix: this is the actual cause of "camera shows fine, points
+    // at a barcode, nothing happens" — expo-camera's web
+    // implementation (ExpoCamera.web.tsx -> useWebBarcodeScanner) calls
+    // onBarcodeScanned with { nativeEvent: BarcodeScanningResult },
+    // not the BarcodeScanningResult directly the way the native
+    // implementation does. result.data was therefore always undefined
+    // on web, and barcode.trim() on that undefined threw immediately
+    // inside lookupBarcodeProduct — outside its own try/catch, as an
+    // unhandled rejection in this async handler with no .catch()
+    // anywhere in the chain. Nothing crashed visibly; the lookup
+    // simply never happened, every single scan, silently. Reading
+    // whichever shape actually arrived handles both platforms
+    // correctly without depending on expo-camera making its two
+    // implementations consistent.
+    const scanningResult: BarcodeScanningResult = 'nativeEvent' in result ? result.nativeEvent : result;
+    if (!scanningResult?.data) return;
     setScanning(false);
     setLooking(true);
     setNotFound(false);
-    const item = await lookupBarcodeProduct(result.data);
+    const item = await lookupBarcodeProduct(scanningResult.data);
     setLooking(false);
     if (item) {
       onFound(item);
@@ -88,7 +104,7 @@ export default function BarcodeScannerModal({
       <CameraView
         style={{ flex: 1 }}
         facing="back"
-        barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e'] }}
+        barcodeScannerSettings={{ barcodeTypes: ['ean13', 'ean8', 'upc_a', 'upc_e', 'code128', 'itf14'] }}
         onBarcodeScanned={scanning ? handleScanned : undefined}
         onMountError={() => setMountError(true)}
       />

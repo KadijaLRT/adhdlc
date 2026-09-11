@@ -17,9 +17,18 @@ function dateOnly(iso: string): string {
  * the person opens the app). This is a read/display value only — it
  * never blocks or resets anything, unlike the routine streaks, which
  * have their own explicit freeze mechanic; this one simply reports.
+ *
+ * cardioActivityDates is optional (defaults to none) so every existing
+ * caller keeps working unchanged — a hike or a run genuinely counts as
+ * "showing up" the same as a lifting session, so a day with only a
+ * cardio activity logged and no sets still counts toward the streak
+ * for callers that pass it in.
  */
-export function calculateWorkoutStreak(setLogs: SetLogEntry[]): number {
-  const uniqueDays = Array.from(new Set((setLogs || []).map((l) => dateOnly(l.date)))).sort().reverse();
+export function calculateWorkoutStreak(setLogs: SetLogEntry[], cardioActivityDates: string[] = []): number {
+  const uniqueDays = Array.from(new Set([
+    ...(setLogs || []).map((l) => dateOnly(l.date)),
+    ...(cardioActivityDates || []),
+  ])).sort().reverse();
   if (!uniqueDays.length) return 0;
 
   const today = new Date();

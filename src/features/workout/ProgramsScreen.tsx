@@ -65,8 +65,8 @@ function GymSelectorCard() {
             const isActive = newGymEquipment.includes(eq);
             return (
               <Pressable key={eq} onPress={() => toggleEquipment(newGymEquipment, setNewGymEquipment, eq)}
-                className={isActive ? 'bg-emerald-100 border-2 border-emerald-500 rounded-full py-2 px-3' : 'bg-stone-100 border-2 border-transparent rounded-full py-2 px-3'}>
-                <Text className={isActive ? 'text-emerald-700 text-xs capitalize' : 'text-slate-700 text-xs capitalize'}>{eq.replace('_', ' ')}</Text>
+                className={isActive ? 'bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 rounded-full py-2 px-3' : 'bg-stone-100 dark:bg-slate-800 border-2 border-transparent rounded-full py-2 px-3'}>
+                <Text className={isActive ? 'text-emerald-700 dark:text-emerald-400 text-xs capitalize' : 'text-slate-700 dark:text-slate-300 text-xs capitalize'}>{eq.replace('_', ' ')}</Text>
               </Pressable>
             );
           })}
@@ -94,8 +94,8 @@ function GymSelectorCard() {
             return (
               <Pressable key={eq}
                 onPress={() => updateGymEquipment(managingGym.id, isActive ? managingGym.equipment.filter((e) => e !== eq) : [...managingGym.equipment, eq])}
-                className={isActive ? 'bg-emerald-100 border-2 border-emerald-500 rounded-full py-2 px-3' : 'bg-stone-100 border-2 border-transparent rounded-full py-2 px-3'}>
-                <Text className={isActive ? 'text-emerald-700 text-xs capitalize' : 'text-slate-700 text-xs capitalize'}>{eq.replace('_', ' ')}</Text>
+                className={isActive ? 'bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 rounded-full py-2 px-3' : 'bg-stone-100 dark:bg-slate-800 border-2 border-transparent rounded-full py-2 px-3'}>
+                <Text className={isActive ? 'text-emerald-700 dark:text-emerald-400 text-xs capitalize' : 'text-slate-700 dark:text-slate-300 text-xs capitalize'}>{eq.replace('_', ' ')}</Text>
               </Pressable>
             );
           })}
@@ -133,9 +133,9 @@ function GymSelectorCard() {
           }}
         />
       )}
-      <Pressable onPress={() => setAdding(true)} className="bg-purple-50 border-2 border-purple-400 rounded-2xl p-4 flex-row items-center justify-between">
+      <Pressable onPress={() => setAdding(true)} className="bg-purple-50 dark:bg-purple-500/10 border-2 border-purple-400 rounded-2xl p-4 flex-row items-center justify-between">
         <View>
-          <Text className="text-purple-700 font-semibold">{activeGym ? `Exercises tailored to ${activeGym.name}` : 'Add a gym'}</Text>
+          <Text className="text-purple-700 dark:text-purple-300 font-semibold">{activeGym ? `Exercises tailored to ${activeGym.name}` : 'Add a gym'}</Text>
           <Text className="text-slate-500 text-xs">{gyms.length > 0 ? 'Tap a gym to switch, hold to edit equipment, or add another' : "Workouts adapt to that gym's actual equipment"}</Text>
         </View>
       </Pressable>
@@ -167,6 +167,7 @@ export default function ProgramsScreen() {
   const [generateError, setGenerateError] = useState<string | null>(null);
   const [confirmingRemoveId, setConfirmingRemoveId] = useState<string | null>(null);
   const [confirmingSwitchId, setConfirmingSwitchId] = useState<string | null>(null);
+  const [confirmingStop, setConfirmingStop] = useState(false);
 
   const activeProgram = getProgramById(activeProgramId, customPrograms || []);
   const currentWeek = activeProgram ? getCurrentProgramWeek(activeProgram, sessionsCompletedInProgram) : 0;
@@ -210,6 +211,19 @@ export default function ProgramsScreen() {
     }
   };
 
+  // Bug fix: "Stop" called stopProgram directly with zero
+  // confirmation — but stopProgram resets sessionsCompletedInProgram
+  // to 0, the exact same destructive reset that "Start this program"
+  // right below it already confirms before allowing. Same guard: only
+  // interrupt when there's genuinely tracked progress to lose.
+  const handleStopProgram = () => {
+    if (sessionsCompletedInProgram > 0) {
+      setConfirmingStop(true);
+    } else {
+      stopProgram();
+    }
+  };
+
   return (
     <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
       <View className="w-full max-w-md self-center">
@@ -221,13 +235,29 @@ export default function ProgramsScreen() {
           <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
             <View className="flex-row items-center justify-between mb-1">
               <Subheading>{activeProgram.emoji} {activeProgram.title}</Subheading>
-              <Pressable onPress={stopProgram}>
-                <Text className="text-slate-500 text-xs">Stop</Text>
-              </Pressable>
+              {confirmingStop ? (
+                <View className="flex-row items-center gap-2">
+                  <Pressable onPress={() => { stopProgram(); setConfirmingStop(false); }}>
+                    <Text className="text-red-500 text-xs font-semibold">Stop</Text>
+                  </Pressable>
+                  <Pressable onPress={() => setConfirmingStop(false)}>
+                    <Text className="text-slate-400 text-xs">Cancel</Text>
+                  </Pressable>
+                </View>
+              ) : (
+                <Pressable onPress={handleStopProgram}>
+                  <Text className="text-slate-500 text-xs">Stop</Text>
+                </Pressable>
+              )}
             </View>
             <Text className="text-slate-500 text-xs">
               Week {currentWeek} of {activeProgram.durationWeeks} · {sessionsThisWeek} of {activeProgram.daysPerWeek} sessions this week
             </Text>
+            {confirmingStop && (
+              <Text className="text-amber-600 dark:text-amber-400 text-xs mt-2">
+                {sessionsCompletedInProgram} session{sessionsCompletedInProgram === 1 ? '' : 's'} of tracked progress will be lost.
+              </Text>
+            )}
           </View>
         )}
 

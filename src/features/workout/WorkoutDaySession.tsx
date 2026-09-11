@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAppStore, selectAdhdFocusModeEnabled, selectSetLogs, selectRecentWarmupHistory } from '@/store/index';
+import { useAppStore, selectAdhdFocusModeEnabled, selectSetLogs, selectRecentWarmupHistory, selectFitnessPreferences } from '@/store/index';
 import type { SetLogEntry } from '@/store/slices/workoutSlice';
 import { WORKOUT_EXERCISES, isBodyweightOnlyExercise, parseTimeBasedSeconds, type Exercise } from '@/content/exercises';
+import { getEffectiveExercise } from '@/content/trainingSchemes';
 import { suggestNextSet } from './weightProgress';
 import { toLocalDateString } from '@/shared/formatDate';
 import { getWarmupForGroups, warmupCategoryForGroups } from '@/content/warmupContent';
@@ -95,6 +96,23 @@ export default function WorkoutDaySession({
   const adhdFocusModeEnabled = useAppStore(selectAdhdFocusModeEnabled);
   const setAdhdFocusMode = useAppStore((s) => s.setAdhdFocusMode);
   const setLogs = useAppStore(selectSetLogs);
+  const fitnessPreferences = useAppStore(selectFitnessPreferences);
+
+  // Single choke point for every exercise lookup in this file — the
+  // person's stated weight goal (lose/gain/maintain) adjusts an
+  // exercise's rep range and rest time (getEffectiveExercise), so
+  // reading straight from WORKOUT_EXERCISES anywhere else in this
+  // component would silently skip that adjustment and show the
+  // exercise's raw, un-adjusted baseline instead — exactly the "goal
+  // stays cosmetic, doesn't reach real training parameters" gap this
+  // exists to close. Wrapping the lookup once, used everywhere,
+  // means every set-count/rep-target/rest-timer in this session is
+  // guaranteed consistent with the same goal, not out of sync because
+  // one of several read sites was missed.
+  const getExercise = (id: string): Exercise | undefined => {
+    const base = WORKOUT_EXERCISES?.[id];
+    return base ? getEffectiveExercise(base, fitnessPreferences?.weightGoalDirections) : undefined;
+  };
 
   const [sessionExerciseIds, setSessionExerciseIds] = useState<string[]>(exerciseIds);
   const [expandedId, setExpandedId] = useState<string | null>(exerciseIds[0] || null);
@@ -162,7 +180,7 @@ export default function WorkoutDaySession({
   const [rowsByExercise, setRowsByExercise] = useState<Record<string, SetRow[]>>(() => {
     const initial: Record<string, SetRow[]> = {};
     for (const id of exerciseIds) {
-      const exercise = WORKOUT_EXERCISES?.[id];
+      const exercise = getExercise(id);
       if (!exercise) continue;
       const isReduced = energyLightened || (reducedGroups?.length && reducedGroups.includes(exercise.group));
       const setCount = isReduced ? Math.max(2, exercise.sets - 1) : exercise.sets;
@@ -214,9 +232,32 @@ export default function WorkoutDaySession({
   // outright, not just background it) never loses anything beyond what
   // was true a moment before. Gated on isDraftChecked so this can't fire
   // with fresh default state before the restore check above has run.
+  // Bug fix / performance: this used to fire on every single keystroke
+  // in any weight/reps field — since rowsByExercise changes on every
+  // character typed, and this effect's dependency array includes it
+  // directly, typing "185" triggered three separate full-draft writes
+  // to disk (SQLite/AsyncStorage), each serializing every exercise's
+  // rows, not just the one being edited. createWriteGuard already
+  // protects write *ordering* (last-write-wins, no corruption from
+  // out-of-order resolution) but never throttled *frequency* — a
+  // debounce is the missing piece.
+  //
+  // Debouncing on its own would reopen the exact failure mode autosave
+  // exists to prevent, though: the app's process can be killed outright
+  // the instant it's backgrounded (not just paused), so a 500ms window
+  // between a keystroke and its debounced save is a real, if narrow,
+  // chance to lose the last few characters typed right before someone
+  // switches away. The AppState listener below closes that gap by
+  // flushing immediately — bypassing the debounce entirely — the moment
+  // the app actually leaves the foreground, so the debounce only ever
+  // trades away *redundant mid-typing* writes, never the guarantee that
+  // backgrounding always saves first.
+  const draftSaveTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const currentDraftRef = useRef<WorkoutSessionDraft | null>(null);
+
   useEffect(() => {
     if (!isDraftChecked) return;
-    persistDraft({
+    const draft: WorkoutSessionDraft = {
       sessionKey,
       sessionStartedAt: new Date(startedAtMs).toISOString(),
       programId,
@@ -224,8 +265,22 @@ export default function WorkoutDaySession({
       sessionExerciseIds,
       rowsByExercise,
       updatedAt: new Date().toISOString(),
-    });
+    };
+    currentDraftRef.current = draft;
+    if (draftSaveTimer.current) clearTimeout(draftSaveTimer.current);
+    draftSaveTimer.current = setTimeout(() => persistDraft(draft), 500);
+    return () => { if (draftSaveTimer.current) clearTimeout(draftSaveTimer.current); };
   }, [isDraftChecked, sessionKey, startedAtMs, programId, dayTitle, sessionExerciseIds, rowsByExercise, persistDraft]);
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextState) => {
+      if (nextState !== 'active' && currentDraftRef.current) {
+        if (draftSaveTimer.current) clearTimeout(draftSaveTimer.current);
+        persistDraft(currentDraftRef.current);
+      }
+    });
+    return () => subscription.remove();
+  }, [persistDraft]);
 
   useEffect(() => {
     const interval = setInterval(() => setElapsedSeconds(Math.max(0, Math.round((Date.now() - startedAtMs) / 1000))), 1000);
@@ -246,7 +301,7 @@ export default function WorkoutDaySession({
   const allDone = totalSets > 0 && doneSets === totalSets;
 
   const handleAddSet = (exerciseId: string) => {
-    const exercise = WORKOUT_EXERCISES?.[exerciseId];
+    const exercise = getExercise(exerciseId);
     const reps = String(exercise?.repsMin || 10);
     setRowsByExercise((prev) => {
       const newRows = exercise?.uni
@@ -269,7 +324,7 @@ export default function WorkoutDaySession({
   // Adds a whole new exercise to just this session — never touches the
   // program itself, so tomorrow's version of this day is unaffected.
   const handleAddExercise = (exerciseId: string) => {
-    const exercise = WORKOUT_EXERCISES?.[exerciseId];
+    const exercise = getExercise(exerciseId);
     if (!exercise || sessionExerciseIds.includes(exerciseId)) return;
     setSessionExerciseIds((prev) => [...prev, exerciseId]);
     setRowsByExercise((prev) => ({
@@ -398,7 +453,7 @@ export default function WorkoutDaySession({
   // already planned for that slot.
   const handleSwapExercise = (oldExerciseId: string, newExerciseId: string) => {
     const oldExercise = WORKOUT_EXERCISES?.[oldExerciseId];
-    const newExercise = WORKOUT_EXERCISES?.[newExerciseId];
+    const newExercise = getExercise(newExerciseId);
     if (!newExercise || sessionExerciseIds.includes(newExerciseId)) return;
     const oldRowCount = rowsByExercise[oldExerciseId]?.length || newExercise.sets;
     // A "set" is one row normally, but one Right+Left pair for a
@@ -425,6 +480,16 @@ export default function WorkoutDaySession({
       setSessionRecorded(true);
       await recordProgramSession();
     }
+    // Bug fix: the debounced autosave (added alongside this) queues a
+    // setTimeout that can still be pending when Finish is tapped — e.g.
+    // typing a weight, then tapping Finish within that same ~500ms
+    // window. Without canceling it here, persistDraft(null) below runs
+    // first, but the stale timer still fires afterward with the old
+    // (non-null) draft data — and since createWriteGuard orders writes
+    // by call time, that later call would win, resurrecting a
+    // "finished" session's draft right after leaving the screen.
+    // Clearing the pending timer before persisting null closes that.
+    if (draftSaveTimer.current) clearTimeout(draftSaveTimer.current);
     // Routed through the same write-guarded persistDraft (not a direct
     // repo call) so this clear can never be overtaken by an autosave that
     // was still in flight from a change made a moment before Finish was tapped.
@@ -487,7 +552,7 @@ export default function WorkoutDaySession({
           )}
 
           {sessionExerciseIds.map((exerciseId, exerciseIndex) => {
-            const exercise = WORKOUT_EXERCISES?.[exerciseId];
+            const exercise = getExercise(exerciseId);
             if (!exercise) return null;
             const hidesWeightInput = isBodyweightOnlyExercise(exercise);
             const timeTargetSeconds = parseTimeBasedSeconds(exercise.reps);

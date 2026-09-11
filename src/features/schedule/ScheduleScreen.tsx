@@ -344,7 +344,7 @@ export default function ScheduleScreen() {
                         <View className="gap-2">
                           {bucketItems.map((item) => (
                             <Pressable key={item.id} onPress={() => toggleScheduleItemDone(item.id)} className="bg-white rounded-xl p-3 flex-row items-center gap-3 dark:bg-slate-900">
-                              <View className={item.isDone ? 'w-5 h-5 rounded-full bg-emerald-500 items-center justify-center' : 'w-5 h-5 rounded-full border-2 border-stone-300'}>
+                              <View className={item.isDone ? 'w-5 h-5 rounded-full bg-emerald-500 items-center justify-center' : 'w-5 h-5 rounded-full border-2 border-stone-300 dark:border-slate-700'}>
                                 {item.isDone && <Text className="text-white text-xs">✓</Text>}
                               </View>
                               {item.time && <Text className="text-slate-500 text-xs w-12">{item.time}</Text>}

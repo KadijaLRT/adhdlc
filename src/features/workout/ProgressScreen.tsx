@@ -1,5 +1,5 @@
 import { View, Text, ScrollView } from 'react-native';
-import { useAppStore, selectSetLogs, selectPersonalRecords, selectUnitSystem } from '@/store/index';
+import { useAppStore, selectSetLogs, selectPersonalRecords, selectUnitSystem, selectCardioActivities } from '@/store/index';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
 import { Heading, Subheading } from '@/shared/components/Heading';
 import { convertWeightForDisplay, weightUnitLabel } from '@/shared/formatUnits';
@@ -26,8 +26,9 @@ export default function ProgressScreen() {
   const unitSystem = useAppStore(selectUnitSystem);
   const wUnit = weightUnitLabel(unitSystem);
   const personalRecords = useAppStore(selectPersonalRecords);
+  const cardioActivities = useAppStore(selectCardioActivities);
 
-  const streak = calculateWorkoutStreak(setLogs);
+  const streak = calculateWorkoutStreak(setLogs, cardioActivities.map((c) => c.date));
   const totalWorkouts = calculateTotalWorkouts(setLogs);
   const totalVolume = calculateTotalVolume(setLogs);
   const estimatedMinutes = calculateEstimatedMinutes(setLogs);

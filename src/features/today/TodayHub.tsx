@@ -74,7 +74,7 @@ export default function TodayHub() {
             <Text className="text-slate-500 text-xs">→</Text>
           </Pressable>
           <Pressable onPress={() => router?.push?.('/stuck')} className="bg-amber-400/10 border-2 border-amber-400 rounded-2xl p-4">
-            <Text className="text-amber-700 text-sm text-center font-medium">I&apos;m feeling stuck</Text>
+            <Text className="text-amber-700 dark:text-amber-400 text-sm text-center font-medium">I&apos;m feeling stuck</Text>
           </Pressable>
         </View>
       </View>

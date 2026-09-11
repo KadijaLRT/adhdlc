@@ -1,13 +1,15 @@
 import { View, Text, ScrollView } from 'react-native';
-import { useAppStore, selectSetLogs } from '@/store/index';
+import { useAppStore, selectSetLogs, selectCardioActivities } from '@/store/index';
 import { calculateWorkoutStreak } from './progressCalculations';
 import { RECOVERY_TIPS } from '@/content/recoveryContent';
 import RecoveryPlanCard from './RecoveryPlanCard';
 import { Heading, Subheading } from '@/shared/components/Heading';
+import { CollapsibleSection } from '@/shared/components/CollapsibleSection';
 
 export default function RecoveryScreen() {
   const setLogs = useAppStore(selectSetLogs);
-  const streak = calculateWorkoutStreak(setLogs);
+  const cardioActivities = useAppStore(selectCardioActivities);
+  const streak = calculateWorkoutStreak(setLogs, cardioActivities.map((c) => c.date));
 
   // A gentle nudge, never a rule — offered only past a few consecutive
   // days, and phrased as a suggestion, not an instruction.
@@ -33,22 +35,18 @@ export default function RecoveryScreen() {
 
         <Subheading className="mb-3 mt-6">Good to know</Subheading>
         <View className="gap-2">
-          <View className="bg-white rounded-xl p-4 dark:bg-slate-900">
-            <Text className="text-slate-700 text-xs font-medium mb-1 dark:text-slate-300">💧 Hydration</Text>
+          <CollapsibleSection title="💧 Hydration" defaultOpen={false} subtitle="Tap to expand">
             <Text className="text-slate-500 text-sm">{RECOVERY_TIPS.hydration}</Text>
-          </View>
-          <View className="bg-white rounded-xl p-4 dark:bg-slate-900">
-            <Text className="text-slate-700 text-xs font-medium mb-1 dark:text-slate-300">😴 Sleep</Text>
+          </CollapsibleSection>
+          <CollapsibleSection title="😴 Sleep" defaultOpen={false} subtitle="Tap to expand">
             <Text className="text-slate-500 text-sm">{RECOVERY_TIPS.sleep}</Text>
-          </View>
-          <View className="bg-white rounded-xl p-4 dark:bg-slate-900">
-            <Text className="text-slate-700 text-xs font-medium mb-1 dark:text-slate-300">🩹 Soreness</Text>
+          </CollapsibleSection>
+          <CollapsibleSection title="🩹 Soreness" defaultOpen={false} subtitle="Tap to expand">
             <Text className="text-slate-500 text-sm">{RECOVERY_TIPS.soreness}</Text>
-          </View>
-          <View className="bg-white rounded-xl p-4 dark:bg-slate-900">
-            <Text className="text-slate-700 text-xs font-medium mb-1 dark:text-slate-300">🛌 Rest days</Text>
+          </CollapsibleSection>
+          <CollapsibleSection title="🛌 Rest days" defaultOpen={false} subtitle="Tap to expand">
             <Text className="text-slate-500 text-sm">{RECOVERY_TIPS.restDays}</Text>
-          </View>
+          </CollapsibleSection>
         </View>
       </View>
     </ScrollView>

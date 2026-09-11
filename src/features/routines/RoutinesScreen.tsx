@@ -55,15 +55,21 @@ export default function RoutinesScreen() {
 
   const handleToggleStep = async (routine: (typeof routines)[number], stepId: string) => {
     await toggleRoutineStep(routine.id, stepId);
-    // Auto-marks the routine done for the day once every step is
-    // checked — no separate "mark done" tap needed on top of finishing
-    // the checklist itself.
-    const checkedToday = routine.stepCompletionDate === today() ? (routine.completedStepIds || []) : [];
-    const willBeChecked = checkedToday.includes(stepId)
-      ? checkedToday.filter((id) => id !== stepId)
-      : [...checkedToday, stepId];
-    const allDone = (routine.steps || []).every((s) => willBeChecked.includes(s.id));
-    if (allDone) await handleComplete(routine.title, routine.id);
+    // Bug fix: this used to recompute "will all steps now be checked"
+    // as a shadow copy of the same logic toggleRoutineStep just ran
+    // for real — using the stale `routine` object captured before the
+    // toggle, not what the store actually ended up with. The two
+    // calculations happened to agree today, but there was nothing
+    // keeping them in sync; a future change to either one silently
+    // breaks the "auto-complete when the last step is checked"
+    // behavior. Reading the real post-toggle state from the store
+    // directly means there's only one source of truth for "is this
+    // routine fully checked off," not two copies of the same logic.
+    const updatedRoutine = useAppStore.getState().routines.find((r) => r.id === routine.id);
+    if (!updatedRoutine) return;
+    const checkedNow = updatedRoutine.stepCompletionDate === today() ? (updatedRoutine.completedStepIds || []) : [];
+    const allDone = (updatedRoutine.steps || []).every((s) => checkedNow.includes(s.id));
+    if (allDone) await handleComplete(updatedRoutine.title, updatedRoutine.id);
   };
 
   return (
@@ -196,7 +202,7 @@ export default function RoutinesScreen() {
                       disabled={doneToday}
                       className={doneToday ? 'flex-1 bg-emerald-500/20 rounded-full py-3 items-center' : 'flex-1 bg-emerald-500 rounded-full py-3 items-center active:bg-emerald-400'}
                     >
-                      <Text className={doneToday ? 'text-emerald-700 font-semibold' : 'text-white font-semibold'}>
+                      <Text className={doneToday ? 'text-emerald-700 dark:text-emerald-400 font-semibold' : 'text-white font-semibold'}>
                         {doneToday ? 'Done today ✓' : 'Mark done today'}
                       </Text>
                     </Pressable>

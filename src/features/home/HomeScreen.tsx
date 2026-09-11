@@ -40,7 +40,6 @@ export default function HomeScreen() {
   const momentumLog = useAppStore(selectMomentumLog);
 
   const [planStarted, setPlanStarted] = useState(false);
-  const [todaysPlan, setTodaysPlan] = useState<PlanItem[]>([]);
 
   const insight = getDailyInsight(energyLevel, stressLogs, streaks, tasks, momentumLog);
   const [modeOverride, setModeOverride] = useState<'auto' | 'planning' | 'reflection'>('auto');
@@ -52,10 +51,17 @@ export default function HomeScreen() {
   const timeGreeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const greeting = profile?.displayName ? `${timeGreeting}, ${profile.displayName} 👋` : `${timeGreeting} 👋`;
 
-  const handleStartMyDay = () => {
-    setTodaysPlan(buildTodaysPlan(tasks, routines, streaks, energyLevel));
-    setPlanStarted(true);
-  };
+  // Bug fix: this used to build the plan once (on "Start My Day") and
+  // freeze it in component state — completing a task or routine from
+  // the plan, then coming back to Home, still showed it as unfinished,
+  // since nothing ever recomputed it. buildTodaysPlan is a pure,
+  // cheap function over data already in the store (no AI call, no
+  // network), so deriving it fresh every render — still gated behind
+  // planStarted, so it only appears after the button is tapped, same
+  // as before — means it always reflects what's actually left.
+  const todaysPlan = planStarted ? buildTodaysPlan(tasks, routines, streaks, energyLevel) : [];
+
+  const handleStartMyDay = () => setPlanStarted(true);
 
   const handlePlanItemPress = (item: PlanItem) => {
     if (item.kind === 'task') router?.push?.(`/task/${item.id}`);
@@ -78,7 +84,7 @@ export default function HomeScreen() {
           <ReflectionCard />
         ) : (
           <View className="bg-white dark:bg-slate-900 rounded-2xl p-4">
-            <Text className="text-indigo-700 text-xs uppercase tracking-wider mb-1">Coach</Text>
+            <Text className="text-indigo-700 dark:text-indigo-300 text-xs uppercase tracking-wider mb-1">Coach</Text>
             <Text className="text-slate-800 dark:text-slate-200 text-sm">{insight}</Text>
           </View>
         )}
@@ -87,7 +93,7 @@ export default function HomeScreen() {
           onPress={() => setModeOverride(isEvening ? 'planning' : 'reflection')}
           className="py-1"
         >
-          <Text className="text-slate-600 text-center text-xs">
+          <Text className="text-slate-600 dark:text-slate-400 text-center text-xs">
             {isEvening ? 'Switch to day view' : 'Switch to evening check-in'}
           </Text>
         </Pressable>

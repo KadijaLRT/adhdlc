@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useAppStore, selectAdhdFocusModeEnabled, selectFitnessPreferences } from '@/store/index';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
 import { getCommonFaults } from '@/content/kinesiology';
+import { getEffectiveExercise } from '@/content/trainingSchemes';
 import { Heading } from '@/shared/components/Heading';
 
 const REST_COACHING_LINES = [
@@ -86,7 +87,16 @@ export default function WorkoutSession({
   const router = useRouter();
   const [swappedExerciseId, setSwappedExerciseId] = useState(exerciseId);
   const [localQueue, setLocalQueue] = useState<string[]>(queue || []);
-  const exercise = WORKOUT_EXERCISES?.[swappedExerciseId];
+  const fitnessPreferences = useAppStore(selectFitnessPreferences);
+  // Bug fix: this used to read straight from WORKOUT_EXERCISES, which
+  // meant the person's stated weight goal (lose/gain/maintain) never
+  // reached this screen at all — every session showed each exercise's
+  // raw, un-adjusted rep range and rest time no matter what goal was
+  // set. getEffectiveExercise applies the same goal-based scheme
+  // WorkoutDaySession.tsx now uses, so a single-exercise "Start
+  // Somewhere" session is consistent with a full day session.
+  const rawExercise = WORKOUT_EXERCISES?.[swappedExerciseId];
+  const exercise = rawExercise ? getEffectiveExercise(rawExercise, fitnessPreferences?.weightGoalDirections) : undefined;
   // Only the single top fault, not the full list from ExerciseBrowser —
   // mid-set is a moment for one quick catch, not a study session; the
   // full breakdown with every fault plus muscle/joint detail is one tap
@@ -176,7 +186,7 @@ export default function WorkoutSession({
     setPhase('resting');
   };
 
-  const goToNextExercise = (nextId: string, remainingQueue: string[]) => {
+  const goToNextExercise = (nextId: string, remainingQueue: string[], completedSetsForThisExercise: number) => {
     router?.replace?.({
       pathname: `/workout/session/${nextId}`,
       params: {
@@ -184,7 +194,7 @@ export default function WorkoutSession({
         queue: remainingQueue.join(','),
         sessionStartedAt: sessionStartedAt || new Date(startedAtMs).toISOString(),
         sessionTotalSets: String(totalSetsThisSession),
-        sessionDoneSets: String(doneSetsSoFar + totalSets),
+        sessionDoneSets: String(doneSetsSoFar + completedSetsForThisExercise),
         reducedGroups: (reducedGroups || []).join(','),
         energyLightened: energyLightened ? '1' : '',
       },
@@ -196,7 +206,9 @@ export default function WorkoutSession({
     setSwappedExerciseId(newId);
     setCurrentSet(1);
     setWeight('');
-    setReps(String(WORKOUT_EXERCISES?.[newId]?.repsMin || 10));
+    const rawNewExercise = WORKOUT_EXERCISES?.[newId];
+    const effectiveNewExercise = rawNewExercise ? getEffectiveExercise(rawNewExercise, fitnessPreferences?.weightGoalDirections) : undefined;
+    setReps(String(effectiveNewExercise?.repsMin || 10));
     setPhase('set');
   };
 
@@ -213,7 +225,17 @@ export default function WorkoutSession({
     if (!hasMoreInQueue) return;
     const [next, ...rest] = localQueue;
     if (!next) return;
-    goToNextExercise(next, [...rest, swappedExerciseId]);
+    // Bug fix: this used to always credit the full totalSets toward
+    // doneSetsSoFar regardless of how many sets were actually
+    // completed before skipping — skipping an exercise untouched
+    // (phase === 'set', zero sets done) still added its whole target
+    // set count to the running total, inflating the "X/Y sets"
+    // progress shown in the header for the rest of the session, up to
+    // and including showing it as 100% done when real logged sets
+    // were far fewer. currentSet - 1 is how many sets on this
+    // exercise were genuinely completed before the skip (currentSet
+    // only advances after a real logSet call in handleCompleteSet).
+    goToNextExercise(next, [...rest, swappedExerciseId], currentSet - 1);
   };
 
   const coachingLine = REST_COACHING_LINES[restSecondsLeft % REST_COACHING_LINES.length];
@@ -366,7 +388,7 @@ export default function WorkoutSession({
                 onPress={() => {
                   const [next, ...rest] = localQueue;
                   if (!next) return;
-                  goToNextExercise(next, rest);
+                  goToNextExercise(next, rest, totalSets);
                 }}
                 className="bg-indigo-600 rounded-full py-4 px-10 active:bg-indigo-500"
               >

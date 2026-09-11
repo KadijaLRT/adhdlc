@@ -117,6 +117,7 @@ export const selectFitnessPreferences = (s: AppState) => s.fitnessPreferences;
 export const selectFitnessCardDismissed = (s: AppState) => s.fitnessCardDismissed;
 export const selectSetLogs = (s: AppState) => s.setLogs || [];
 export const selectRecoveryLogs = (s: AppState) => s.recoveryLogs || [];
+export const selectCardioActivities = (s: AppState) => s.cardioActivities || [];
 export const selectPersonalRecords = (s: AppState) => s.personalRecords || [];
 export const selectAdhdFocusModeEnabled = (s: AppState) => s.adhdFocusModeEnabled ?? true;
 export const selectGyms = (s: AppState) => s.gyms || [];

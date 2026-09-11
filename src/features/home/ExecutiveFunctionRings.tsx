@@ -21,13 +21,64 @@ function stressToCalmScore(level: string | undefined): number {
   return 50;
 }
 
+// Bug fix: this used to render a full circle at every percentage and
+// only vary its opacity (opacity: clamped / 100) — a ring at 20% and a
+// ring at 90% looked like the same full circle, just more or less
+// faded, which isn't what "20% full" vs "90% full" should look like at
+// all. This builds a real proportional arc out of two half-circles
+// (the standard technique for a CSS/RN progress ring without SVG,
+// which this app doesn't have installed) — each half rotates from 0°
+// up to 180° for the first half of the percentage, then the second
+// half kicks in for the remainder, so the filled arc's actual length
+// now matches the percentage.
+function ProgressRing({ percent, color, size = 80, strokeWidth = 8 }: { percent: number; color: string; size?: number; strokeWidth?: number }) {
+  const clamped = Math.max(0, Math.min(percent || 0, 100));
+  const firstHalfDeg = Math.min(clamped, 50) * 3.6; // 0-50% maps to the right half-circle, 0°-180°
+  const secondHalfDeg = Math.max(clamped - 50, 0) * 3.6; // 50-100% maps to the left half-circle
+
+  return (
+    <View style={{ width: size, height: size }}>
+      {/* Track */}
+      <View
+        style={{
+          position: 'absolute', width: size, height: size, borderRadius: size / 2,
+          borderWidth: strokeWidth, borderColor: '#e7e5e4',
+        }}
+        className="dark:border-slate-700"
+      />
+      {/* Right half: fills first, 0-50% */}
+      <View style={{ position: 'absolute', width: size, height: size, overflow: 'hidden' }}>
+        <View
+          style={{
+            width: size, height: size, borderRadius: size / 2, borderWidth: strokeWidth,
+            borderColor: 'transparent', borderTopColor: color, borderRightColor: color,
+            transform: [{ rotate: `${-90 + firstHalfDeg}deg` }],
+          }}
+        />
+      </View>
+      {/* Left half: only starts filling once the right half is complete, 50-100% */}
+      {clamped > 50 && (
+        <View style={{ position: 'absolute', width: size, height: size, overflow: 'hidden' }}>
+          <View
+            style={{
+              width: size, height: size, borderRadius: size / 2, borderWidth: strokeWidth,
+              borderColor: 'transparent', borderBottomColor: color, borderLeftColor: color,
+              transform: [{ rotate: `${-90 + secondHalfDeg}deg` }],
+            }}
+          />
+        </View>
+      )}
+    </View>
+  );
+}
+
 function Ring({ label, percent, color }: { label: string; percent: number; color: string }) {
   const clamped = Math.max(0, Math.min(percent || 0, 100));
   return (
     <View className="items-center flex-1">
-      <View className="w-20 h-20 rounded-full border-4 border-stone-200 items-center justify-center mb-2 dark:border-slate-700">
-        <View className="absolute w-20 h-20 rounded-full border-4" style={{ borderColor: color, opacity: clamped / 100 }} />
-        <Text className="text-slate-900 text-sm font-semibold dark:text-slate-100">{clamped}%</Text>
+      <View className="w-20 h-20 items-center justify-center mb-2">
+        <ProgressRing percent={clamped} color={color} />
+        <Text className="text-slate-900 text-sm font-semibold dark:text-slate-100" style={{ position: 'absolute' }}>{clamped}%</Text>
       </View>
       <Text className="text-slate-500 text-xs">{label}</Text>
     </View>

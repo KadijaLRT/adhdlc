@@ -23,6 +23,28 @@ export interface Gym {
   equipment: string[];
 }
 
+export type CardioActivityType = 'hiking' | 'biking' | 'swimming' | 'running' | 'walking' | 'other';
+
+export const CARDIO_ACTIVITY_TYPES: { id: CardioActivityType; label: string; emoji: string }[] = [
+  { id: 'walking', label: 'Walking', emoji: '🚶' },
+  { id: 'running', label: 'Running', emoji: '🏃' },
+  { id: 'hiking', label: 'Hiking', emoji: '🥾' },
+  { id: 'biking', label: 'Biking', emoji: '🚴' },
+  { id: 'swimming', label: 'Swimming', emoji: '🏊' },
+  { id: 'other', label: 'Other', emoji: '🏋️' },
+];
+
+export interface CardioActivityEntry {
+  id: string;
+  type: CardioActivityType;
+  label?: string; // only meaningful for 'other' — e.g. "rock climbing"
+  date: string; // YYYY-MM-DD
+  durationMinutes: number;
+  distanceMiles?: number; // optional — not every activity has a meaningful distance (e.g. swimming laps)
+  perceivedEffort?: number; // 1 (easy) - 5 (max effort), self-reported like sorenessLevel
+  loggedAt: string; // ISO timestamp, for ordering same-day entries
+}
+
 export interface RecoveryLogEntry {
   date: string; // YYYY-MM-DD, one entry per day
   stretchRoutineId?: string;
@@ -64,6 +86,7 @@ export interface WorkoutState {
   activeGymId: string | null;
   weekdayAssignment: (string | null)[]; // length 7, index=weekday (0=Sun), value=day letter or null for rest
   recoveryLogs: RecoveryLogEntry[];
+  cardioActivities: CardioActivityEntry[];
   // Keyed by day title (e.g. "Quads B", the stable identity of a
   // lettered day's muscle-group content — see buildWeeklySplit.ts).
   // Each entry holds the last few exercise-id combos actually started
@@ -89,6 +112,8 @@ export interface WorkoutSlice extends WorkoutState {
   setActiveGym: (gymId: string | null) => Promise<void>;
   setWeekdayAssignment: (weekdayIndex: number, dayLetter: string | null) => Promise<void>;
   logRecoveryUpdate: (date: string, updates: Partial<Omit<RecoveryLogEntry, 'date'>>) => Promise<void>;
+  logCardioActivity: (entry: Omit<CardioActivityEntry, 'id' | 'loggedAt'>) => Promise<void>;
+  removeCardioActivity: (id: string) => Promise<void>;
   recordUsedExerciseCombo: (dayTitle: string, exerciseIds: string[]) => Promise<void>;
   recordUsedWarmupCombo: (category: string, moveIds: string[]) => Promise<void>;
 }
@@ -102,6 +127,7 @@ const DEFAULT_STATE: WorkoutState = {
   activeGymId: null,
   weekdayAssignment: [null, 'A', 'B', 'C', 'D', 'E', 'F'], // default: Sun rest, Mon–Sat A–F
   recoveryLogs: [],
+  cardioActivities: [],
   recentDayExerciseHistory: {},
   recentWarmupHistory: {},
 };
@@ -120,6 +146,7 @@ function currentState(get: () => WorkoutState): WorkoutState {
     activeGymId: get().activeGymId ?? null,
     weekdayAssignment: get().weekdayAssignment || DEFAULT_STATE.weekdayAssignment,
     recoveryLogs: get().recoveryLogs || [],
+    cardioActivities: get().cardioActivities || [],
     recentDayExerciseHistory: get().recentDayExerciseHistory || {},
     recentWarmupHistory: get().recentWarmupHistory || {},
   };
@@ -231,6 +258,25 @@ export const createWorkoutSlice: StateCreator<WorkoutSlice> = (set, get) => ({
       ? existing.map((r) => (r.date === date ? { ...r, ...updates } : r))
       : [...existing, { date, ...updates }];
     const nextState = { ...currentState(get), recoveryLogs: next };
+    set(nextState);
+    await persist(nextState);
+  },
+
+  // Unlike recovery logs, multiple cardio activities can genuinely
+  // happen on the same day (a morning walk and an evening bike ride
+  // are both real, both worth keeping) — appended as its own entry
+  // rather than merged/overwritten per date.
+  logCardioActivity: async (entry) => {
+    const newEntry: CardioActivityEntry = { ...entry, id: generateId('cardio'), loggedAt: new Date().toISOString() };
+    const next = [...(get().cardioActivities || []), newEntry];
+    const nextState = { ...currentState(get), cardioActivities: next };
+    set(nextState);
+    await persist(nextState);
+  },
+
+  removeCardioActivity: async (id) => {
+    const next = (get().cardioActivities || []).filter((a) => a.id !== id);
+    const nextState = { ...currentState(get), cardioActivities: next };
     set(nextState);
     await persist(nextState);
   },

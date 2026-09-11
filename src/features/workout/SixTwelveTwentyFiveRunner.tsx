@@ -117,8 +117,15 @@ export default function SixTwelveTwentyFiveRunner({
 
   const handleCompleteSet = async () => {
     if (!currentStep) return;
-    const w = Number(weight) || 0;
-    const r = Number(reps) || currentStep.slot.targetReps;
+    // Bug fix: Number(weight) || 0 only catches 0/NaN/empty — a
+    // genuinely negative typed value like -50 is truthy and passed
+    // straight through, corrupting PR/volume stats downstream. Same
+    // bug already caught and fixed in WorkoutDaySession.tsx's
+    // handleCompleteSet, just never carried over to this runner.
+    // Math.max(0, ...) clamps a negative to 0 while a legitimate 0
+    // (bodyweight exercises) still passes through untouched.
+    const w = Math.max(0, Number(weight) || 0);
+    const r = Math.max(0, Number(reps) || currentStep.slot.targetReps);
     const { isNewRecord } = await logSet(currentStep.slot.exerciseId, w, r);
     setCompletedSets((n) => n + 1);
     setRecordBanner(isNewRecord ? `🎉 New personal record — ${currentExercise?.name}!` : null);

@@ -1,7 +1,7 @@
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
 import {
-  useAppStore, selectStreaks, selectMilestones, selectTasks, selectSavedRecipeIds, selectSetLogs, selectUnitSystem,
+  useAppStore, selectStreaks, selectMilestones, selectTasks, selectSavedRecipeIds, selectSetLogs, selectUnitSystem, selectCardioActivities,
 } from '@/store/index';
 import { MILESTONE_DEFINITIONS, getUnlockedTiers } from '@/content/milestoneDefinitions';
 import { SKILLS, UNLOCKABLES, xpToLevel, xpForNextLevel } from '@/content/rpgCatalog';
@@ -36,10 +36,11 @@ export default function ProgressHub() {
   const savedRecipeIds = useAppStore(selectSavedRecipeIds);
   const setLogs = useAppStore(selectSetLogs);
   const unitSystem = useAppStore(selectUnitSystem);
+  const cardioActivities = useAppStore(selectCardioActivities);
 
   const longestStreak = Math.max(0, ...(streaks || []).map((s) => s.count || 0));
   const tasksCompleted = (tasks || []).filter((t) => t.isComplete).length;
-  const workoutStreak = calculateWorkoutStreak(setLogs);
+  const workoutStreak = calculateWorkoutStreak(setLogs, cardioActivities.map((c) => c.date));
   const totalVolume = calculateTotalVolume(setLogs);
 
   const level = xpToLevel(totalXp || 0);

@@ -49,10 +49,22 @@ export default function BodyCheckinScreen({
 
   const adjustment = useMemo(() => computeCheckinAdjustment(severityByPart), [severityByPart]);
 
+  const [noExercisesError, setNoExercisesError] = useState(false);
+
   const handleContinue = () => {
     const adjustedIds = applySkipToExerciseIds(exerciseIds, adjustment.skipGroups, (id) => WORKOUT_EXERCISES?.[id]?.group);
+    // Bug fix: this used to silently call router.back() whenever
+    // adjustedIds came out empty, with zero explanation — a jarring,
+    // unexplained bounce back to the previous screen that looks
+    // exactly like the button just didn't work. applySkipToExerciseIds
+    // itself already falls back to the original list rather than ever
+    // returning empty when it's given a real list to work with, so
+    // this can only actually happen if exerciseIds arrived empty in
+    // the first place (a malformed deep link or navigation edge case,
+    // not a normal flow through this screen's own UI) — but if it does
+    // happen, the person deserves to know why, not just get bounced.
     if (!adjustedIds.length) {
-      router?.back?.();
+      setNoExercisesError(true);
       return;
     }
 
@@ -143,6 +155,11 @@ export default function BodyCheckinScreen({
         </ScrollView>
 
         <View className="pb-safe pt-2">
+          {noExercisesError && (
+            <Text className="text-red-500 text-xs mb-2 text-center">
+              Couldn't find today's exercises to adjust — try going back and starting this day again.
+            </Text>
+          )}
           {flaggedParts.length === 0 ? (
             <Text className="text-emerald-600 dark:text-emerald-400 text-xs mb-2">✅ Body feels good, going for the full workout</Text>
           ) : (

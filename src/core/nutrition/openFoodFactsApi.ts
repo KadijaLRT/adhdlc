@@ -82,7 +82,11 @@ export async function searchOpenFoodFacts(query: string): Promise<FoodItem[]> {
 
 /** Barcode lookup. Returns null if not found or on any failure. */
 export async function lookupBarcodeProduct(barcode: string): Promise<FoodItem | null> {
-  const code = barcode.trim();
+  // Bug fix: barcode.trim() with no fallback threw on any undefined
+  // input — outside this function's own try/catch, so any caller
+  // passing a bad value produced an unhandled rejection instead of the
+  // graceful "not found" this function is documented to always return.
+  const code = (barcode || '').trim();
   if (!code) return null;
   try {
     const url = `${BASE_URL}/api/v2/product/${encodeURIComponent(code)}.json`;

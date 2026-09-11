@@ -181,7 +181,7 @@ export default function RecoveryPlanCard({ compact = false }: { compact?: boolea
             className="flex-1 bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 text-center"
           />
           <Pressable
-            onPress={() => logRecoveryUpdate(today, { sleepHours: Number(sleepInput) || 0 })}
+            onPress={() => logRecoveryUpdate(today, { sleepHours: Math.max(0, Number(sleepInput) || 0) })}
             disabled={!sleepInput.trim()}
             className={sleepInput.trim() ? 'bg-indigo-600 rounded-xl px-5 justify-center active:bg-indigo-500' : 'bg-slate-300 dark:bg-slate-700 rounded-xl px-5 justify-center'}
           >

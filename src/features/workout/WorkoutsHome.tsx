@@ -14,6 +14,7 @@ import { WORKOUT_EXERCISES } from '@/content/exercises';
 import { SIX_TWELVE_TWENTYFIVE_GROUPS, type SixTwelveTwentyFiveGroup } from '@/content/sixTwelveTwentyFive';
 import PersonalizeFitnessCard from './PersonalizeFitnessCard';
 import RecoveryPlanCard from './RecoveryPlanCard';
+import CardioActivityCard from './CardioActivityCard';
 import { Heading, Subheading } from '@/shared/components/Heading';
 import { getRepository } from '@/core/storage';
 import { buildSessionKey } from './WorkoutDaySession';
@@ -39,8 +40,8 @@ function DayStrip({
         return (
           <View className={isActive ? 'bg-indigo-600/10 border-2 border-indigo-500 rounded-2xl p-3 items-center w-24' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-2xl p-3 items-center w-24'}>
             <Pressable onPress={() => onJumpTo(index)} className="items-center">
-              <Text className={isActive ? 'text-indigo-700 text-xs font-bold' : 'text-slate-500 text-xs font-bold'}>{item.weekdayLabel}</Text>
-              <Text className={isActive ? 'text-indigo-700 text-sm font-semibold mt-1' : 'text-slate-700 dark:text-slate-300 text-sm mt-1'}>
+              <Text className={isActive ? 'text-indigo-700 dark:text-indigo-300 text-xs font-bold' : 'text-slate-500 text-xs font-bold'}>{item.weekdayLabel}</Text>
+              <Text className={isActive ? 'text-indigo-700 dark:text-indigo-300 text-sm font-semibold mt-1' : 'text-slate-700 dark:text-slate-300 text-sm mt-1'}>
                 {item.isRestDay ? 'Rest' : `Day ${item.dayLetter}`}
               </Text>
             </Pressable>
@@ -70,6 +71,7 @@ function DayCard({
   day: WeeklySplitDay; onStart: () => void; onBodyCheckin: () => void; onLayout: (y: number) => void; programId?: string; isResumable?: boolean; resumingExerciseIds?: string[]; isCheckingResume?: boolean;
 }) {
   const router = useRouter();
+  const [showCardioLog, setShowCardioLog] = useState(false);
   const sixTwelveTwentyFiveGroup = firstSixTwelveTwentyFiveGroup(day.muscleGroups);
   const sixTwelveTwentyFiveLabel = SIX_TWELVE_TWENTYFIVE_GROUPS.find((g) => g.id === sixTwelveTwentyFiveGroup)?.label;
   const setLogs = useAppStore(selectSetLogs);
@@ -103,6 +105,8 @@ function DayCard({
         <Text className="text-slate-900 text-lg font-semibold mb-1 dark:text-slate-100">Rest day</Text>
         <Text className="text-slate-500 text-sm text-center mb-4">Recovery is part of the program, not a break from it.</Text>
         <RecoveryPlanCard compact />
+        <View className="h-3" />
+        <CardioActivityCard compact />
       </View>
     );
   }
@@ -173,6 +177,17 @@ function DayCard({
         >
           <Text className="text-slate-500 text-xs">🔥 Or try the 6-12-25 method for {sixTwelveTwentyFiveLabel} today →</Text>
         </Pressable>
+      )}
+
+      {!isResumable && (
+        <Pressable onPress={() => setShowCardioLog((v) => !v)} className="items-center pt-3">
+          <Text className="text-slate-500 text-xs">🥾 {showCardioLog ? 'Hide' : 'Log a hike, bike ride, run, or other activity'} {showCardioLog ? '▴' : '→'}</Text>
+        </Pressable>
+      )}
+      {showCardioLog && !isResumable && (
+        <View className="mt-3">
+          <CardioActivityCard compact />
+        </View>
       )}
     </View>
   );

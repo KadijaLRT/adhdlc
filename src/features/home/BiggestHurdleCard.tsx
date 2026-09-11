@@ -48,11 +48,18 @@ export default function BiggestHurdleCard() {
         subSteps: (decomposition.subSteps || []).map((s) => ({ id: s.id, title: s.title, isComplete: false })),
       });
     } else {
+      // Bug fix: this used to be energyLevel (the person's current
+      // mood-energy at this exact moment) — same bug already fixed on
+      // the main Tasks screen: a task gets tagged with whatever energy
+      // the person happened to have right then, permanently, which
+      // then skews future suggestNextTask recommendations for reasons
+      // that have nothing to do with the task itself. 'medium' is a
+      // neutral default, matching the fix already applied elsewhere.
       await addTask({
         id: generateId('hurdle'),
         title: text,
         isComplete: false,
-        energyRequired: energyLevel,
+        energyRequired: 'medium',
         priority: 'important',
         category: 'general',
         createdAt: new Date().toISOString(),
