@@ -46,14 +46,28 @@ const WARMUP_MOVE_POOLS: Record<WarmupCategory, WarmupStep[]> = {
     { id: 'lb-12', text: 'Ankle bounces', durationSeconds: 20, emoji: '🦶', animation: 'quickVertical' },
   ],
   upper_body: [
-    { id: 'ub-1', text: 'Arm circles, forward then back', durationSeconds: 20, emoji: '💪', animation: 'rotate' },
+    // Bug fix: this used to be one 20-second step with text promising
+    // two directions ("forward then back") but nothing in the timer
+    // ever cued the switch — someone doing exactly what the text says
+    // spends the whole 20 seconds going one direction, and the step
+    // ends before "back" ever happens, or they have to guess when to
+    // switch mid-countdown with no signal to do so. Split into two
+    // real steps, same as the leg-swing/hip-circle pairs, each with
+    // its own dedicated countdown and its own explicit direction — and
+    // paired via pairId so the variety rotation below always keeps
+    // both directions together, never selecting just one.
+    { id: 'ub-1', text: 'Arm circles — Forward', durationSeconds: 10, emoji: '💪', animation: 'rotate', pairId: 'arm-circles' },
+    { id: 'ub-1b', text: 'Arm circles — Backward', durationSeconds: 10, emoji: '💪', animation: 'rotate', pairId: 'arm-circles' },
     { id: 'ub-2', text: 'Band pull-aparts (or the same motion with no band)', durationSeconds: 30, emoji: '🙌', animation: 'horizontal' },
     { id: 'ub-3', text: 'Shoulder rolls', durationSeconds: 20, emoji: '🤷', animation: 'rotate' },
     { id: 'ub-4', text: 'Push-up to downward dog', durationSeconds: 30, emoji: '🧘', animation: 'vertical' },
     { id: 'ub-5', text: 'Light rows or scapular squeezes', durationSeconds: 30, emoji: '🚣', animation: 'horizontal' },
     { id: 'ub-6', text: 'Arm swings, across the chest', durationSeconds: 20, emoji: '💪', animation: 'horizontal' },
     { id: 'ub-7', text: 'Wall slides', durationSeconds: 30, emoji: '🙌', animation: 'vertical' },
-    { id: 'ub-8', text: 'Wrist circles, both directions', durationSeconds: 20, emoji: '🤲', animation: 'rotate' },
+    // Same fix as arm circles above — "both directions" in one
+    // countdown gave no cue to actually switch.
+    { id: 'ub-8', text: 'Wrist circles — Clockwise', durationSeconds: 10, emoji: '🤲', animation: 'rotate', pairId: 'wrist-circles' },
+    { id: 'ub-8b', text: 'Wrist circles — Counterclockwise', durationSeconds: 10, emoji: '🤲', animation: 'rotate', pairId: 'wrist-circles' },
     { id: 'ub-9', text: 'Shadow boxing, light and loose', durationSeconds: 30, emoji: '🥊', animation: 'horizontal' },
     { id: 'ub-10', text: 'Torso twists with arms extended', durationSeconds: 20, emoji: '🤸', animation: 'twist' },
   ],
