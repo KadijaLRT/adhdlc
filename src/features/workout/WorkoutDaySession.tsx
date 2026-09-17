@@ -554,7 +554,7 @@ export default function WorkoutDaySession({
           {sessionExerciseIds.map((exerciseId, exerciseIndex) => {
             const exercise = getExercise(exerciseId);
             if (!exercise) return null;
-            const hidesWeightInput = isBodyweightOnlyExercise(exercise);
+            const hidesWeightInput = isBodyweightOnlyExercise(exercise) || !!exercise.noWeight;
             const timeTargetSeconds = parseTimeBasedSeconds(exercise.reps);
             const rows = rowsByExercise[exerciseId] || [];
             const exerciseDone = rows.length > 0 && rows.every((r) => r.done);

@@ -2,13 +2,20 @@ export interface Exercise {
   name: string; muscle: string; group: string; icon: string; tag: string;
   rest: number; inc: number; sets: number; reps: string; repsMin: number;
   uni?: boolean; eq: string[]; cues: string; points: string[];
+  /** True for equipment with no meaningful "weight" to log — cardio
+   * machines (treadmill, elliptical, stationary bike, stair climber,
+   * ARC trainer, rowing machine) run on duration/resistance level, not
+   * a loaded weight. Distinct from `eq:["bodyweight"]`-only exercises
+   * (handled by isBodyweightOnlyExercise) since these use eq:["machine"]
+   * and would otherwise be indistinguishable from genuinely weighted
+   * machines like Leg Press or Leg Extension. */
+  noWeight?: boolean;
 }
 
 export const WORKOUT_EXERCISES: Record<string, Exercise> = {
   // -- GLUTES ------------------------------------------------------------------
   g1: {name:"Barbell Hip Thrust",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"\uD83C\uDFC6 #1 Glute Builder",rest:90,inc:5,sets:3,reps:"10-12",repsMin:10,eq:["barbell","bodyweight"],cues:"Upper back on bench, bar across hips with pad. Drive through HEELS. Squeeze hard 1-2 sec at top.",points:["Bar needs a pad","Drive through heels","Squeeze 1-2 sec","Chin tucked"]},
   g1b:{name:"Hip Thrust Machine",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"Machine Hip Thrust",rest:90,inc:5,sets:3,reps:"12",repsMin:12,eq:["hip_thrust_machine"],cues:"Adjust pad across hips. Drive through heels. Hold squeeze 1 second at top.",points:["Pad across hips","Drive through heels","Hold 1 sec at top"]},
-  g2: {name:"Cable Kickback",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"Glute isolation",rest:60,inc:2.5,sets:3,reps:"15 each",repsMin:15,uni:true,eq:["cable"],cues:"Ankle strap on cable. Slight hinge forward. Kick leg straight back, squeeze glute at peak. Control the return.",points:["Slight hinge forward","Kick straight back","Squeeze at peak","Control return"]},
   g3: {name:"Hip Abductor Machine",muscle:"Glutes (outer)",group:"glutes",icon:"\uD83C\uDF51",tag:"Outer glute",rest:60,inc:2.5,sets:3,reps:"15-20",repsMin:15,eq:["machine"],cues:"Sit tall, back against pad. Push knees OUT. Control the return slowly \u2014 growth happens on the way in.",points:["Sit tall, back on pad","Push knees outward","Slow controlled return"]},
   g3b:{name:"Hip Adductor Machine",muscle:"Inner Thigh",group:"glutes",icon:"\uD83C\uDF51",tag:"Inner thigh",rest:60,inc:2.5,sets:3,reps:"15-20",repsMin:15,eq:["machine"],cues:"Sit tall. Squeeze knees together. Hold at contraction, then slow return.",points:["Sit tall","Squeeze knees together","Hold at contraction"]},
   g4: {name:"Glute Kickback (Donkey Kick)",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"Bodyweight glute",rest:60,inc:0,sets:3,reps:"20 each",repsMin:20,uni:true,eq:["bodyweight","resistance_band"],cues:"On all fours. Drive one heel toward ceiling, squeeze glute at top. Add band above knees for more burn.",points:["All fours on mat","Drive heel to ceiling","Squeeze at top","Band above knees = extra burn"]},
@@ -106,7 +113,6 @@ export const WORKOUT_EXERCISES: Record<string, Exercise> = {
   // -- BACK (extra) -------------------------------------------------------------
   b10:{name:"Chest Supported Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"No cheat possible",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["dumbbell","machine"],cues:"Chest on incline bench. Row dumbbells or use machine. Chest support eliminates all body English \u2014 pure back work.",points:["Chest on incline pad","No swinging possible","Full stretch at bottom","Pure back isolation"]},
   b11:{name:"Kneeling Lat Pulldown",muscle:"Lats",group:"back",icon:"\uD83D\uDD19",tag:"Core + lats",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["cable"],cues:"Kneel at the cable, no seat. Core must engage to stay upright. Same pull motion \u2014 elbows drive down to ribs.",points:["Kneel, don't sit","Core braces for stability","Elbows drive down","Great core + lat combo"]},
-  b12:{name:"Seated Cable Pullover",muscle:"Lats",group:"back",icon:"\uD83D\uDD19",tag:"Lat isolation from cable",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["cable"],cues:"Sit facing high cable, arms extended overhead. Pull straight down to thighs. Pure lat stretch and contraction.",points:["Sit facing high cable","Arms extended overhead","Pull to thighs","Feel the lat stretch"]},
   b13:{name:"Rack Pull",muscle:"Back + Posterior Chain",group:"back",icon:"\uD83D\uDD19",tag:"Partial deadlift",rest:240,inc:10,sets:3,reps:"5",repsMin:5,eq:["barbell"],cues:"Like a deadlift but bar starts at knee height. Allows heavier loading of the back. Great for upper back thickness.",points:["Bar at knee height","Same back position as DL","Heavier than full DL","Builds upper back thickness"]},
   b14:{name:"Resistance Band Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"Home or warmup row",rest:60,inc:0,sets:3,reps:"15",repsMin:15,eq:["resistance_band"],cues:"Band around a post or feet. Row elbows back, squeeze blades. Perfect for warming up or at home.",points:["Band fixed around anchor","Row elbows back","Squeeze shoulder blades","Great warmup exercise"]},
   // -- CHEST (extra) ------------------------------------------------------------
@@ -154,31 +160,28 @@ export const WORKOUT_EXERCISES: Record<string, Exercise> = {
   fb13:{name:"Bear Crawl",muscle:"Full Body Stability",group:"fullbody",icon:"\uD83D\uDC3B",tag:"Primal movement",rest:60,inc:0,sets:3,reps:"20 steps",repsMin:20,eq:["bodyweight"],cues:"On hands and feet, knees hover 2 inches off ground. Move opposite hand and foot simultaneously. Core stays completely rigid. Harder than it looks.",points:["Knees hover 2 inches up","Opposite arm and leg move","Stay low, core rigid","Looks easy, absolutely isn't"]},
   fb14:{name:"Clean and Press",muscle:"Full Body Power",group:"fullbody",icon:"\uD83C\uDFCB\uFE0F",tag:"Olympic lift variation",rest:240,inc:5,sets:3,reps:"6",repsMin:6,eq:["barbell","dumbbell"],cues:"Pull bar from hip height to shoulder (clean), then press overhead. Combines a hip hinge pull with an overhead press. Use dumbbells first to learn the movement.",points:["Clean: pull to front rack","Dip and drive for press","Dumbbells are easier to learn","Power from hip extension"]},
   // -- CARDIO MACHINES (in-gym) --------------------------------------------------
-  fb21:{name:"Treadmill",muscle:"Legs + Cardio",group:"fullbody",icon:"\uD83C\uDFC3",tag:"Steady-state or intervals",rest:0,inc:0,sets:1,reps:"15-30 min",repsMin:1,eq:["machine"],cues:"Life Fitness and Precor treadmills at most commercial gyms: set incline 1-2% to mimic outdoor resistance. Start at a walk to warm up, then either hold steady pace or alternate 1 min fast / 2 min recovery for intervals. Use the side rails only to step on/off, not to hold while running.",points:["Incline 1-2% mimics outdoor terrain","Warm up at a walk first","Intervals: 1 min fast, 2 min recovery","Don't grip the handrails while moving"]},
-  fb22:{name:"Elliptical",muscle:"Full Body + Cardio",group:"fullbody",icon:"\uD83D\uDD25",tag:"Low-impact cardio",rest:0,inc:0,sets:1,reps:"15-30 min",repsMin:1,eq:["machine"],cues:"Precor and Life Fitness ellipticals let you push/pull the handles for upper body or let go and swing arms freely for legs-only. Increase resistance level rather than stride speed to raise intensity without joint strain. Great option on sore-joint days.",points:["Push/pull handles for upper body work","Raise resistance, not just speed","Zero impact on knees and hips","Good choice on sore-joint days"]},
-  fb23:{name:"Stationary Bike",muscle:"Quads + Cardio",group:"quads",icon:"\uD83D\uDEB4",tag:"Low-impact leg cardio",rest:0,inc:0,sets:1,reps:"15-30 min",repsMin:1,eq:["machine"],cues:"Upright or recumbent bike (Life Fitness, Precor, Cybex). Seat height: slight bend in the knee at the bottom of the pedal stroke. Recumbent option is easier on the lower back if that's a concern.",points:["Seat height: slight knee bend at bottom","Recumbent = easier on lower back","Keep cadence steady, adjust resistance","Zero impact, good recovery-day option"]},
-  fb24:{name:"Stair Climber",muscle:"Glutes + Cardio",group:"fullbody",icon:"\uD83E\uDDB5",tag:"Glute-focused cardio",rest:0,inc:0,sets:1,reps:"10-20 min",repsMin:1,eq:["machine"],cues:"StairMaster or Cybex stepmill: stand tall, avoid leaning on the handrails (that removes the glute work). Take full steps rather than tiny quick ones. Light hand-rest for balance only, not weight support.",points:["Stand tall, avoid leaning on rails","Full steps, not tiny quick ones","Hands rest lightly, don't bear weight","Great glute-focused warmup"]},
-  fb25:{name:"ARC Trainer",muscle:"Glutes + Quads + Cardio",group:"fullbody",icon:"\uD83D\uDD25",tag:"Low-impact glute/quad cardio",rest:0,inc:0,sets:1,reps:"15-30 min",repsMin:1,eq:["machine"],cues:"Cybex ARC Trainer: adjust the ramp/incline to shift emphasis toward glutes (higher ramp) or quads (lower ramp). The foot path is an arc, not a circle like an elliptical, so it feels different \u2014 give it a minute to adjust.",points:["Higher ramp = more glute emphasis","Lower ramp = more quad emphasis","Zero impact, joint-friendly","Takes a minute to get used to the motion"]},
-  fb26:{name:"Rowing Machine",muscle:"Back + Legs + Cardio",group:"back",icon:"\uD83D\uDEA3",tag:"Full body pull cardio",rest:0,inc:0,sets:1,reps:"10-20 min",repsMin:1,eq:["machine"],cues:"Concept2 or Life Fitness rower. Sequence is legs, then back, then arms on the drive; reverse it on the recovery \u2014 arms, then back, then legs. Most beginners pull too much with arms too early; let the legs do most of the work.",points:["Drive order: legs, back, arms","Recovery order: arms, back, legs","Legs do most of the work, not arms","Keep back flat, don't round forward"]},
+  fb21:{name:"Treadmill",muscle:"Legs + Cardio",group:"fullbody",icon:"\uD83C\uDFC3",tag:"Steady-state or intervals",rest:0,inc:0,sets:1,reps:"15-30 min",repsMin:1,eq:["machine"],noWeight:true,cues:"Life Fitness and Precor treadmills at most commercial gyms: set incline 1-2% to mimic outdoor resistance. Start at a walk to warm up, then either hold steady pace or alternate 1 min fast / 2 min recovery for intervals. Use the side rails only to step on/off, not to hold while running.",points:["Incline 1-2% mimics outdoor terrain","Warm up at a walk first","Intervals: 1 min fast, 2 min recovery","Don't grip the handrails while moving"]},
+  fb22:{name:"Elliptical",muscle:"Full Body + Cardio",group:"fullbody",icon:"\uD83D\uDD25",tag:"Low-impact cardio",rest:0,inc:0,sets:1,reps:"15-30 min",repsMin:1,eq:["machine"],noWeight:true,cues:"Precor and Life Fitness ellipticals let you push/pull the handles for upper body or let go and swing arms freely for legs-only. Increase resistance level rather than stride speed to raise intensity without joint strain. Great option on sore-joint days.",points:["Push/pull handles for upper body work","Raise resistance, not just speed","Zero impact on knees and hips","Good choice on sore-joint days"]},
+  fb23:{name:"Stationary Bike",muscle:"Quads + Cardio",group:"quads",icon:"\uD83D\uDEB4",tag:"Low-impact leg cardio",rest:0,inc:0,sets:1,reps:"15-30 min",repsMin:1,eq:["machine"],noWeight:true,cues:"Upright or recumbent bike (Life Fitness, Precor, Cybex). Seat height: slight bend in the knee at the bottom of the pedal stroke. Recumbent option is easier on the lower back if that's a concern.",points:["Seat height: slight knee bend at bottom","Recumbent = easier on lower back","Keep cadence steady, adjust resistance","Zero impact, good recovery-day option"]},
+  fb24:{name:"Stair Climber",muscle:"Glutes + Cardio",group:"fullbody",icon:"\uD83E\uDDB5",tag:"Glute-focused cardio",rest:0,inc:0,sets:1,reps:"10-20 min",repsMin:1,eq:["machine"],noWeight:true,cues:"StairMaster or Cybex stepmill: stand tall, avoid leaning on the handrails (that removes the glute work). Take full steps rather than tiny quick ones. Light hand-rest for balance only, not weight support.",points:["Stand tall, avoid leaning on rails","Full steps, not tiny quick ones","Hands rest lightly, don't bear weight","Great glute-focused warmup"]},
+  fb25:{name:"ARC Trainer",muscle:"Glutes + Quads + Cardio",group:"fullbody",icon:"\uD83D\uDD25",tag:"Low-impact glute/quad cardio",rest:0,inc:0,sets:1,reps:"15-30 min",repsMin:1,eq:["machine"],noWeight:true,cues:"Cybex ARC Trainer: adjust the ramp/incline to shift emphasis toward glutes (higher ramp) or quads (lower ramp). The foot path is an arc, not a circle like an elliptical, so it feels different \u2014 give it a minute to adjust.",points:["Higher ramp = more glute emphasis","Lower ramp = more quad emphasis","Zero impact, joint-friendly","Takes a minute to get used to the motion"]},
+  fb26:{name:"Rowing Machine",muscle:"Back + Legs + Cardio",group:"back",icon:"\uD83D\uDEA3",tag:"Full body pull cardio",rest:0,inc:0,sets:1,reps:"10-20 min",repsMin:1,eq:["machine"],noWeight:true,cues:"Concept2 or Life Fitness rower. Sequence is legs, then back, then arms on the drive; reverse it on the recovery \u2014 arms, then back, then legs. Most beginners pull too much with arms too early; let the legs do most of the work.",points:["Drive order: legs, back, arms","Recovery order: arms, back, legs","Legs do most of the work, not arms","Keep back flat, don't round forward"]},
   fb15:{name:"Wall Ball",muscle:"Legs + Shoulders + Core",group:"fullbody",icon:"\uD83C\uDFC0",tag:"Full body conditioning",rest:60,inc:0,sets:3,reps:"15",repsMin:15,eq:["medicine_ball"],cues:"Hold medicine ball, squat deep, explode up and throw ball to a wall target at 10 feet. Catch, immediately squat into next rep. Non-stop flow.",points:["Squat deep before throw","Use leg drive to throw","Catch and flow into next squat","Target 10 feet up on wall"]},
   fb16:{name:"T Push-Up",muscle:"Chest + Core + Rotation",group:"fullbody",icon:"\uD83D\uDCAA",tag:"Push-up with rotation",rest:60,inc:0,sets:3,reps:"8 each",repsMin:8,uni:true,eq:["bodyweight","dumbbell"],cues:"Push-up, then rotate to side plank raising one arm to ceiling. Targets chest, obliques, and shoulder stability in one move.",points:["Push-up first, then rotate","Stack feet or stagger for balance","Arm points straight up","Slow rotation = more oblique work"]},
 
   // -- GLUTES (expanded) ---------------------------------------------------------
   g17:{name:"Barbell Glute Bridge",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"Ground-based bridge",rest:75,inc:5,sets:3,reps:"12",repsMin:12,eq:["barbell","bodyweight"],cues:"Shoulders stay on the floor (not a bench), bar across hips. Drive up through heels, squeeze glutes hard at the top.",points:["Shoulders stay on floor","Drive through heels","Squeeze hard at top","Good regression from hip thrust"]},
-  g18:{name:"Frog Pumps",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"High-rep activation",rest:45,inc:0,sets:3,reps:"20-25",repsMin:20,eq:["bodyweight"],cues:"Lie on back, soles of feet together, knees out wide. Pulse hips up, squeezing glutes hard at the top.",points:["Soles of feet together","Knees fall out wide","Squeeze hard at top","Great warm-up activator"]},
   g19:{name:"Monster Walk",muscle:"Glutes (outer)",group:"glutes",icon:"\uD83C\uDF51",tag:"Diagonal band walk",rest:45,inc:0,sets:3,reps:"10 steps each direction",repsMin:10,eq:["resistance_band"],cues:"Band above knees, walk forward and diagonally in a mini-squat stance, keeping tension on the band throughout.",points:["Mini-squat stance","Walk diagonally forward","Constant band tension","Great warm-up activator"]},
   g20:{name:"Banded Lateral Walk",muscle:"Glutes (outer)",group:"glutes",icon:"\uD83C\uDF51",tag:"Activation + warm-up",rest:45,inc:0,sets:3,reps:"15 steps each way",repsMin:15,eq:["resistance_band"],cues:"Band above knees or ankles, slight squat stance. Step sideways keeping tension on the band the whole time.",points:["Stay in a mini-squat","Keep constant band tension","Don't let knees cave in","Common warm-up staple"]},
   g21:{name:"Standing Cable Hip Extension",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"Standing isolation",rest:60,inc:2.5,sets:3,reps:"15 each",repsMin:15,uni:true,eq:["cable"],cues:"Ankle strap on cable, stand facing the machine holding on for balance. Drive the leg straight back and up, squeezing at the top.",points:["Hold on for balance","Drive leg straight back","Squeeze glute at top","Keep torso mostly still"]},
   g22:{name:"Zercher Squat",muscle:"Glutes + Quads + Core",group:"glutes",icon:"\uD83C\uDF51",tag:"Front-loaded squat",rest:90,inc:5,sets:3,reps:"8-10",repsMin:8,eq:["barbell"],cues:"Bar cradled in the crooks of your elbows. Squat upright, core braced hard the whole way down.",points:["Bar sits in elbow creases","Torso stays upright","Brace your core hard","Pad the bar if needed"]},
   g23:{name:"Landmine Squat",muscle:"Glutes + Quads",group:"glutes",icon:"\uD83C\uDF51",tag:"Joint-friendly squat",rest:75,inc:5,sets:3,reps:"12",repsMin:12,eq:["barbell","machine"],cues:"Hold the end of a landmine bar at chest height. Squat down keeping the bar close, drive up through heels.",points:["Bar stays close to chest","Drive through heels","Easier on the lower back","Great beginner squat pattern"]},
   g24:{name:"Pistol Squat",muscle:"Glutes + Quads + Balance",group:"glutes",icon:"\uD83E\uDDB5",tag:"Advanced single-leg",rest:90,inc:0,sets:3,reps:"5 each",repsMin:5,uni:true,eq:["bodyweight"],cues:"One leg extended out front, squat all the way down on the other. Use a chair or TRX for assistance at first.",points:["Extend the free leg forward","Use support if needed at first","Full depth on standing leg","Builds serious single-leg strength"]},
-  g25:{name:"Cable Glute Kickback (standing)",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"Standing cable isolation",rest:60,inc:2.5,sets:3,reps:"15 each",repsMin:15,uni:true,eq:["cable"],cues:"Face the cable stack, ankle strap on. Kick straight back and slightly up, squeeze hard, control the return.",points:["Slight forward lean","Kick back and up","Squeeze at the top","Control the negative"]},
   g26:{name:"Deficit Reverse Lunge",muscle:"Glutes + Hamstrings",group:"glutes",icon:"\uD83E\uDDB5",tag:"Extra range of motion",rest:75,inc:2.5,sets:3,reps:"10 each",repsMin:10,uni:true,eq:["bodyweight","dumbbell"],cues:"Stand on a small platform, step one leg back and down into a lunge. The extra height means a deeper stretch.",points:["Stand on a plate or step","Step back into deep lunge","Deeper stretch than flat ground","Control the descent"]},
 
   // -- HAMSTRINGS (expanded) ------------------------------------------------------
   h9:{name:"Sliding Leg Curl",muscle:"Hamstrings",group:"hamstrings",icon:"\uD83E\uDDB5",tag:"Sliders or towel variation",rest:60,inc:0,sets:3,reps:"10-12",repsMin:10,eq:["bodyweight"],cues:"Lie on back, heels on sliders or a towel on a smooth floor, hips lifted. Slide feet out straight, then curl back in.",points:["Hips stay lifted","Slide feet out fully","Curl back in with hamstrings","No equipment needed"]},
   h10:{name:"Trap Bar Deadlift",muscle:"Hamstrings + Glutes + Back",group:"hamstrings",icon:"\uD83D\uDD19",tag:"Beginner-friendly deadlift",rest:120,inc:5,sets:3,reps:"8",repsMin:8,eq:["barbell"],cues:"Step inside the trap bar, hinge down keeping your chest up, drive through the floor to stand. Easier on the back than a straight bar.",points:["Stand inside the bar","Chest stays up","Drive through the floor","More beginner-friendly than barbell deadlift"]},
-  h11:{name:"Cable Pull-Through (heavy)",muscle:"Hamstrings + Glutes",group:"hamstrings",icon:"\uD83C\uDF51",tag:"Heavier hip hinge",rest:90,inc:5,sets:3,reps:"10",repsMin:10,eq:["cable"],cues:"Same pattern as the lighter pull-through but heavier load and lower reps, treating it like a hinge strength move.",points:["Face away from cable","Deep hip hinge","Drive hips forward hard","Heavier and lower reps here"]},
   h12:{name:"Glute-Ham Raise",muscle:"Hamstrings + Glutes",group:"hamstrings",icon:"\uD83E\uDDB5",tag:"Advanced hamstring builder",rest:90,inc:0,sets:3,reps:"6-10",repsMin:6,eq:["machine"],cues:"Anchor feet in the GHD, lower your torso forward under control, then curl back up using your hamstrings.",points:["Feet anchored securely","Lower under full control","Curl back up with hamstrings","Very advanced \u2014 progress slowly"]},
   h13:{name:"Dumbbell Stiff-Leg Deadlift",muscle:"Hamstrings",group:"hamstrings",icon:"\uD83D\uDD19",tag:"Straighter-leg variation",rest:75,inc:5,sets:3,reps:"10-12",repsMin:10,eq:["dumbbell"],cues:"Legs stay straighter than an RDL (small knee bend only). Hinge at hips, dumbbells trace down your shins.",points:["Legs straighter than RDL","Dumbbells trace shins","Deep hamstring stretch","Keep back flat throughout"]},
 
@@ -191,7 +194,6 @@ export const WORKOUT_EXERCISES: Record<string, Exercise> = {
 
   // -- BACK (expanded) --------------------------------------------------------------
   b15:{name:"Pendlay Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"Explosive dead-stop row",rest:90,inc:5,sets:3,reps:"8",repsMin:8,eq:["barbell"],cues:"Torso parallel to floor, bar starts on the ground each rep. Pull explosively to the lower chest, reset fully between reps.",points:["Bar rests on floor between reps","Torso stays parallel","Pull explosively","Full reset each rep"]},
-  b16:{name:"Chest-Supported Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"Strict, no momentum",rest:75,inc:5,sets:3,reps:"12",repsMin:12,eq:["machine","dumbbell"],cues:"Chest braced against the pad the whole time \u2014 zero momentum possible. Pull elbows back, squeeze shoulder blades.",points:["Chest stays on pad","No swinging or momentum","Squeeze shoulder blades together","Great for isolating back"]},
   b17:{name:"Straight-Arm Pulldown",muscle:"Lats",group:"back",icon:"\uD83D\uDD19",tag:"Lat isolation",rest:60,inc:2.5,sets:3,reps:"12-15",repsMin:12,eq:["cable"],cues:"Arms stay nearly straight the whole rep. Pull the bar down in an arc to your thighs, feeling it purely in the lats.",points:["Arms stay almost straight","Pull in an arc to thighs","Pure lat isolation","No elbow bending"]},
   b18:{name:"Seal Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"Chest-supported, no cheating",rest:75,inc:5,sets:3,reps:"10-12",repsMin:10,eq:["barbell","machine"],cues:"Lying face-down on a raised bench, pull the bar straight up to your chest. Zero momentum possible \u2014 pure back isolation.",points:["Lying face-down on bench","Pull straight up to chest","Zero body momentum","Very strict back builder"]},
   b19:{name:"Inverted Row",muscle:"Mid Back + Biceps",group:"back",icon:"\uD83D\uDD19",tag:"Bodyweight row",rest:75,inc:0,sets:3,reps:"10-15",repsMin:10,eq:["bodyweight"],cues:"Under a bar or rings, body straight, pull your chest up to the bar. Raise your feet to make it harder, bend knees to make it easier.",points:["Body stays straight","Pull chest to bar","Feet higher = harder","Adjustable for any level"]},
@@ -229,29 +231,27 @@ export const WORKOUT_EXERCISES: Record<string, Exercise> = {
   co18:{name:"V-Up",muscle:"Abs",group:"core",icon:"\uD83D\uDD25",tag:"Full ab contraction",rest:45,inc:0,sets:3,reps:"12-15",repsMin:12,eq:["bodyweight"],cues:"Lying flat, simultaneously lift your straight legs and torso, reaching hands toward your toes to form a V shape.",points:["Lift legs and torso together","Reach hands toward toes","Full V shape at the top","Keep knees fairly straight"]},
 
   // -- CALVES (expanded) ----------------------------------------------------------------
-  ca5:{name:"Single-Leg Calf Raise",muscle:"Calves",group:"calves",icon:"\uD83E\uDDB5",tag:"Unilateral bodyweight raise",rest:45,inc:0,sets:3,reps:"15-20 each",repsMin:15,uni:true,eq:["bodyweight"],cues:"One foot on a step, rise up onto your toes as high as possible, lower slowly for a full stretch at the bottom.",points:["One foot at a time","Rise as high as possible","Full stretch at bottom","Hold a rail for balance"]},
   ca6:{name:"Standing Barbell Calf Raise",muscle:"Calves",group:"calves",icon:"\uD83E\uDDB5",tag:"Loaded standing raise",rest:60,inc:5,sets:3,reps:"15",repsMin:15,eq:["barbell"],cues:"Bar across your upper back, rise up onto your toes as high as possible, pause, lower slowly for a full stretch.",points:["Bar across upper back","Rise as high as possible","Pause at the top","Full stretch on the way down"]},
   ca7:{name:"Tibialis Raise",muscle:"Shins",group:"calves",icon:"\uD83E\uDDB5",tag:"Shin strengthener",rest:45,inc:0,sets:3,reps:"15-20",repsMin:15,eq:["bodyweight"],cues:"Lean your back against a wall, heels planted, lift your toes up toward your shins as high as you can.",points:["Back against a wall","Lift toes toward shins","Often overlooked muscle","Helps balance out calf training"]},
 
   // -- FULLBODY (expanded) ---------------------------------------------------------------
   fb17:{name:"Kettlebell Clean and Press",muscle:"Full Body",group:"fullbody",icon:"\uD83D\uDCAA",tag:"Explosive full-body move",rest:90,inc:2.5,sets:3,reps:"8 each",repsMin:8,uni:true,eq:["dumbbell"],cues:"Hike the weight back, explosively bring it to your shoulder, then press overhead. One fluid, powerful motion.",points:["Explosive hip drive to start","Weight lands softly on shoulder","Press overhead to finish","Practice the clean with light weight first"]},
   fb18:{name:"Turkish Get-Up",muscle:"Full Body + Stability",group:"fullbody",icon:"\uD83D\uDCAA",tag:"Complex stability builder",rest:90,inc:0,sets:3,reps:"5 each side",repsMin:5,uni:true,eq:["dumbbell"],cues:"A slow, multi-step sequence from lying to standing while holding a weight overhead the entire time. Learn it slowly with no weight first.",points:["Weight stays overhead throughout","Multi-step sequence, go slow","Learn with no weight first","Builds total-body stability"]},
-  fb19:{name:"Devil Press",muscle:"Full Body",group:"fullbody",icon:"\uD83D\uDCAA",tag:"Burpee + snatch combo",rest:90,inc:0,sets:3,reps:"8-10",repsMin:8,eq:["dumbbell"],cues:"Burpee with hands on dumbbells, then explosively swing both weights overhead in one motion. Extremely demanding \u2014 pace yourself.",points:["Burpee with hands on dumbbells","Explosive double-arm swing up","Very high intensity","Pace yourself, this one's brutal"]},
   fb20:{name:"Man Maker",muscle:"Full Body",group:"fullbody",icon:"\uD83D\uDCAA",tag:"Push-up + row + burpee combo",rest:90,inc:0,sets:3,reps:"6-8",repsMin:6,eq:["dumbbell"],cues:"Push-up on dumbbells with a row each side, then squat and press both weights overhead. A brutal, complete combo move.",points:["Push-up plus a row each side","Squat and press to finish","Extremely demanding","Scale reps down if needed"]},
 
 
 };
 export const WGROUPS = {
-  "glutes": ['g1b', 'g3', 'g3b', 'g10', 'g11', 'g12', 'g13', 'g14', 'g15', 'g16', 'g17', 'g18', 'g19', 'g20', 'g21', 'g22', 'g23', 'g24', 'g25', 'g26'],
-  "back": ['b1b', 'b1c', 'b2b', 'b4b', 'b5b', 'lb1', 'lb2', 'lb3', 'b10', 'b11', 'b12', 'b13', 'b14', 'b15', 'b16', 'b17', 'b18', 'b19', 'b20', 'b21'],
+  "glutes": ['g1b', 'g3', 'g3b', 'g10', 'g11', 'g12', 'g13', 'g14', 'g15', 'g16', 'g17', 'g19', 'g20', 'g21', 'g22', 'g23', 'g24', 'g26'],
+  "back": ['b1b', 'b1c', 'b2b', 'b4b', 'b5b', 'lb1', 'lb2', 'lb3', 'b10', 'b11', 'b13', 'b14', 'b15', 'b17', 'b18', 'b19', 'b20', 'b21'],
   "shoulders": ['sh1', 'sh2', 'sh3', 'sh4', 'sh5', 'sh6', 'sh7', 'sh8', 'sh9', 'sh10', 'sh11', 'sh12', 'sh13', 'sh14', 'sh15', 'sh16'],
   "core": ['co1', 'co2', 'co3', 'co4', 'co5', 'co6', 'co7', 'co8', 'co9', 'co10', 'co11', 'co12', 'fb1', 'fb2', 'co13', 'co14', 'co15', 'co16', 'co17', 'co18'],
-  "calves": ['ca1', 'ca2', 'fb4', 'ca3', 'ca4', 'ca5', 'ca6', 'ca7'],
-  "hamstrings": ['h7', 'h8', 'h9', 'h10', 'h11', 'h12', 'h13'],
+  "calves": ['ca1', 'ca2', 'fb4', 'ca3', 'ca4', 'ca6', 'ca7'],
+  "hamstrings": ['h7', 'h8', 'h9', 'h10', 'h12', 'h13'],
   "quads": ['q7', 'q8', 'q9', 'q10', 'fb3', 'q11', 'q12', 'q13', 'q14', 'q15'],
   "chest": ['c9', 'c10', 'c11', 'c12', 'c13', 'c14', 'c15', 'c16', 'c17'],
   "arms": ['a10', 'a11', 'a12', 'a13', 'a14', 'a15', 'a16', 'a17', 'a18', 'a19', 'a20', 'a21'],
-  "fullbody": ['fb5', 'fb6', 'fb7', 'fb8', 'fb9', 'fb10', 'fb11', 'fb12', 'fb13', 'fb14', 'fb15', 'fb16', 'fb17', 'fb18', 'fb19', 'fb20'],
+  "fullbody": ['fb5', 'fb6', 'fb7', 'fb8', 'fb9', 'fb10', 'fb11', 'fb12', 'fb13', 'fb14', 'fb15', 'fb16', 'fb17', 'fb18', 'fb20'],
 };
 
 /**
@@ -290,18 +290,18 @@ export function isBodyweightOnlyExercise(exercise: Pick<Exercise, 'eq'>): boolea
  * exercise-science sources agree on this specific ordering principle).
  */
 const COMPOUND_EXERCISE_IDS = new Set([
-  'g1', 'g1b', 'g5', 'g6', 'g7', 'g8', 'g9', 'g10', 'g11', 'g12', 'g16', 'g17', 'g18',
+  'g1', 'g1b', 'g5', 'g6', 'g7', 'g8', 'g9', 'g10', 'g11', 'g12', 'g16', 'g17',
   'g21', 'g22', 'g23', 'g24', 'g26',
-  'h1', 'h4', 'h6', 'h8', 'h10', 'h11', 'h12', 'h13',
+  'h1', 'h4', 'h6', 'h8', 'h10', 'h12', 'h13',
   'q1', 'q5', 'q6', 'q7', 'q10', 'q12', 'q13', 'q14', 'q15',
   'b1', 'b1b', 'b1c', 'b2', 'b2b', 'b3', 'b4', 'b4b', 'b5', 'b5b', 'b8', 'b9',
-  'b10', 'b11', 'b12', 'b13', 'b14', 'b15', 'b16', 'b18', 'b19', 'b20',
+  'b10', 'b11', 'b13', 'b14', 'b15', 'b18', 'b19', 'b20',
   'c1', 'c2', 'c5', 'c6', 'c8', 'c9', 'c10', 'c11', 'c13', 'c14', 'c16',
   'a12', 'a19', 'a21',
   'sh1', 'sh6', 'sh7', 'sh10', 'sh16',
   'lb1', 'lb2', 'lb3',
   'fb1', 'fb2', 'fb3', 'fb4', 'fb5', 'fb6', 'fb7', 'fb8', 'fb9', 'fb10',
-  'fb11', 'fb12', 'fb13', 'fb14', 'fb15', 'fb16', 'fb17', 'fb18', 'fb19', 'fb20',
+  'fb11', 'fb12', 'fb13', 'fb14', 'fb15', 'fb16', 'fb17', 'fb18', 'fb20',
 ]);
 
 export function isCompoundExercise(exerciseId: string): boolean {
@@ -310,23 +310,139 @@ export function isCompoundExercise(exerciseId: string): boolean {
 
 /**
  * Parses a target duration in seconds out of an exercise's reps
- * string (e.g. "45-60 sec", "30 sec each", "15-20 sec each side") —
- * returns null for a genuinely rep-based exercise ("10-12", "max").
- * For a range, the upper bound is used as the target: this app's
- * position elsewhere (forgiving, non-punitive systems) is to encourage
- * reaching the fuller end of a stated range rather than defaulting to
- * the minimum. Verified against every "sec"-containing reps string
- * actually present in this file.
+ * string (e.g. "45-60 sec", "30 sec each", "15-20 sec each side",
+ * "15-30 min") — returns null for a genuinely rep-based exercise
+ * ("10-12", "max"). For a range, the upper bound is used as the
+ * target: this app's position elsewhere (forgiving, non-punitive
+ * systems) is to encourage reaching the fuller end of a stated range
+ * rather than defaulting to the minimum. Verified against every
+ * "sec"/"min"-containing reps string actually present in this file.
  */
 export function parseTimeBasedSeconds(reps: string): number | null {
-  const match = reps.match(/(\d+)(?:-(\d+))?\s*sec/i);
+  const match = reps.match(/(\d+)(?:-(\d+))?\s*(sec|min)/i);
   if (!match) return null;
   const low = match[1] ? parseInt(match[1], 10) : NaN;
   const high = match[2] ? parseInt(match[2], 10) : low;
-  return Number.isFinite(high) ? high : null;
+  if (!Number.isFinite(high)) return null;
+  const unit = (match[3] || 'sec').toLowerCase();
+  return unit === 'min' ? high * 60 : high;
 }
 
 /** True for an exercise whose reps field is a time duration rather than a rep count — the set-row UI shows a countdown timer instead of a reps number input for these. */
 export function isTimeBasedExercise(exercise: Pick<Exercise, 'reps'>): boolean {
   return parseTimeBasedSeconds(exercise.reps) !== null;
+}
+
+/**
+ * Normalizes an exercise name for duplicate detection: lowercases,
+ * strips everything but letters/digits, and drops a single trailing
+ * "s" (so "Frog Pump" and "Frog Pumps" collapse to the same key, as do
+ * "Chest Supported Row" and "Chest-Supported Row", and "Devil's Press"
+ * and "Devil Press"). This is deliberately just name-based, not a full
+ * movement-pattern classifier — it exists to catch the exact failure
+ * mode that happened in practice (the same exercise re-added under a
+ * cosmetically different name), not to judge whether two differently-
+ * named exercises are "close enough" to be the same movement. Two
+ * genuinely different exercises that happen to share a normalized name
+ * would be a real bug in the data, not a false positive.
+ */
+export function normalizeExerciseName(name: string): string {
+  return name.toLowerCase().replace(/[^a-z0-9]/g, '').replace(/s$/, '');
+}
+
+/**
+ * Scans the full library for two or more entries whose names normalize
+ * to the same key. Returns one array per colliding group (each holding
+ * every id+name that collided), empty groups filtered out. Used by
+ * both the dev-time assertion below and scripts/checkExerciseDuplicates.ts
+ * so there is exactly one implementation of "what counts as a
+ * duplicate" — this is the standing guard requested after the
+ * Chest-Supported Row / Frog Pumps / Devil Press-style duplicates that
+ * had silently accumulated in the file.
+ */
+export function findDuplicateExerciseNames(
+  exercises: Record<string, Pick<Exercise, 'name'>>
+): { id: string; name: string }[][] {
+  const groups = new Map<string, { id: string; name: string }[]>();
+  for (const [id, exercise] of Object.entries(exercises)) {
+    const key = normalizeExerciseName(exercise.name);
+    const bucket = groups.get(key) || [];
+    bucket.push({ id, name: exercise.name });
+    groups.set(key, bucket);
+  }
+  return Array.from(groups.values()).filter((bucket) => bucket.length > 1);
+}
+
+/**
+ * Flags groups of 2+ exercises sharing the exact same muscle, equipment
+ * set, and rep/rest/set scheme — the parameter signature, not the name.
+ * This exists because the name-normalization check above missed real
+ * duplicates that used unrelated names for the identical movement
+ * (Cable Kickback / Standing Cable Hip Extension / Cable Glute Kickback
+ * (standing) all shared eq:["cable"], muscle:"Glutes", reps:"15 each",
+ * repsMin:15, rest:60, inc:2.5, sets:3, uni:true — a dead giveaway once
+ * looked at side by side, but three unrelated-looking names). This is
+ * deliberately a WARNING, not a hard failure: two genuinely different
+ * isolation exercises can legitimately share a parameter signature by
+ * coincidence, so a match here means "a human should look at this,"
+ * not "this is definitely wrong." Equipment arrays are compared
+ * order-independently (a exercise listing ["barbell","dumbbell"] and
+ * one listing ["dumbbell","barbell"] should still match).
+ */
+export function findSuspiciousParameterMatches(
+  exercises: Record<string, Pick<Exercise, 'name' | 'muscle' | 'eq' | 'reps' | 'repsMin' | 'rest' | 'sets' | 'inc' | 'uni'>>
+): { id: string; name: string }[][] {
+  const groups = new Map<string, { id: string; name: string }[]>();
+  for (const [id, exercise] of Object.entries(exercises)) {
+    const eqKey = [...(exercise.eq || [])].sort().join(',');
+    const key = [
+      exercise.muscle,
+      eqKey,
+      exercise.reps,
+      exercise.repsMin,
+      exercise.rest,
+      exercise.sets,
+      exercise.inc,
+      !!exercise.uni,
+    ].join('|');
+    const bucket = groups.get(key) || [];
+    bucket.push({ id, name: exercise.name });
+    groups.set(key, bucket);
+  }
+  return Array.from(groups.values()).filter((bucket) => bucket.length > 1);
+}
+
+// Dev-time guard: throws immediately on module load if a future edit
+// (by anyone, including an AI assistant making batch additions) adds
+// an exercise whose name collides with an existing one after
+// normalization. This is the actual enforcement mechanism — not a
+// comment asking someone to remember to check. Only runs in
+// development so it can never crash a production build; the CI/local
+// script (scripts/checkExerciseDuplicates.ts) is what should catch
+// this before a change ever ships, but this is the backstop in case
+// that step gets skipped.
+if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
+  const duplicates = findDuplicateExerciseNames(WORKOUT_EXERCISES);
+  if (duplicates.length > 0) {
+    const details = duplicates
+      .map((group) => group.map((e) => `${e.id}:"${e.name}"`).join(' + '))
+      .join('\n  ');
+    throw new Error(
+      `exercises.ts: duplicate exercise name(s) detected — the same movement was added twice under different ids.\n  ${details}\n` +
+      `Remove or rename one of each pair before shipping. If these are genuinely different exercises (different equipment/movement) despite the name collision, rename one to disambiguate rather than suppressing this check.`
+    );
+  }
+
+  // Warning only, not a throw — see findSuspiciousParameterMatches doc
+  // comment for why a parameter-signature match isn't automatically a
+  // real duplicate the way a name collision is.
+  const suspicious = findSuspiciousParameterMatches(WORKOUT_EXERCISES);
+  if (suspicious.length > 0) {
+    const details = suspicious
+      .map((group) => group.map((e) => `${e.id}:"${e.name}"`).join(' + '))
+      .join('\n  ');
+    console.warn(
+      `exercises.ts: ${suspicious.length} group(s) of exercises share the same muscle/equipment/rep/rest/set signature — worth a manual look for possible duplicates:\n  ${details}`
+    );
+  }
 }
