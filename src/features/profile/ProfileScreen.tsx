@@ -22,10 +22,7 @@ export default function ProfileScreen() {
     await clearProfile();
     await setNutritionPreferences({ allergies: [], dietaryRestrictions: [], foodsLoved: [], foodsAvoided: [] });
     await setFitnessPreferences({ equipment: [], primaryGoal: null });
-    // Explicitly omits weedLog — that's logged history, not a setup
-    // preference, and clearing it here would be real, unexpected data
-    // loss for someone who just wants to redo their setup answers.
-    await setWellnessPreferences({ bloodTypeEnabled: false, bloodType: null, cannabisModuleEnabled: false });
+    await setWellnessPreferences({ bloodTypeEnabled: false, bloodType: null });
     await setCycleTrackingEnabled(false);
     // Only removes items onboarding itself created (see the `med-`
     // prefix used in onboarding/final.tsx) — anything the person added

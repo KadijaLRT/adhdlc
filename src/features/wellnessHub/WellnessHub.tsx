@@ -1,6 +1,6 @@
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAppStore, selectProfile, selectFitnessPreferences, type EnergyLevel } from '@/store/index';
+import { useAppStore, selectFitnessPreferences, type EnergyLevel } from '@/store/index';
 import { Heading } from '@/shared/components/Heading';
 
 const MOOD_OPTIONS: { level: EnergyLevel; emoji: string; label: string }[] = [
@@ -12,9 +12,7 @@ const MOOD_OPTIONS: { level: EnergyLevel; emoji: string; label: string }[] = [
 /**
  * Mood-first. Workout isn't linked here anymore — it has its own tab
  * already, so it doesn't need a second entry point. Blood type moved to
- * Meals, since that's what it actually affects. Strain Explorer only
- * shows if the person indicated cannabis as a support method during
- * onboarding — it's not offered to everyone by default.
+ * Meals, since that's what it actually affects.
  *
  * Cycle tracking's visibility here is a default based on the gender
  * selected during onboarding, not a hard gate — someone who selected
@@ -29,10 +27,8 @@ export default function WellnessHub() {
   const router = useRouter();
   const energyLevel = useAppStore((s) => s.energyLevel);
   const logEnergyForToday = useAppStore((s) => s.logEnergyForToday);
-  const profile = useAppStore(selectProfile);
   const fitnessPreferences = useAppStore(selectFitnessPreferences);
   const cycleTrackingEnabled = useAppStore((s) => s.cycleTrackingEnabled);
-  const showStrainExplorer = (profile?.supportMethods || []).includes('cannabis');
   const showCycleTracking = fitnessPreferences?.gender !== 'male' || cycleTrackingEnabled;
 
   return (
@@ -76,12 +72,6 @@ export default function WellnessHub() {
             <Text className="text-slate-900 dark:text-slate-100 text-sm">📝 Workbook</Text>
             <Text className="text-slate-500 text-xs">→</Text>
           </Pressable>
-          {showStrainExplorer && (
-            <Pressable onPress={() => router?.push?.('/wellness/strains')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
-              <Text className="text-slate-900 dark:text-slate-100 text-sm">🌿 Strain explorer</Text>
-              <Text className="text-slate-500 text-xs">→</Text>
-            </Pressable>
-          )}
         </View>
       </View>
     </ScrollView>

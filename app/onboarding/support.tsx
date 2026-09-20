@@ -6,37 +6,25 @@ import { OnboardingStepHeader, OnboardingProgressBar } from '@/features/onboardi
 
 const SUPPORT_METHODS = [
   { id: 'medication', label: 'Medication', emoji: '💊' },
-  { id: 'cannabis', label: 'Cannabis', emoji: '🌿', minAgeBracket: 'college' as const },
   { id: 'therapy', label: 'Therapy or coaching', emoji: '🧠' },
   { id: 'movement', label: 'Movement', emoji: '💪' },
   { id: 'routines', label: 'Routines & systems', emoji: '📋' },
   { id: 'figuring_out', label: 'Still figuring it out', emoji: '🤷' },
 ];
 
-// Age brackets under 18: middle_school (12–13), high_school (14–17).
-// Cannabis isn't offered as a support-method option below college-age
-// brackets — this isn't a values judgment on the option itself (it's
-// offered to adults elsewhere in the app), it's a straightforward
-// age-appropriateness gate on what onboarding presents to a minor.
-const UNDER_18_BRACKETS = ['middle_school', 'high_school'];
-
 // These directly determine which optional modules get surfaced:
-// "cannabis" pre-suggests the Strain Explorer, "movement" nudges toward
-// Workout, "routines" nudges toward the Routines tab — via
-// suggestedModules below, read by Home/Today after onboarding.
+// "movement" nudges toward Workout, "routines" nudges toward the
+// Routines tab — via suggestedModules below, read by Home/Today after
+// onboarding.
 
 export default function SupportScreen() {
   const router = useRouter();
   const supportMethods = useOnboardingStore((s) => s.supportMethods);
-  const ageBracket = useOnboardingStore((s) => s.ageBracket);
   const toggleInList = useOnboardingStore((s) => s.toggleInList);
   const getStepInfo = useOnboardingStore((s) => s.getStepInfo);
   const { step, total } = getStepInfo('/onboarding/support');
 
   const goToNextModuleScreen = useOnboardingStore((s) => s.goToNextModuleScreen);
-
-  const isUnder18 = ageBracket ? UNDER_18_BRACKETS.includes(ageBracket) : false;
-  const visibleSupportMethods = SUPPORT_METHODS.filter((item) => !(item.id === 'cannabis' && isUnder18));
 
   const handleContinue = () => goToNextModuleScreen(router);
 
@@ -50,7 +38,7 @@ export default function SupportScreen() {
           <Text className="text-slate-400 text-sm mb-6">Whatever works for you counts. No judgment here.</Text>
 
           <View className="flex-row flex-wrap gap-2 mb-8">
-            {(visibleSupportMethods || []).map((item) => {
+            {(SUPPORT_METHODS || []).map((item) => {
               const isActive = supportMethods.includes(item.id);
               return (
                 <Pressable
