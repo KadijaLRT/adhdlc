@@ -10,7 +10,10 @@ import { getCurrentProgramWeek, getSessionsThisWeek } from './buildProgramSessio
 import { buildWeeklySplit, getEnergyAdjustedExerciseIds, getVariedExerciseSelection, orderExercisesLikeATrainer, type WeeklySplitDay } from './buildWeeklySplit';
 import { getWeightProgressLabel } from './weightProgress';
 import { pickStartSomewhereExercise } from './pickStartSomewhere';
+import { bodyGroupLabel } from '@/content/bodyGroups';
+import { buildEquipmentContext } from './exerciseAvailability';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
+import { getEffectiveExercise } from '@/content/trainingSchemes';
 import { SIX_TWELVE_TWENTYFIVE_GROUPS, type SixTwelveTwentyFiveGroup } from '@/content/sixTwelveTwentyFive';
 import PersonalizeFitnessCard from './PersonalizeFitnessCard';
 import RecoveryPlanCard from './RecoveryPlanCard';
@@ -120,7 +123,7 @@ function DayCard({
         <Text className="text-indigo-700 text-xs font-bold dark:text-indigo-300">DAY {day.dayLetter}</Text>
       </View>
       <Text className="text-slate-900 text-xl font-bold mb-1 dark:text-slate-100">{day.title}</Text>
-      <Text className="text-slate-500 text-xs mb-1 capitalize">{day.muscleGroups.join(' & ')}</Text>
+      <Text className="text-slate-500 text-xs mb-1">{day.muscleGroups.map(bodyGroupLabel).join(' & ')}</Text>
       {isCheckingResume ? (
         <Text className="text-slate-400 text-xs mb-4">Checking for a workout in progress…</Text>
       ) : (
@@ -288,10 +291,19 @@ export default function WorkoutsHome() {
   const activeProgram = getProgramById(activeProgramId, customPrograms || []);
   const activeGym = gyms.find((g) => g.id === activeGymId) || null;
 
-  const weeklySplit = useMemo(
-    () => (activeProgram ? buildWeeklySplit(activeProgram, fitnessPreferences, weekdayAssignment, activeGym?.equipment) : []),
-    [activeProgram, fitnessPreferences, weekdayAssignment, activeGym]
+  const prefsEquipment = fitnessPreferences?.equipment;
+  const equipmentContext = useMemo(
+    () => buildEquipmentContext(activeGym, prefsEquipment),
+    [activeGym, prefsEquipment]
   );
+  const [noFitNotice, setNoFitNotice] = useState(false);
+
+  const weeklySplit = useMemo(
+    () => (activeProgram ? buildWeeklySplit(activeProgram, fitnessPreferences, weekdayAssignment, equipmentContext) : []),
+    [activeProgram, fitnessPreferences, weekdayAssignment, equipmentContext]
+  );
+  const equipmentBlocksEverything =
+    !!activeProgram && equipmentContext.restricted && weeklySplit.every((d) => d.isRestDay);
 
   // getDay() is already Sunday-indexed (0=Sun...6=Sat), matching the array directly.
   useEffect(() => {
@@ -329,8 +341,10 @@ export default function WorkoutsHome() {
     const matchingDraft = inProgressDraft?.sessionKey === sessionKey ? inProgressDraft : null;
 
     if (matchingDraft) {
+      // Drop ids from before the list was rebuilt so a resumed session never points at an exercise that no longer exists.
+      const draftIds = (matchingDraft.sessionExerciseIds || []).filter((id) => !!WORKOUT_EXERCISES?.[id]);
       return {
-        exerciseIds: matchingDraft.sessionExerciseIds?.length ? matchingDraft.sessionExerciseIds : day.exerciseIds,
+        exerciseIds: draftIds.length ? draftIds : day.exerciseIds,
         sessionStartedAt: matchingDraft.sessionStartedAt,
       };
     }
@@ -339,12 +353,12 @@ export default function WorkoutsHome() {
     const variedIds = getVariedExerciseSelection(
       day.muscleGroups,
       day.exerciseIds.length,
-      activeGym?.equipment,
+      equipmentContext,
       recentDayExerciseHistory[day.title] || [],
       seed
     );
     const baseIds = variedIds.length ? variedIds : day.exerciseIds;
-    const energyAdjustedIds = getEnergyAdjustedExerciseIds(baseIds, day.muscleGroups, energyLevel);
+    const energyAdjustedIds = getEnergyAdjustedExerciseIds(baseIds, day.muscleGroups, energyLevel, equipmentContext);
     const effectiveExerciseIds = orderExercisesLikeATrainer(energyAdjustedIds, fitnessPreferences?.focusAreas);
     recordUsedExerciseCombo(day.title, baseIds);
     return { exerciseIds: effectiveExerciseIds };
@@ -379,9 +393,11 @@ export default function WorkoutsHome() {
   };
 
   const handleStartSomewhere = () => {
-    const picked = pickStartSomewhereExercise(fitnessPreferences);
+    const picked = pickStartSomewhereExercise(equipmentContext);
+    setNoFitNotice(!picked);
     if (picked) {
-      const sets = WORKOUT_EXERCISES?.[picked.id]?.sets || 3;
+      const base = WORKOUT_EXERCISES?.[picked.id];
+      const sets = (base ? getEffectiveExercise(base, fitnessPreferences?.weightGoalDirections).sets : 0) || 3;
       router?.push?.({
         pathname: `/workout/session/${picked.id}`,
         params: {
@@ -427,6 +443,18 @@ export default function WorkoutsHome() {
           </Pressable>
         </View>
 
+        {noFitNotice && (
+          <View className="bg-slate-100 dark:bg-slate-900 rounded-xl p-3 mb-3">
+            <Text className="text-slate-600 text-xs dark:text-slate-300">Nothing fits {activeGym ? `${activeGym.name}'s` : 'your'} equipment list yet. Add what the gym has under Programs and it will show up here.</Text>
+          </View>
+        )}
+
+        {equipmentBlocksEverything && (
+          <View className="bg-slate-100 dark:bg-slate-900 rounded-xl p-3 mb-3">
+            <Text className="text-slate-600 text-xs dark:text-slate-300">No exercises in this program fit {activeGym ? `${activeGym.name}'s` : 'your'} equipment list. Add equipment under Programs, or pick a different program.</Text>
+          </View>
+        )}
+
         {activeProgram && weeklySplit.length > 0 && (
           <View onLayout={(e) => { stripOffsetY.current = e.nativeEvent.layout.y; }}>
             <Subheading className="mb-2">{activeProgram.emoji} {activeProgram.title}</Subheading>
@@ -452,7 +480,7 @@ export default function WorkoutsHome() {
                   onLayout={(y) => { cardOffsets.current[index] = y; }}
                   programId={activeProgram?.id}
                   isResumable={!!matchingDraft}
-                  resumingExerciseIds={matchingDraft?.sessionExerciseIds}
+                  resumingExerciseIds={matchingDraft?.sessionExerciseIds?.filter((id) => !!WORKOUT_EXERCISES?.[id])}
                   isCheckingResume={!isDraftCheckComplete}
                 />
               );

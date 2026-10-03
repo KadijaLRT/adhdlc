@@ -1,5 +1,6 @@
 import { z } from 'zod';
 // @ts-ignore - plain JS by design, see file header.
+import { BODY_GROUP_IDS } from '@/content/bodyGroups';
 import { sanitizeString, sanitizePayload } from './groqSanitizer';
 import { callGroqCompletion, GroqProxyError, type GroqMessage } from './groqProxyClient';
 
@@ -55,7 +56,7 @@ export type BrainDumpResult = z.infer<typeof BrainDumpResultSchema>;
 // constraining generation to these (rather than letting the model
 // invent its own group names) is what keeps a generated program from
 // silently matching zero real exercises.
-const VALID_EXERCISE_GROUPS = ['glutes', 'hamstrings', 'quads', 'back', 'chest', 'core', 'calves', 'arms', 'shoulders', 'fullbody'] as const;
+const VALID_EXERCISE_GROUPS: readonly string[] = BODY_GROUP_IDS;
 
 const GeneratedProgramSchema = z.object({
   title: z.string(),

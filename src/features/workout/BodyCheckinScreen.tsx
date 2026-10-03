@@ -4,7 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAppStore, selectEnergyLevel } from '@/store/index';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
-import { BODY_PARTS, computeCheckinAdjustment, applySkipToExerciseIds, type PainSeverity } from './bodyCheckin';
+import { BODY_PARTS, BODY_PART_SECTIONS, computeCheckinAdjustment, applySkipToExerciseIds, type PainSeverity } from './bodyCheckin';
 import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
 
 const SEVERITY_OPTIONS: { value: PainSeverity; label: string }[] = [
@@ -93,8 +93,11 @@ export default function BodyCheckinScreen({
         </Text>
 
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-          <View className="flex-row flex-wrap gap-2 mb-4">
-            {BODY_PARTS.map((part) => {
+          {BODY_PART_SECTIONS.map((section) => (
+          <View key={section.id} className="mb-2">
+            <Text className="text-slate-500 text-xs font-medium mb-2">{section.label}</Text>
+          <View className="flex-row flex-wrap gap-2 mb-2">
+            {BODY_PARTS.filter((p) => p.section === section.id).map((part) => {
               const isFlagged = !!severityByPart[part.id];
               return (
                 <Pressable
@@ -126,6 +129,8 @@ export default function BodyCheckinScreen({
               );
             })}
           </View>
+          </View>
+          ))}
 
           <TextInput
             value={notes}

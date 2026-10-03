@@ -7,6 +7,8 @@ export interface TrainingScheme {
   repsMin: number;
   /** Rest in seconds between sets. */
   restSeconds: number;
+  /** Extra sets added to multi-joint (compound) exercises; 0 leaves sets alone. */
+  compoundSetsBonus: number;
   /** Shown in the UI so the "why" is never hidden — every scheme change is explained, not just applied silently. */
   rationale: string;
 }
@@ -39,12 +41,14 @@ export const TRAINING_SCHEMES: Record<'lose' | 'gain' | 'maintain', TrainingSche
     reps: '12-20',
     repsMin: 12,
     restSeconds: 40,
+    compoundSetsBonus: 0,
     rationale: 'Higher reps, shorter rest — this raises the metabolic demand of each set, which fits a goal to lose weight better than heavy, low-rep work.',
   },
   gain: {
     reps: '6-10',
     repsMin: 6,
     restSeconds: 105,
+    compoundSetsBonus: 1,
     rationale: 'Moderate reps, full rest — this prioritizes mechanical tension and lets you lift heavier relative to your max, which is what building size and strength actually requires.',
   },
   // null is deliberate, not an oversight — see the doc comment above.
@@ -74,10 +78,11 @@ export function getTrainingScheme(directions: WeightGoalDirection[] | undefined)
 
 /**
  * Applies the person's goal-based training scheme on top of one
- * exercise's own defined baseline — sets/rest/inc(rement) stay exactly
- * as defined (a scheme changes rep range and rest, not how many sets
- * or how much weight to add on a PR), reps/repsMin get overridden by
- * the scheme when one applies. A 'maintain' goal (or no goal stated)
+ * exercise's own baseline. Reps and rest are overridden by the scheme,
+ * and a gain goal adds one set (max 5) to compound exercises, since
+ * building size and strength is driven by hard sets on multi-joint
+ * lifts. The weight increment stays the exercise's own, so how much to
+ * add after a good session never changes with the goal. A 'maintain' goal (or no goal stated)
  * returns the exercise completely unchanged, matching how this app has
  * always behaved for someone without a stated direction.
  *
@@ -89,7 +94,7 @@ export function getTrainingScheme(directions: WeightGoalDirection[] | undefined)
  * rep count" — same signal, not a second, differently-matching
  * reimplementation of it.
  */
-export function getEffectiveExercise<T extends { reps: string; repsMin: number; rest: number }>(
+export function getEffectiveExercise<T extends { reps: string; repsMin: number; rest: number; sets?: number; compound?: boolean }>(
   exercise: T,
   directions: WeightGoalDirection[] | undefined
 ): T {
@@ -97,5 +102,16 @@ export function getEffectiveExercise<T extends { reps: string; repsMin: number; 
   if (!scheme) return exercise;
   const isTimeBased = parseTimeBasedSeconds(exercise.reps) !== null;
   if (isTimeBased) return exercise;
-  return { ...exercise, reps: scheme.reps, repsMin: scheme.repsMin, rest: scheme.restSeconds };
+  const baseSets = typeof exercise.sets === 'number' ? exercise.sets : undefined;
+  const sets =
+    baseSets !== undefined && exercise.compound && scheme.compoundSetsBonus > 0
+      ? Math.min(5, baseSets + scheme.compoundSetsBonus)
+      : baseSets;
+  return {
+    ...exercise,
+    reps: scheme.reps,
+    repsMin: scheme.repsMin,
+    rest: scheme.restSeconds,
+    ...(sets !== undefined ? { sets } : {}),
+  };
 }

@@ -1,15 +1,22 @@
+# dependencies
 node_modules/
+
+# secrets (never commit)
+.env
+.env.*
+!.env.example
+
+# expo / build output
 .expo/
 dist/
 web-build/
-*.log
-.env
-.env.local
-.env.*.local
-.DS_Store
-*.p8
-*.p12
-*.key
-*.mobileprovision
+.vercel/
+
+# native
 ios/
 android/
+
+# misc
+.DS_Store
+*.log
+*.tsbuildinfo

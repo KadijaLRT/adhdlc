@@ -7,6 +7,9 @@ import { deriveMuscleInvolvement, getJointAction, getCommonFaults } from '@/cont
 import { getEffectiveExercise, getTrainingScheme } from '@/content/trainingSchemes';
 import type { WeightGoalDirection } from '@/store/slices/nutritionFitnessSlice';
 import { Heading } from '@/shared/components/Heading';
+import { BODY_GROUP_IDS, bodyGroupLabel } from '@/content/bodyGroups';
+import { filterAvailableEntries } from './exerciseAvailability';
+import { useEquipmentContext } from './useEquipmentContext';
 
 // Secondary screen reached from "Browse all exercises" on the Workouts
 // landing page. The Start Somewhere button and Programs/Progress/
@@ -21,18 +24,18 @@ export default function ExerciseBrowser() {
 
   const entries = useMemo(() => Object.entries(WORKOUT_EXERCISES || {}), []);
   const groups = useMemo(() => {
-    const set = new Set<string>();
-    entries.forEach(([, ex]) => set.add(ex.group));
-    return Array.from(set);
+    // Registry order (upper body first), only groups that have exercises.
+    const present = new Set<string>();
+    entries.forEach(([, ex]) => present.add(ex.group));
+    return BODY_GROUP_IDS.filter((id) => present.has(id));
   }, [entries]);
 
-  const availableEquipment = fitnessPreferences?.equipment || null;
+  const equipmentContext = useEquipmentContext();
 
-  const filteredByEquipment = useMemo(() => (
-    availableEquipment
-      ? entries.filter(([, ex]) => (ex.eq || []).some((e) => availableEquipment.includes(e)))
-      : entries
-  ), [entries, availableEquipment]);
+  const filteredByEquipment = useMemo(
+    () => filterAvailableEntries(entries, equipmentContext),
+    [entries, equipmentContext]
+  );
 
   const filtered = useMemo(
     () => filteredByEquipment.filter(([, ex]) => !selectedGroup || ex.group === selectedGroup),
@@ -59,7 +62,7 @@ export default function ExerciseBrowser() {
                 onPress={() => setSelectedGroup(item === 'all' ? null : item)}
                 className={isActive ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-full py-2 px-4' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-full py-2 px-4'}
               >
-                <Text className={isActive ? 'text-indigo-700 dark:text-indigo-300 text-xs capitalize' : 'text-slate-700 dark:text-slate-300 text-xs capitalize'}>{item}</Text>
+                <Text className={isActive ? 'text-indigo-700 dark:text-indigo-300 text-xs' : 'text-slate-700 dark:text-slate-300 text-xs'}>{item === 'all' ? 'All' : bodyGroupLabel(item)}</Text>
               </Pressable>
             );
           }}

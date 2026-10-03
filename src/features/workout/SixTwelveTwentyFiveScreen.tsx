@@ -1,12 +1,12 @@
 import { useState, useMemo } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
-import { useAppStore, selectFitnessPreferences, selectGyms, selectActiveGymId } from '@/store/index';
 import {
   SIX_TWELVE_TWENTYFIVE_GROUPS, pickSixTwelveTwentyFiveTemplate, type SixTwelveTwentyFiveGroup,
 } from '@/content/sixTwelveTwentyFive';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
 import { Heading, Subheading } from '@/shared/components/Heading';
+import { useEquipmentContext } from './useEquipmentContext';
 
 function InfoRow({ emoji, children }: { emoji: string; children: React.ReactNode }) {
   return (
@@ -30,11 +30,7 @@ export default function SixTwelveTwentyFiveScreen() {
   // primary muscle group, pre-selected so it's a one-tap continue
   // rather than making them pick it again from the grid below.
   const { group: incomingGroup } = useLocalSearchParams<{ group?: string }>();
-  const fitnessPreferences = useAppStore(selectFitnessPreferences);
-  const gyms = useAppStore(selectGyms);
-  const activeGymId = useAppStore(selectActiveGymId);
-  const activeGym = gyms.find((g) => g.id === activeGymId) || null;
-  const equipment = activeGym?.equipment?.length ? activeGym.equipment : fitnessPreferences?.equipment;
+  const equipment = useEquipmentContext();
 
   const [showMore, setShowMore] = useState(false);
 

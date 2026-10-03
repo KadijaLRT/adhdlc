@@ -1,3 +1,4 @@
+import { getBodyGroup } from './bodyGroups';
 export type WarmupCategory = 'lower_body' | 'upper_body' | 'core' | 'fullbody';
 export type WarmupAnimationType = 'vertical' | 'quickVertical' | 'horizontal' | 'rotate' | 'twist' | 'pulse';
 
@@ -196,15 +197,14 @@ export function getVariedWarmupSelection(
  * rather than guessing which half matters more.
  */
 export function warmupCategoryForGroups(muscleGroups: string[]): WarmupCategory {
-  const lowerBodyGroups = new Set(['quads', 'hamstrings', 'glutes', 'calves']);
-  const upperBodyGroups = new Set(['chest', 'back', 'shoulders', 'arms']);
-
   let lowerCount = 0, upperCount = 0, coreCount = 0, fullbodyCount = 0;
   for (const group of muscleGroups) {
-    if (lowerBodyGroups.has(group)) lowerCount++;
-    else if (upperBodyGroups.has(group)) upperCount++;
-    else if (group === 'core') coreCount++;
-    else if (group === 'fullbody') fullbodyCount++;
+    // Region comes from the shared body group list; old saved ids ('arms', 'back') count as upper body.
+    const region = getBodyGroup(group)?.region || (group === 'arms' || group === 'back' ? 'upper' : undefined);
+    if (region === 'lower') lowerCount++;
+    else if (region === 'upper') upperCount++;
+    else if (region === 'core') coreCount++;
+    else if (region === 'full' || region === 'cardio') fullbodyCount++;
   }
 
   if (fullbodyCount > 0 || (lowerCount > 0 && upperCount > 0)) return 'fullbody';

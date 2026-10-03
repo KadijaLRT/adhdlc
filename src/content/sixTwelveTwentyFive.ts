@@ -1,4 +1,6 @@
-import { WORKOUT_EXERCISES, isCompoundExercise, isBodyweightOnlyExercise, type Exercise } from './exercises';
+import { WORKOUT_EXERCISES, isCompoundExercise, isBodyweightOnlyExercise } from './exercises';
+import { getBodyGroup } from './bodyGroups';
+import { UNRESTRICTED, filterAutoPickEntries, type EquipmentContext } from '@/features/workout/exerciseAvailability';
 
 /**
  * The 6-12-25 method (popularized by Charles Poliquin): three exercises
@@ -19,22 +21,19 @@ import { WORKOUT_EXERCISES, isCompoundExercise, isBodyweightOnlyExercise, type E
  * every other workout flow in the app also depends on.
  */
 
-export type SixTwelveTwentyFiveGroup =
-  | 'glutes' | 'hamstrings' | 'quads' | 'back' | 'chest'
-  | 'shoulders' | 'arms' | 'core' | 'calves' | 'fullbody';
+export type SixTwelveTwentyFiveGroup = string;
 
-export const SIX_TWELVE_TWENTYFIVE_GROUPS: { id: SixTwelveTwentyFiveGroup; label: string; icon: string }[] = [
-  { id: 'chest', label: 'Chest', icon: '💪' },
-  { id: 'back', label: 'Back', icon: '🔙' },
-  { id: 'shoulders', label: 'Shoulders', icon: '🏋️' },
-  { id: 'arms', label: 'Arms', icon: '💪' },
-  { id: 'glutes', label: 'Glutes', icon: '🍑' },
-  { id: 'quads', label: 'Quads', icon: '🦵' },
-  { id: 'hamstrings', label: 'Hamstrings', icon: '🦵' },
-  { id: 'calves', label: 'Calves', icon: '🦵' },
-  { id: 'core', label: 'Core', icon: '🎯' },
-  { id: 'fullbody', label: 'Full Body', icon: '🔥' },
+// Groups with enough different exercises to fill a heavy, moderate and light
+// slot. Neck, forearms and cardio are left out on purpose.
+const SIX_TWELVE_TWENTYFIVE_GROUP_IDS = [
+  'chest', 'lats', 'upper_back', 'shoulders', 'biceps', 'triceps', 'glutes', 'quads', 'hamstrings', 'calves', 'core', 'lower_back', 'fullbody',
 ];
+
+export const SIX_TWELVE_TWENTYFIVE_GROUPS: { id: SixTwelveTwentyFiveGroup; label: string; icon: string }[] =
+  SIX_TWELVE_TWENTYFIVE_GROUP_IDS.flatMap((id) => {
+    const g = getBodyGroup(id);
+    return g ? [{ id: g.id, label: g.label, icon: g.icon }] : [];
+  });
 
 export interface SixTwelveTwentyFiveSlot {
   role: 'heavy' | 'moderate' | 'light';
@@ -56,16 +55,15 @@ export interface SixTwelveTwentyFiveSlot {
  */
 export function pickSixTwelveTwentyFiveTemplate(
   group: SixTwelveTwentyFiveGroup,
-  equipment?: string[] | null
+  equipment: EquipmentContext = UNRESTRICTED
 ): SixTwelveTwentyFiveSlot[] {
   const entries = Object.entries(WORKOUT_EXERCISES || {}).filter(([, ex]) => ex.group === group);
   if (!entries.length) return [];
 
-  const matchesEquipment = ([, ex]: [string, Exercise]) =>
-    !equipment?.length || (ex.eq || []).some((e) => equipment.includes(e));
-
-  let pool = entries.filter(matchesEquipment);
-  if (!pool.length) pool = entries; // equipment filter too narrow for this group — fall back to the full group pool rather than an empty template
+  // Only exercises doable with the active equipment. No fallback to the full
+  // group: an empty pool returns no template and the screen explains why.
+  const pool = filterAutoPickEntries(entries, equipment);
+  if (!pool.length) return [];
 
   const compounds = pool.filter(([id]) => isCompoundExercise(id));
   const isolations = pool.filter(([id]) => !isCompoundExercise(id));

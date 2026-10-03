@@ -1,7 +1,9 @@
 import { WORKOUT_EXERCISES, isCompoundExercise } from '@/content/exercises';
+import { bodyGroupLabel, expandLegacyGroups, getBodyGroup } from '@/content/bodyGroups';
 import type { ProgramDefinition } from '@/content/programs';
 import type { FitnessPreferences, SessionTimeBudget } from '@/store/slices/nutritionFitnessSlice';
 import { interleaveByGroup } from './interleaveExercises';
+import { targetsGroup, UNRESTRICTED, filterAutoPickEntries, isAutoPickable, isExerciseAvailable, rankForPlanning, type EquipmentContext } from './exerciseAvailability';
 
 // Full calendar week, Sunday first. The 6 lettered training days
 // (A–F) land on Monday–Saturday; Sunday is always a rest day with no
@@ -101,17 +103,16 @@ function sameCombo(a: string[], b: string[]): boolean {
 export function getVariedExerciseSelection(
   muscleGroups: string[],
   count: number,
-  equipment: string[] | undefined | null,
+  equipment: EquipmentContext,
   recentCombos: string[][],
   seed: number
 ): string[] {
   const entries = Object.entries(WORKOUT_EXERCISES || {});
   const matchesGroup = ([, ex]: [string, any]) => muscleGroups.includes(ex.group);
-  const matchesEquipment = ([, ex]: [string, any]) =>
-    !equipment?.length || (ex.eq || []).some((e: string) => equipment.includes(e));
 
-  let pool = entries.filter((e) => matchesGroup(e) && matchesEquipment(e));
-  if (!pool.length) pool = entries.filter(matchesGroup);
+  // No fallback to "show everything": if the equipment rules out the whole
+  // pool, the caller gets an empty list and shows an honest empty state.
+  const pool = filterAutoPickEntries(entries.filter(matchesGroup), equipment);
   if (!pool.length) return [];
 
   const ids = pool.map(([id]) => id);
@@ -158,7 +159,7 @@ export function getVariedExerciseSelection(
  * every call.
  */
 export function orderExercisesLikeATrainer(exerciseIds: string[], priorityGroups?: string[] | null): string[] {
-  const priority = new Set(priorityGroups || []);
+  const priority = new Set(expandLegacyGroups(priorityGroups));
 
   const rank = (id: string): number => {
     const exercise = WORKOUT_EXERCISES?.[id];
@@ -179,19 +180,16 @@ export function orderExercisesLikeATrainer(exerciseIds: string[], priorityGroups
 export function buildDayLetterContent(
   program: ProgramDefinition,
   preferences: FitnessPreferences | null,
-  gymEquipment?: string[] | null
+  equipment: EquipmentContext = UNRESTRICTED
 ): Map<string, DayLetterContent> {
   const entries = Object.entries(WORKOUT_EXERCISES || {});
-  const equipment = gymEquipment && gymEquipment.length > 0 ? gymEquipment : preferences?.equipment;
 
   const matchesGroup = ([, ex]: [string, any]) =>
-    (program.targetGroups || []).includes('all') || (program.targetGroups || []).includes(ex.group);
-  const matchesEquipment = ([, ex]: [string, any]) =>
-    !equipment?.length || (ex.eq || []).some((e: string) => equipment.includes(e));
+    targetsGroup(program.targetGroups, ex.group);
 
-  let filtered = entries.filter((e) => matchesGroup(e) && matchesEquipment(e));
-  if (!filtered.length) filtered = entries.filter(matchesGroup);
-  if (!filtered.length) filtered = entries;
+  // Only exercises doable with the active equipment. No fallbacks: an empty
+  // result means an empty plan, which the UI explains.
+  let filtered = rankForPlanning(filterAutoPickEntries(entries.filter(matchesGroup), equipment));
 
   // Exercises are listed in the content file one muscle group at a
   // time (all glutes, then all hamstrings, etc). Without this, a
@@ -213,13 +211,12 @@ export function buildDayLetterContent(
     const groupCounts = new Map<string, number>();
     for (const [, ex] of chunk) groupCounts.set(ex.group, (groupCounts.get(ex.group) || 0) + 1);
     const muscleGroups = Array.from(groupCounts.keys());
-    const dominantGroup = [...groupCounts.entries()].sort((a, b) => b[1] - a[1])[0]?.[0] || 'Full Body';
     const dayLetter = DAY_LETTERS[i];
     if (!dayLetter) continue;
     lettersToContent.set(dayLetter, {
       exerciseIds: chunk.map(([id]) => id),
       muscleGroups,
-      title: `${capitalize(dominantGroup)} ${dayLetter}`,
+      title: `${dayTitleForGroups(muscleGroups)} ${dayLetter}`,
       estimatedMinutes: chunk.length * 10,
     });
   }
@@ -237,9 +234,9 @@ export function buildWeeklySplit(
   program: ProgramDefinition,
   preferences: FitnessPreferences | null,
   customAssignment?: (string | null)[],
-  gymEquipment?: string[] | null
+  equipment: EquipmentContext = UNRESTRICTED
 ): WeeklySplitDay[] {
-  const lettersToContent = buildDayLetterContent(program, preferences, gymEquipment);
+  const lettersToContent = buildDayLetterContent(program, preferences, equipment);
   const trainingDayCount = lettersToContent.size;
 
   // Default assignment: Sunday rest, Monday–Saturday get A–F in order.
@@ -292,7 +289,8 @@ export function buildWeeklySplit(
 export function getEnergyAdjustedExerciseIds(
   exerciseIds: string[],
   muscleGroups: string[],
-  energyLevel: 'low' | 'medium' | 'high' | undefined
+  energyLevel: 'low' | 'medium' | 'high' | undefined,
+  equipment: EquipmentContext = UNRESTRICTED
 ): string[] {
   if (energyLevel === 'low') {
     if (exerciseIds.length <= 2) return exerciseIds;
@@ -306,22 +304,35 @@ export function getEnergyAdjustedExerciseIds(
       // typed with no cast needed. Left as any, a typo like ex.grop
       // would have silently compiled and returned undefined forever
       // instead of being caught here.
-      .find(([id, ex]) => muscleGroups.includes(ex.group) && !exerciseIds.includes(id));
+      .find(([id, ex]) => muscleGroups.includes(ex.group) && !exerciseIds.includes(id) && isAutoPickable(ex) && isExerciseAvailable(id, equipment, ex));
     return bonus ? [...exerciseIds, bonus[0]] : exerciseIds;
   }
   return exerciseIds;
 }
 
-export function getAvailableDayLetters(program: ProgramDefinition, preferences?: FitnessPreferences | null): string[] {
+export function getAvailableDayLetters(
+  program: ProgramDefinition,
+  preferences?: FitnessPreferences | null,
+  equipment: EquipmentContext = UNRESTRICTED
+): string[] {
   const entries = Object.entries(WORKOUT_EXERCISES || {});
   const matchesGroup = ([, ex]: [string, any]) =>
-    (program.targetGroups || []).includes('all') || (program.targetGroups || []).includes(ex.group);
-  const filtered = entries.filter(matchesGroup);
+    targetsGroup(program.targetGroups, ex.group);
+  const filtered = filterAutoPickEntries(entries.filter(matchesGroup), equipment);
   const perDay = Math.max(1, getEffectiveSessionExerciseCount(program.sessionExerciseCount || 5, preferences?.sessionTimeBudget));
-  const trainingDayCount = Math.min(DAY_LETTERS.length, Math.max(1, Math.ceil(filtered.length / perDay)));
+  const trainingDayCount = Math.min(DAY_LETTERS.length, Math.ceil(filtered.length / perDay));
   return DAY_LETTERS.slice(0, trainingDayCount);
 }
 
-function capitalize(word: string): string {
-  return word.charAt(0).toUpperCase() + word.slice(1);
+/** One group keeps its own name; groups from the same region read as Upper/Lower Body; anything else is Full Body. */
+function dayTitleForGroups(groups: string[]): string {
+  if (groups.length === 1 && groups[0]) return bodyGroupLabel(groups[0]);
+  const regions = new Set(groups.map((g) => getBodyGroup(g)?.region || 'full'));
+  if (regions.size === 1) {
+    const only = Array.from(regions)[0];
+    if (only === 'upper') return 'Upper Body';
+    if (only === 'lower') return 'Lower Body';
+    if (only === 'core') return 'Core';
+  }
+  return 'Full Body';
 }

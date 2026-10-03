@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { FOCUS_AREA_GROUPS, bodyGroupLabel, expandLegacyGroups } from '@/content/bodyGroups';
 import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -46,7 +47,7 @@ const SESSION_TIME_BUDGETS: { id: SessionTimeBudget; label: string; blurb: strin
   { id: 'standard', label: 'Standard', blurb: "As programmed \u2014 no adjustment" },
   { id: 'long', label: 'Long', blurb: 'More exercises per session \u2014 when you have extra time' },
 ];
-const FOCUS_AREAS = ['glutes', 'quads', 'hamstrings', 'back', 'chest', 'shoulders', 'arms', 'core', 'calves', 'fullbody'];
+const FOCUS_AREAS = FOCUS_AREA_GROUPS.map((g) => g.id);
 const BLOOD_TYPES: BloodType[] = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 function goalFromExerciseGoals(exerciseGoals: string[]): 'strength' | 'endurance' | 'mobility' | 'general' {
@@ -83,7 +84,7 @@ export default function EditFitnessPreferencesScreen() {
   const [activityLevel, setActivityLevel] = useState<ActivityLevel | undefined>(fitnessPreferences?.activityLevel);
   const [sessionTimeBudget, setSessionTimeBudget] = useState<SessionTimeBudget>(fitnessPreferences?.sessionTimeBudget || 'standard');
   const [exerciseGoals, setExerciseGoals] = useState<string[]>(fitnessPreferences?.exerciseGoals || []);
-  const [focusAreas, setFocusAreas] = useState<string[]>(fitnessPreferences?.focusAreas || []);
+  const [focusAreas, setFocusAreas] = useState<string[]>(expandLegacyGroups(fitnessPreferences?.focusAreas));
   const [bloodType, setBloodType] = useState<BloodType | null>((wellnessPreferences?.bloodType as BloodType | null) || null);
   const [saved, setSaved] = useState(false);
 
@@ -191,7 +192,7 @@ export default function EditFitnessPreferencesScreen() {
 
           <Text className="text-slate-900 dark:text-slate-100 text-base font-medium mb-2">Focus areas</Text>
           <View className="flex-row flex-wrap gap-2 mb-6">
-            {FOCUS_AREAS.map((f) => <Pill key={f} label={f} active={focusAreas.includes(f)} onPress={() => toggleIn(focusAreas, setFocusAreas, f)} />)}
+            {FOCUS_AREAS.map((f) => <Pill key={f} label={bodyGroupLabel(f)} active={focusAreas.includes(f)} onPress={() => toggleIn(focusAreas, setFocusAreas, f)} />)}
           </View>
 
           <Text className="text-slate-900 dark:text-slate-100 text-base font-medium mb-2">Blood type</Text>

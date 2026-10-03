@@ -1,7 +1,9 @@
 import { WORKOUT_EXERCISES } from '@/content/exercises';
 import type { ProgramDefinition } from '@/content/programs';
 import type { FitnessPreferences } from '@/store/slices/nutritionFitnessSlice';
+import { targetsGroup } from './exerciseAvailability';
 import { interleaveByGroup } from './interleaveExercises';
+import { UNRESTRICTED, filterAutoPickEntries, type EquipmentContext } from './exerciseAvailability';
 
 /**
  * Which week (1-indexed) the person is on, based on sessions completed
@@ -31,20 +33,17 @@ export function getSessionsThisWeek(program: ProgramDefinition, sessionsComplete
 export function buildProgramSessionExerciseIds(
   program: ProgramDefinition,
   preferences: FitnessPreferences | null,
-  sessionsCompleted = 0
+  sessionsCompleted = 0,
+  equipment: EquipmentContext = UNRESTRICTED
 ): string[] {
   const entries = Object.entries(WORKOUT_EXERCISES || {});
-  const equipment = preferences?.equipment;
 
   const matchesGroup = ([, ex]: [string, any]) =>
-    (program.targetGroups || []).includes('all') || (program.targetGroups || []).includes(ex.group);
+    targetsGroup(program.targetGroups, ex.group);
 
-  const matchesEquipment = ([, ex]: [string, any]) =>
-    !equipment?.length || (ex.eq || []).some((e: string) => equipment.includes(e));
-
-  let filtered = entries.filter((e) => matchesGroup(e) && matchesEquipment(e));
-  if (!filtered.length) filtered = entries.filter(matchesGroup); // never end up empty just from equipment
-  if (!filtered.length) filtered = entries;
+  // No fallback to "everything": equipment that rules out the whole pool yields an empty session.
+  let filtered = filterAutoPickEntries(entries.filter(matchesGroup), equipment);
+  if (!filtered.length) return [];
 
   // Same fix as the weekly split builder: the content file lists every
   // exercise for one muscle group in a block, so without interleaving,

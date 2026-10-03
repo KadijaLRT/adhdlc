@@ -2,11 +2,13 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { useAppStore, selectAdhdFocusModeEnabled, selectSetLogs, selectRecentWarmupHistory, selectFitnessPreferences } from '@/store/index';
+import { useAppStore, selectAdhdFocusModeEnabled, selectSetLogs, selectRecentWarmupHistory, selectFitnessPreferences, selectGyms, selectActiveGymId } from '@/store/index';
 import type { SetLogEntry } from '@/store/slices/workoutSlice';
 import { WORKOUT_EXERCISES, isBodyweightOnlyExercise, parseTimeBasedSeconds, type Exercise } from '@/content/exercises';
 import { getEffectiveExercise } from '@/content/trainingSchemes';
+import GroupedExerciseList, { type PickableExercise } from './GroupedExerciseList';
 import { suggestNextSet } from './weightProgress';
+import { buildEquipmentContext, isExerciseAvailable, type EquipmentContext } from './exerciseAvailability';
 import { toLocalDateString } from '@/shared/formatDate';
 import { getWarmupForGroups, warmupCategoryForGroups } from '@/content/warmupContent';
 import InlineStepTimer from '@/shared/components/InlineStepTimer';
@@ -68,13 +70,12 @@ function buildSetRows(count: number, exercise: Exercise, exerciseId: string, set
   return rows;
 }
 
-function searchExercises(query: string, excludeIds: string[]): { id: string; name: string; muscle: string; icon: string }[] {
+function searchExercises(query: string, excludeIds: string[], equipment: EquipmentContext): PickableExercise[] {
   const q = query.trim().toLowerCase();
   const excluded = new Set(excludeIds);
   return Object.entries(WORKOUT_EXERCISES || {})
-    .filter(([id, ex]) => !excluded.has(id) && (!q || ex.name.toLowerCase().includes(q) || ex.muscle.toLowerCase().includes(q)))
-    .slice(0, 20)
-    .map(([id, ex]) => ({ id, name: ex.name, muscle: ex.muscle, icon: ex.icon }));
+    .filter(([id, ex]) => !excluded.has(id) && isExerciseAvailable(id, equipment, ex) && (!q || ex.name.toLowerCase().includes(q) || ex.muscle.toLowerCase().includes(q)))
+    .map(([id, ex]) => ({ id, name: ex.name, muscle: ex.muscle, icon: ex.icon, group: ex.group }));
 }
 
 /**
@@ -97,6 +98,13 @@ export default function WorkoutDaySession({
   const setAdhdFocusMode = useAppStore((s) => s.setAdhdFocusMode);
   const setLogs = useAppStore(selectSetLogs);
   const fitnessPreferences = useAppStore(selectFitnessPreferences);
+  const gyms = useAppStore(selectGyms);
+  const activeGymId = useAppStore(selectActiveGymId);
+  const prefsEquipment = fitnessPreferences?.equipment;
+  const equipmentContext = useMemo(
+    () => buildEquipmentContext((gyms || []).find((g) => g.id === activeGymId) || null, prefsEquipment),
+    [gyms, activeGymId, prefsEquipment]
+  );
 
   // Single choke point for every exercise lookup in this file — the
   // person's stated weight goal (lose/gain/maintain) adjusts an
@@ -211,7 +219,9 @@ export default function WorkoutDaySession({
           if (isStale) {
             await repo.saveWorkoutSessionDraft(null);
           } else {
-            if (draft.sessionExerciseIds?.length) setSessionExerciseIds(draft.sessionExerciseIds);
+            // Ignore ids from before the exercise list was rebuilt.
+            const restoredIds = (draft.sessionExerciseIds || []).filter((id) => !!WORKOUT_EXERCISES?.[id]);
+            if (restoredIds.length) setSessionExerciseIds(restoredIds);
             if (draft.rowsByExercise) setRowsByExercise(draft.rowsByExercise);
             if (draft.sessionStartedAt) setStartedAtMs(new Date(draft.sessionStartedAt).getTime());
           }
@@ -379,8 +389,8 @@ export default function WorkoutDaySession({
   };
 
   const exerciseSearchResults = useMemo(
-    () => searchExercises(exerciseSearch, sessionExerciseIds),
-    [exerciseSearch, sessionExerciseIds]
+    () => searchExercises(exerciseSearch, sessionExerciseIds, equipmentContext),
+    [exerciseSearch, sessionExerciseIds, equipmentContext]
   );
 
   const updateRow = (exerciseId: string, index: number, updates: Partial<SetRow>) => {
@@ -634,20 +644,7 @@ export default function WorkoutDaySession({
                       autoFocus
                       className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-2"
                     />
-                    <ScrollView style={{ maxHeight: 256 }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
-                      {exerciseSearchResults.map((ex) => (
-                        <Pressable key={ex.id} onPress={() => handleSwapExercise(exerciseId, ex.id)} className="py-2 border-b border-stone-100 dark:border-slate-800 flex-row items-center gap-2">
-                          <Text className="text-base">{ex.icon}</Text>
-                          <View>
-                            <Text className="text-slate-800 dark:text-slate-200 text-sm">{ex.name}</Text>
-                            <Text className="text-slate-500 text-xs">{ex.muscle}</Text>
-                          </View>
-                        </Pressable>
-                      ))}
-                      {exerciseSearchResults.length === 0 && (
-                        <Text className="text-slate-500 text-xs py-2">No matches.</Text>
-                      )}
-                    </ScrollView>
+                    <GroupedExerciseList items={exerciseSearchResults} onPick={(id) => handleSwapExercise(exerciseId, id)} emptyText="No matches for your equipment." />
                     <Pressable onPress={() => { setSwappingId(null); setExerciseSearch(''); }} className="py-2 mt-1">
                       <Text className="text-slate-500 text-center text-xs">Cancel</Text>
                     </Pressable>
@@ -770,20 +767,7 @@ export default function WorkoutDaySession({
                   "Finish workout" below it instead of being contained.
                   A real ScrollView with nestedScrollEnabled actually
                   bounds and scrolls the list. */}
-              <ScrollView style={{ maxHeight: 256 }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
-                {exerciseSearchResults.map((ex) => (
-                  <Pressable key={ex.id} onPress={() => handleAddExercise(ex.id)} className="py-2 border-b border-stone-100 dark:border-slate-800 flex-row items-center gap-2">
-                    <Text className="text-base">{ex.icon}</Text>
-                    <View>
-                      <Text className="text-slate-800 dark:text-slate-200 text-sm">{ex.name}</Text>
-                      <Text className="text-slate-500 text-xs">{ex.muscle}</Text>
-                    </View>
-                  </Pressable>
-                ))}
-                {exerciseSearchResults.length === 0 && (
-                  <Text className="text-slate-500 text-xs py-2">No matches.</Text>
-                )}
-              </ScrollView>
+              <GroupedExerciseList items={exerciseSearchResults} onPick={handleAddExercise} emptyText="No matches for your equipment." />
               <Pressable onPress={() => { setShowAddExercise(false); setExerciseSearch(''); }} className="py-2 mt-1">
                 <Text className="text-slate-500 text-center text-xs">Cancel</Text>
               </Pressable>

@@ -1,3 +1,4 @@
+import { expandLegacyGroups } from '@/content/bodyGroups';
 /**
  * Round-robins a filtered exercise pool across muscle groups instead of
  * leaving it in raw insertion order, optionally weighting the round
@@ -26,7 +27,7 @@ export function interleaveByGroup<T extends [string, { group: string }]>(
   entries: T[],
   priorityGroups?: string[] | null
 ): T[] {
-  const priority = new Set(priorityGroups || []);
+  const priority = new Set(expandLegacyGroups(priorityGroups));
   const buckets = new Map<string, T[]>();
   for (const entry of entries) {
     const group = entry[1].group;

@@ -17,8 +17,13 @@ import { avivaBrain } from '@/core/ai/AvivaBrain';
 import { describeAiFailure } from '@/core/ai/describeAiFailure';
 import { generateId } from '@/shared/generateId';
 import { Heading, Subheading } from '@/shared/components/Heading';
+import { CARDIO_MACHINE_IDS, EQUIPMENT_FORMAT_MARKER, hasLegacyMachineToken } from '@/content/equipment';
+import GymEquipmentPicker from './GymEquipmentPicker';
+import GymPresetPicker from './GymPresetPicker';
+import { CUSTOM_GYM_EQUIPMENT, getGymPreset, presetEquipment, type GymPreset } from '@/content/gymPresets';
 
-const EQUIPMENT_OPTIONS = ['bodyweight', 'dumbbell', 'barbell', 'machine', 'cable', 'resistance_band'];
+// Cardio machines are in every gym, so a new gym starts with them ticked. Everything else is up to the person.
+const DEFAULT_NEW_GYM_EQUIPMENT: string[] = [...CARDIO_MACHINE_IDS, EQUIPMENT_FORMAT_MARKER];
 
 function GymSelectorCard() {
   const gyms = useAppStore(selectGyms);
@@ -31,51 +36,74 @@ function GymSelectorCard() {
   const [adding, setAdding] = useState(false);
   const [managingGymId, setManagingGymId] = useState<string | null>(null);
   const [newGymName, setNewGymName] = useState('');
-  const [newGymEquipment, setNewGymEquipment] = useState<string[]>(['bodyweight']);
+  const [presetId, setPresetId] = useState<string | null>(null);
+  const [savingGym, setSavingGym] = useState(false);
+  const [newGymEquipment, setNewGymEquipment] = useState<string[]>(DEFAULT_NEW_GYM_EQUIPMENT);
 
   const activeGym = gyms.find((g) => g.id === activeGymId) || null;
   const managingGym = gyms.find((g) => g.id === managingGymId) || null;
 
-  const toggleEquipment = (list: string[], setList: (v: string[]) => void, item: string) => {
-    setList(list.includes(item) ? list.filter((e) => e !== item) : [...list, item]);
+  const handlePickPreset = (preset: GymPreset) => {
+    const previous = getGymPreset(presetId);
+    // Keep a name the person typed themselves (for example "LA Fitness Downtown"); only replace an empty or auto-filled one.
+    if (!newGymName.trim() || newGymName === previous?.name) setNewGymName(preset.name);
+    setPresetId(preset.id);
+    setNewGymEquipment(presetEquipment(preset));
+  };
+
+  const handlePickOther = () => {
+    const previous = getGymPreset(presetId);
+    if (newGymName === previous?.name) setNewGymName('');
+    setPresetId('other');
+    setNewGymEquipment(CUSTOM_GYM_EQUIPMENT);
+  };
+
+  const resetAddForm = () => {
+    setNewGymName('');
+    setPresetId(null);
+    setNewGymEquipment(DEFAULT_NEW_GYM_EQUIPMENT);
+    setAdding(false);
   };
 
   const handleAddGym = async () => {
-    if (!newGymName.trim()) return;
-    await addGym(newGymName.trim(), newGymEquipment);
-    setNewGymName('');
-    setNewGymEquipment(['bodyweight']);
-    setAdding(false);
+    const name = newGymName.trim() || getGymPreset(presetId)?.name || '';
+    if (!name || savingGym) return;
+    setSavingGym(true);
+    try {
+      await addGym(name, newGymEquipment);
+      resetAddForm();
+    } catch (error) {
+      console.error('GymSelectorCard: failed to save gym', error);
+    } finally {
+      setSavingGym(false);
+    }
   };
 
   if (adding) {
     return (
       <View className="bg-white border-2 border-indigo-500 rounded-2xl p-4 mb-4 dark:bg-slate-900">
+        <GymPresetPicker selectedId={presetId} onPickPreset={handlePickPreset} onPickOther={handlePickOther} />
         <TextInput
           value={newGymName}
           onChangeText={setNewGymName}
-          placeholder="Gym name..."
+          placeholder="Gym name (add the location if you like)..."
           placeholderTextColor="#64748b"
-          autoFocus
           className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 mb-3 dark:text-slate-100 dark:bg-slate-800"
         />
+        {getGymPreset(presetId) && (
+          <Text className="text-slate-500 text-xs mb-3">
+            {getGymPreset(presetId)?.basis === 'published' ? 'Typical equipment for this gym, from published lists. ' : 'A typical list for this kind of gym, not checked against this chain. '}
+            {getGymPreset(presetId)?.note ? `${getGymPreset(presetId)?.note} ` : ''}
+            Locations differ, so tick or untick anything below.
+          </Text>
+        )}
         <Text className="text-slate-700 text-xs font-medium mb-2 dark:text-slate-300">What equipment does this gym have?</Text>
-        <View className="flex-row flex-wrap gap-2 mb-3">
-          {EQUIPMENT_OPTIONS.map((eq) => {
-            const isActive = newGymEquipment.includes(eq);
-            return (
-              <Pressable key={eq} onPress={() => toggleEquipment(newGymEquipment, setNewGymEquipment, eq)}
-                className={isActive ? 'bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 rounded-full py-2 px-3' : 'bg-stone-100 dark:bg-slate-800 border-2 border-transparent rounded-full py-2 px-3'}>
-                <Text className={isActive ? 'text-emerald-700 dark:text-emerald-400 text-xs capitalize' : 'text-slate-700 dark:text-slate-300 text-xs capitalize'}>{eq.replace('_', ' ')}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <GymEquipmentPicker value={newGymEquipment} onChange={setNewGymEquipment} />
         <View className="flex-row gap-2">
-          <Pressable onPress={handleAddGym} className="flex-1 bg-indigo-600 rounded-xl py-3 items-center">
-            <Text className="text-white text-sm font-semibold">Save gym</Text>
+          <Pressable onPress={handleAddGym} disabled={savingGym} className="flex-1 bg-indigo-600 rounded-xl py-3 items-center">
+            <Text className="text-white text-sm font-semibold">{savingGym ? 'Saving...' : 'Save gym'}</Text>
           </Pressable>
-          <Pressable onPress={() => setAdding(false)} className="py-3 px-4">
+          <Pressable onPress={resetAddForm} className="py-3 px-4">
             <Text className="text-slate-500 text-sm">Cancel</Text>
           </Pressable>
         </View>
@@ -88,18 +116,7 @@ function GymSelectorCard() {
       <View className="bg-white border-2 border-indigo-500 rounded-2xl p-4 mb-4 dark:bg-slate-900">
         <Text className="text-slate-900 font-semibold mb-3 dark:text-slate-100">{managingGym.name}</Text>
         <Text className="text-slate-700 text-xs font-medium mb-2 dark:text-slate-300">Equipment available here</Text>
-        <View className="flex-row flex-wrap gap-2 mb-3">
-          {EQUIPMENT_OPTIONS.map((eq) => {
-            const isActive = managingGym.equipment.includes(eq);
-            return (
-              <Pressable key={eq}
-                onPress={() => updateGymEquipment(managingGym.id, isActive ? managingGym.equipment.filter((e) => e !== eq) : [...managingGym.equipment, eq])}
-                className={isActive ? 'bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 rounded-full py-2 px-3' : 'bg-stone-100 dark:bg-slate-800 border-2 border-transparent rounded-full py-2 px-3'}>
-                <Text className={isActive ? 'text-emerald-700 dark:text-emerald-400 text-xs capitalize' : 'text-slate-700 dark:text-slate-300 text-xs capitalize'}>{eq.replace('_', ' ')}</Text>
-              </Pressable>
-            );
-          })}
-        </View>
+        <GymEquipmentPicker value={managingGym.equipment} onChange={(next) => updateGymEquipment(managingGym.id, next)} />
         <View className="flex-row gap-2">
           <Pressable onPress={() => setManagingGymId(null)} className="flex-1 bg-indigo-600 rounded-xl py-3 items-center">
             <Text className="text-white text-sm font-semibold">Done</Text>
@@ -139,6 +156,13 @@ function GymSelectorCard() {
           <Text className="text-slate-500 text-xs">{gyms.length > 0 ? 'Tap a gym to switch, hold to edit equipment, or add another' : "Workouts adapt to that gym's actual equipment"}</Text>
         </View>
       </Pressable>
+      {activeGym && (
+        <Pressable onPress={() => setManagingGymId(activeGym.id)} className="py-2 mt-1">
+          <Text className="text-indigo-600 text-xs font-medium dark:text-indigo-400">
+            {hasLegacyMachineToken(activeGym.equipment) ? 'Review which machines this gym has →' : `Edit ${activeGym.name} equipment →`}
+          </Text>
+        </Pressable>
+      )}
     </View>
   );
 }

@@ -1,4 +1,5 @@
 import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
+import { FOCUS_AREA_GROUPS, bodyGroupLabel } from '@/content/bodyGroups';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
@@ -38,7 +39,7 @@ const EXERCISE_GOALS = [
   { id: 'flexibility', label: 'Flexibility', emoji: '🧘' },
   { id: 'general_health', label: 'General Health', emoji: '❤️' },
 ];
-const FOCUS_AREAS = ['glutes', 'quads', 'hamstrings', 'back', 'chest', 'shoulders', 'arms', 'core', 'calves', 'fullbody'];
+const FOCUS_AREAS = FOCUS_AREA_GROUPS.map((g) => g.id);
 const BLOOD_TYPES: BloodType[] = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 function Pill({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
@@ -154,7 +155,7 @@ export default function BodyScreen() {
 
           <Text className="text-slate-100 text-base font-medium mb-2">Focus areas (pick all that apply)</Text>
           <View className="flex-row flex-wrap gap-2 mb-6">
-            {FOCUS_AREAS.map((f) => <Pill key={f} label={f} active={o.focusAreas.includes(f)} onPress={() => toggleInList('focusAreas', f)} />)}
+            {FOCUS_AREAS.map((f) => <Pill key={f} label={bodyGroupLabel(f)} active={o.focusAreas.includes(f)} onPress={() => toggleInList('focusAreas', f)} />)}
           </View>
 
           <Text className="text-slate-100 text-base font-medium mb-2">Blood type</Text>

@@ -51,6 +51,14 @@ const GROUP_FALLBACK: Record<string, JointActionInfo> = {
   back: { pattern: 'horizontal_pull', jointAction: 'Shoulder extension / scapular retraction', plane: 'Sagittal plane' },
   chest: { pattern: 'horizontal_press', jointAction: 'Horizontal shoulder adduction', plane: 'Transverse plane' },
   shoulders: { pattern: 'shoulder_raise', jointAction: 'Shoulder flexion / abduction', plane: 'Sagittal / frontal plane' },
+  biceps: { pattern: 'elbow_flexion', jointAction: 'Elbow flexion', plane: 'Sagittal plane' },
+  triceps: { pattern: 'elbow_extension', jointAction: 'Elbow extension', plane: 'Sagittal plane' },
+  forearms: { pattern: 'elbow_flexion', jointAction: 'Wrist flexion / extension and grip', plane: 'Sagittal plane' },
+  lats: { pattern: 'vertical_pull', jointAction: 'Shoulder extension / adduction', plane: 'Sagittal / frontal plane' },
+  upper_back: { pattern: 'horizontal_pull', jointAction: 'Scapular retraction / shoulder extension', plane: 'Sagittal plane' },
+  lower_back: { pattern: 'hip_hinge', jointAction: 'Hip and spinal extension', plane: 'Sagittal plane' },
+  neck: { pattern: 'core_anti_movement', jointAction: 'Neck flexion / extension (stabilization)', plane: 'Sagittal plane' },
+  cardio: { pattern: 'full_body_power', jointAction: 'Multi-joint cardio', plane: 'Multi-planar' },
   arms: { pattern: 'elbow_flexion', jointAction: 'Elbow flexion / extension', plane: 'Sagittal plane' },
   core: { pattern: 'core_anti_movement', jointAction: 'Spinal stabilization', plane: 'Multi-planar (isometric)' },
   calves: { pattern: 'ankle_plantarflexion', jointAction: 'Ankle plantarflexion', plane: 'Sagittal plane' },
@@ -116,7 +124,7 @@ const KEYWORD_RULES: { test: (name: string, group: string) => boolean; info: Joi
   { test: (n) => /lateral raise|front raise|rear delt|upright row|bus driver/.test(n), info: { pattern: 'shoulder_raise', jointAction: 'Shoulder abduction / flexion', plane: 'Frontal / sagittal plane' } },
 
   // Arm isolation
-  { test: (n, g) => g === 'arms' && /curl/.test(n), info: { pattern: 'elbow_flexion', jointAction: 'Elbow flexion', plane: 'Sagittal plane' } },
+  { test: (n, g) => (g === 'arms' || g === 'biceps') && /curl/.test(n) && !/wrist/.test(n), info: { pattern: 'elbow_flexion', jointAction: 'Elbow flexion', plane: 'Sagittal plane' } },
   { test: (n) => /tricep|skull crusher|pushdown/.test(n), info: { pattern: 'elbow_extension', jointAction: 'Elbow extension', plane: 'Sagittal plane' } },
   { test: (n) => /shrug/.test(n), info: { pattern: 'scapular_elevation', jointAction: 'Scapular elevation', plane: 'Frontal plane' } },
   { test: (n) => /pullover/.test(n), info: { pattern: 'vertical_pull', jointAction: 'Shoulder extension', plane: 'Sagittal plane' } },

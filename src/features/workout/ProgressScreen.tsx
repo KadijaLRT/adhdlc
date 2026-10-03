@@ -33,7 +33,8 @@ export default function ProgressScreen() {
   const totalVolume = calculateTotalVolume(setLogs);
   const estimatedMinutes = calculateEstimatedMinutes(setLogs);
   const weeklyVolume = calculateWeeklyVolume(setLogs);
-  const topRecords = getTopRecords(personalRecords);
+  // Records for exercises that were removed when the list was rebuilt have no name to show, so they are left out.
+  const topRecords = getTopRecords(personalRecords).filter((r) => !!WORKOUT_EXERCISES?.[r.exerciseId]);
 
   const maxVolume = Math.max(...weeklyVolume.map((w) => w.volume), 1);
 

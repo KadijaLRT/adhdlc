@@ -1,258 +1,129 @@
+import { getBodyGroup } from './bodyGroups';
+import { EXERCISE_CATALOG, type CatalogRow, type ExerciseKind } from './exerciseCatalog';
+
 export interface Exercise {
   name: string; muscle: string; group: string; icon: string; tag: string;
   rest: number; inc: number; sets: number; reps: string; repsMin: number;
   uni?: boolean; eq: string[]; cues: string; points: string[];
-  /** True for equipment with no meaningful "weight" to log — cardio
-   * machines (treadmill, elliptical, stationary bike, stair climber,
-   * ARC trainer, rowing machine) run on duration/resistance level, not
-   * a loaded weight. Distinct from `eq:["bodyweight"]`-only exercises
-   * (handled by isBodyweightOnlyExercise) since these use eq:["machine"]
-   * and would otherwise be indistinguishable from genuinely weighted
-   * machines like Leg Press or Leg Extension. */
+  /**
+   * Exact equipment needed, as OR-of-AND over ids in equipment.ts: the exercise
+   * can be done when ANY inner list is fully owned. `[[]]` means no equipment.
+   * This is the only thing the gym filter reads.
+   */
+  requires: string[][];
+  /** Movement type, used to decide what the app may pick for someone and how to rank it. */
+  kind: ExerciseKind;
+  /** Multi-joint movement; ordered before isolation work in a session. */
+  compound: boolean;
+  /** Technical or specialist lifts. Never auto-picked for plans; still searchable. */
+  advanced: boolean;
+  /** True for equipment with no meaningful "weight" to log (rowing machine, bike). */
   noWeight?: boolean;
 }
 
-export const WORKOUT_EXERCISES: Record<string, Exercise> = {
-  // -- GLUTES ------------------------------------------------------------------
-  g1: {name:"Barbell Hip Thrust",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"\uD83C\uDFC6 #1 Glute Builder",rest:90,inc:5,sets:3,reps:"10-12",repsMin:10,eq:["barbell","bodyweight"],cues:"Upper back on bench, bar across hips with pad. Drive through HEELS. Squeeze hard 1-2 sec at top.",points:["Bar needs a pad","Drive through heels","Squeeze 1-2 sec","Chin tucked"]},
-  g1b:{name:"Hip Thrust Machine",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"Machine Hip Thrust",rest:90,inc:5,sets:3,reps:"12",repsMin:12,eq:["hip_thrust_machine"],cues:"Adjust pad across hips. Drive through heels. Hold squeeze 1 second at top.",points:["Pad across hips","Drive through heels","Hold 1 sec at top"]},
-  g3: {name:"Hip Abductor Machine",muscle:"Glutes (outer)",group:"glutes",icon:"\uD83C\uDF51",tag:"Outer glute",rest:60,inc:2.5,sets:3,reps:"15-20",repsMin:15,eq:["machine"],cues:"Sit tall, back against pad. Push knees OUT. Control the return slowly \u2014 growth happens on the way in.",points:["Sit tall, back on pad","Push knees outward","Slow controlled return"]},
-  g3b:{name:"Hip Adductor Machine",muscle:"Inner Thigh",group:"glutes",icon:"\uD83C\uDF51",tag:"Inner thigh",rest:60,inc:2.5,sets:3,reps:"15-20",repsMin:15,eq:["machine"],cues:"Sit tall. Squeeze knees together. Hold at contraction, then slow return.",points:["Sit tall","Squeeze knees together","Hold at contraction"]},
-  g4: {name:"Glute Kickback (Donkey Kick)",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"Bodyweight glute",rest:60,inc:0,sets:3,reps:"20 each",repsMin:20,uni:true,eq:["bodyweight","resistance_band"],cues:"On all fours. Drive one heel toward ceiling, squeeze glute at top. Add band above knees for more burn.",points:["All fours on mat","Drive heel to ceiling","Squeeze at top","Band above knees = extra burn"]},
-  g5: {name:"Sumo Dumbbell Squat",muscle:"Glutes + Inner Thigh",group:"glutes",icon:"\uD83C\uDF51",tag:"Wide stance",rest:75,inc:5,sets:3,reps:"12",repsMin:12,eq:["dumbbell"],cues:"Wide stance, toes 45\u00B0 out. Hold one dumbbell between legs. Push knees OUT as you squat.",points:["Wide stance","Toes 45\u00B0 out","Push knees OUT","One dumbbell"]},
-  g6: {name:"Bulgarian Split Squat",muscle:"Glutes + Quads",group:"glutes",icon:"\uD83E\uDDB5",tag:"Most effective split",rest:90,inc:5,sets:3,reps:"8 each leg",repsMin:8,uni:true,eq:["bodyweight","dumbbell","barbell"],cues:"Back foot elevated on bench. LEAN torso forward \u2014 this shifts to glutes. Front knee over toes.",points:["Back foot elevated","Lean FORWARD for glutes","Front knee over toes"]},
-  g7: {name:"Cable Pull-Through",muscle:"Glutes + Hamstrings",group:"glutes",icon:"\uD83C\uDF51",tag:"Hip hinge glute",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["cable"],cues:"Face AWAY from cable. Hinge forward, then drive hips forward squeezing glutes. Like a kettlebell swing.",points:["Face away from cable","Hinge at hips","Drive hips forward","Squeeze glutes at top"]},
-  g8: {name:"Resistance Band Squat",muscle:"Glutes + Quads",group:"glutes",icon:"\uD83C\uDF51",tag:"Band activation",rest:60,inc:0,sets:3,reps:"20",repsMin:20,eq:["resistance_band"],cues:"Band above knees. Squat down, drive knees OUT against band. Great warm-up or finisher.",points:["Band above knees","Drive knees out","Full squat depth","Great as warm-up"]},
-  g9: {name:"Step-Up with Knee Drive",muscle:"Glutes + Quads",group:"glutes",icon:"\uD83E\uDDB5",tag:"Functional glute",rest:60,inc:2.5,sets:3,reps:"12 each",repsMin:12,uni:true,eq:["bodyweight","dumbbell","machine"],cues:"Step onto box, drive opposite knee up high. Squeeze glute of stepping leg at top.",points:["Drive knee up at top","Squeeze stepping glute","Control the descent","Use a stable surface"]},
-  g10:{name:"Reverse Hyperextension",muscle:"Glutes + Lower Back",group:"glutes",icon:"\uD83C\uDF51",tag:"Posterior chain",rest:75,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["machine","bodyweight"],cues:"Lie face down on bench, legs hanging. Squeeze glutes to drive legs up until parallel with body.",points:["Squeeze glutes to lift","Don't hyperextend","Full range of motion","Excellent for lower back health"]},
-  // -- HAMSTRINGS ---------------------------------------------------------------
-  h1: {name:"Romanian Deadlift",muscle:"Hamstrings + Glutes",group:"hamstrings",icon:"\uD83D\uDD19",tag:"Best hamstring stretch",rest:90,inc:5,sets:3,reps:"10-12",repsMin:10,eq:["barbell","dumbbell"],cues:"Soft knee bend. Hinge at HIPS not waist. Bar close to legs. Feel the hamstring stretch, squeeze glutes rising.",points:["Hinge at HIPS","Bar close to legs","Deep hamstring stretch","Squeeze glutes at top"]},
-  h2: {name:"Lying Leg Curl",muscle:"Hamstrings",group:"hamstrings",icon:"\uD83E\uDDB5",tag:"Prone curl",rest:60,inc:2.5,sets:3,reps:"12-15",repsMin:12,eq:["machine"],cues:"Curl heels all the way up. Squeeze at top. 3-count down \u2014 no slamming.",points:["Full curl up","Squeeze at top","3-count down"]},
-  h3: {name:"Seated Leg Curl",muscle:"Hamstrings",group:"hamstrings",icon:"\uD83E\uDDB5",tag:"Seated version",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["machine"],cues:"Both directions controlled. Full range every rep.",points:["Both directions matter","Full range"]},
-  h4: {name:"Single-Leg RDL",muscle:"Hamstrings + Glutes",group:"hamstrings",icon:"\uD83D\uDD19",tag:"Balance + Hamstring",rest:75,inc:2.5,sets:3,reps:"10 each",repsMin:10,uni:true,eq:["dumbbell","bodyweight","barbell"],cues:"Balance on one leg. Hinge forward, free leg kicks back. Feel the deep hamstring stretch. Use a wall for balance at first.",points:["Balance on one leg","Hinge forward and reach","Back leg counterbalances","Wall for support if needed"]},
-  h5: {name:"Nordic Hamstring Curl",muscle:"Hamstrings",group:"hamstrings",icon:"\uD83E\uDDB5",tag:"Hardest hamstring",rest:90,inc:0,sets:3,reps:"5-8",repsMin:5,eq:["bodyweight"],cues:"Knees on mat, feet anchored. Lower your body SLOWLY to the floor \u2014 pure hamstring eccentrics. Most effective hamstring builder.",points:["Feet anchored (under bench)","Lower SLOWLY \u2014 4-5 count","Catch yourself at bottom","Extremely effective eccentrics"]},
-  h6: {name:"Good Mornings",muscle:"Hamstrings + Lower Back",group:"hamstrings",icon:"\uD83D\uDD19",tag:"Posterior chain",rest:75,inc:5,sets:3,reps:"12",repsMin:12,eq:["barbell","resistance_band"],cues:"Bar on traps, slight knee bend. Hinge forward at hips until torso near parallel. Feel the hamstring stretch.",points:["Bar on traps or use band","Hinge at hips","Torso near parallel","Feel the stretch"]},
-  // -- QUADS --------------------------------------------------------------------
-  q1: {name:"Leg Press",muscle:"Quads + Glutes",group:"quads",icon:"\uD83E\uDDB5",tag:"Safe quad builder",rest:90,inc:10,sets:4,reps:"12",repsMin:12,eq:["machine"],cues:"Feet mid-height, shoulder width. Press through heels. NEVER lock knees. 3-count down.",points:["Feet mid-height","Press through heels","NEVER lock knees","3-count down"]},
-  q2: {name:"Leg Extension",muscle:"Quads",group:"quads",icon:"\uD83E\uDDB5",tag:"Knee strengthening",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["machine"],cues:"Full extension \u2014 hold 1 second. 3-count down. Light for knee health.",points:["Full extension","Hold 1 sec","3-count down","Keep light"]},
-  q3: {name:"Hack Squat Machine",muscle:"Quads",group:"quads",icon:"\uD83E\uDDB5",tag:"Deep quad focus",rest:90,inc:10,sets:4,reps:"10",repsMin:10,eq:["machine"],cues:"Feet shoulder width on platform. Deep squat, full range. Control the descent.",points:["Full depth","Feet on platform","Control down","Knees track toes"]},
-  q4: {name:"Wall Sit",muscle:"Quads + Glutes",group:"quads",icon:"\uD83E\uDDB5",tag:"Isometric burn",rest:60,inc:0,sets:3,reps:"45-60 sec",repsMin:1,eq:["bodyweight"],cues:"Back flat against wall, thighs parallel to floor. Hold. This is your ADHD reset \u2014 focus on the burn.",points:["Back flat on wall","Thighs parallel","Breathe through it","Great mental focus exercise"]},
-  q5: {name:"Goblet Squat",muscle:"Quads + Glutes",group:"quads",icon:"\uD83E\uDDB5",tag:"Perfect squat form",rest:75,inc:5,sets:3,reps:"15",repsMin:15,eq:["dumbbell","barbell"],cues:"Hold dumbbell at chest. Deep squat, chest up, knees out. This teaches perfect squat mechanics.",points:["Dumbbell at chest","Chest stays up","Knees track over toes","Perfect form teacher"]},
-  q6: {name:"Walking Lunges",muscle:"Quads + Glutes",group:"quads",icon:"\uD83E\uDDB5",tag:"Functional strength",rest:75,inc:5,sets:3,reps:"12 each",repsMin:12,uni:true,eq:["bodyweight","dumbbell"],cues:"Step forward, lower rear knee toward floor. Alternate legs walking forward. Stay upright.",points:["Knee toward floor","Torso upright","Alternate legs","Back knee almost touches"]},
-  // -- BACK ---------------------------------------------------------------------
-  b1: {name:"Lat Pulldown",muscle:"Upper Back",group:"back",icon:"\uD83D\uDD19",tag:"Width builder",rest:75,inc:2.5,sets:3,reps:"10-12",repsMin:10,eq:["cable"],cues:"Lean back 15-20\u00B0. Pull to UPPER CHEST \u2014 never behind neck. Elbows drive down and back.",points:["Lean back 15-20\u00B0","Pull to UPPER CHEST","Elbows drive down","Hands are hooks"]},
-  b1b:{name:"Wide Grip Lat Pulldown",muscle:"Upper Back (outer)",group:"back",icon:"\uD83D\uDD19",tag:"Max width",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["cable"],cues:"Grip wide outside the marks. Same pull motion but wider grip hits the outer lats more.",points:["Wider grip","Same elbow drive motion","Stretches lats wider"]},
-  b1c:{name:"Underhand Lat Pulldown",muscle:"Back + Biceps",group:"back",icon:"\uD83D\uDD19",tag:"Underhand variation",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["cable"],cues:"Underhand (supinated) grip. Pull to chest. Biceps assist more \u2014 good for thick back.",points:["Underhand grip","Pull to chest","Biceps assist"]},
-  b2: {name:"Seated Cable Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"Posture builder",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["cable"],cues:"Sit TALL. Pull to belly. Squeeze shoulder blades together. Hold 1 second.",points:["Sit tall","Pull to belly","Squeeze blades","Hold 1 sec"]},
-  b2b:{name:"Wide Row (cable)",muscle:"Upper Back",group:"back",icon:"\uD83D\uDD19",tag:"Upper back thickness",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["cable"],cues:"Wide attachment on cable row. Elbows flare out at 90\u00B0. Pull to chest, squeeze upper back.",points:["Wide attachment","Elbows out at 90\u00B0","Pull to chest"]},
-  b3: {name:"Single-Arm DB Row",muscle:"Back + Biceps",group:"back",icon:"\uD83D\uDD19",tag:"Unilateral",rest:60,inc:2.5,sets:3,reps:"10 each",repsMin:10,uni:true,eq:["dumbbell"],cues:"Elbow drives UP to ceiling. Full stretch at bottom. Don't rotate torso.",points:["Elbow drives UP","Full stretch at bottom","No torso rotation"]},
-  b4: {name:"Barbell Bent-Over Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"Compound mass builder",rest:90,inc:5,sets:3,reps:"10",repsMin:10,eq:["barbell"],cues:"Back nearly PARALLEL. Pull bar to lower chest. Squeeze shoulder blades.",points:["Back near parallel","Pull to lower chest","Squeeze blades"]},
-  b4b:{name:"T-Bar Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"Thick back builder",rest:90,inc:5,sets:3,reps:"10",repsMin:10,eq:["barbell","machine"],cues:"Straddle the bar, hinge forward. Pull to chest. One of the best back thickness exercises.",points:["Hinge forward","Pull to chest","Great for thickness"]},
-  b5: {name:"Assisted Pull-Up",muscle:"Back + Biceps",group:"back",icon:"\uD83D\uDD19",tag:"Building to pull-ups",rest:90,inc:2.5,sets:3,reps:"6-8",repsMin:6,eq:["machine","bodyweight"],cues:"Full hang at bottom. Drive elbows DOWN to bring chin above bar.",points:["Full hang","Elbows drive DOWN","Chin above bar"]},
-  b5b:{name:"Neutral Grip Pull-Up",muscle:"Back + Biceps",group:"back",icon:"\uD83D\uDD19",tag:"Palms facing",rest:90,inc:0,sets:3,reps:"max",repsMin:3,eq:["machine","bodyweight"],cues:"Palms facing each other. Easier on shoulders. Full hang to chin above.",points:["Palms face each other","Shoulder-friendly","Full hang to chin"]},
-  b6: {name:"Face Pull",muscle:"Rear Delt + Upper Back",group:"back",icon:"\uD83D\uDD19",tag:"Shoulder health",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["cable","resistance_band"],cues:"Cable at face height. Pull to face, elbows HIGH and wide. Never skip this.",points:["Elbows HIGH","Pull to face","Shoulder health essential"]},
-  b7: {name:"Cable Straight-Arm Pulldown",muscle:"Lats",group:"back",icon:"\uD83D\uDD19",tag:"Lat isolation",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["cable"],cues:"Arms almost straight. Pull bar down to hips \u2014 like closing a book. Pure lat squeeze.",points:["Arms almost straight","Pull down to hips","Pure lat contraction","Like closing a book"]},
-  b8: {name:"Meadows Row",muscle:"Upper Back",group:"back",icon:"\uD83D\uDD19",tag:"Unilateral compound",rest:75,inc:5,sets:3,reps:"10 each",repsMin:10,uni:true,eq:["barbell"],cues:"One end of barbell in corner. Staggered stance, pull handle to hip. Elite back builder.",points:["Barbell end in corner","Staggered stance","Pull to hip","Elite mass builder"]},
-  b9: {name:"Inverted Row / TRX Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"Bodyweight row",rest:60,inc:0,sets:3,reps:"15",repsMin:15,eq:["bodyweight"],cues:"Under a barbell in rack or TRX. Pull chest to bar, body straight. Great back width.",points:["Body straight as plank","Pull chest to bar","Feet further = harder"]},
-  // -- CHEST --------------------------------------------------------------------
-  c1: {name:"Dumbbell Bench Press",muscle:"Chest",group:"chest",icon:"\uD83D\uDCAA",tag:"Chest builder",rest:90,inc:2.5,sets:3,reps:"10-12",repsMin:10,eq:["dumbbell"],cues:"Elbows at 45\u00B0, not flared. Lower to chest, press up. Don't lock elbows.",points:["Elbows at 45\u00B0","Lower to chest","Don't lock out"]},
-  c2: {name:"Incline Dumbbell Press",muscle:"Upper Chest",group:"chest",icon:"\uD83D\uDCAA",tag:"Lifts and shapes",rest:90,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["dumbbell"],cues:"30-45\u00B0 incline only. Upper chest work lifts and shapes.",points:["30-45\u00B0 angle","Upper chest focus"]},
-  c3: {name:"Pec Deck / Butterfly",muscle:"Chest (inner)",group:"chest",icon:"\uD83D\uDCAA",tag:"Chest isolation",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["machine"],cues:"Slight elbow bend. Hugging arc. Squeeze inner chest at peak. Slow open.",points:["Slight elbow bend","Hugging arc","Squeeze at peak"]},
-  c4: {name:"Cable Chest Fly",muscle:"Chest",group:"chest",icon:"\uD83D\uDCAA",tag:"Full range fly",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["cable"],cues:"Cables shoulder height. Arc arms forward like hugging a tree. Constant tension.",points:["Shoulder height","Hugging arc","Squeeze at center"]},
-  c5: {name:"Barbell Bench Press",muscle:"Chest + Triceps",group:"chest",icon:"\uD83D\uDCAA",tag:"Classic compound",rest:90,inc:5,sets:3,reps:"8-10",repsMin:8,eq:["barbell"],cues:"Bar to LOWER chest. Elbows at 45\u00B0. Slight arch is correct.",points:["Bar to LOWER chest","Elbows at 45\u00B0","Slight arch OK"]},
-  c6: {name:"Push-Up Variations",muscle:"Chest + Triceps",group:"chest",icon:"\uD83D\uDCAA",tag:"Bodyweight",rest:60,inc:0,sets:3,reps:"max",repsMin:10,eq:["bodyweight"],cues:"Wide = chest. Close = triceps. Decline = upper chest. Diamond = inner chest. Pick one each time.",points:["Wide for chest","Close for triceps","Decline for upper","Diamond for inner"]},
-  c7: {name:"Low Cable Fly",muscle:"Lower Chest",group:"chest",icon:"\uD83D\uDCAA",tag:"Lower chest definition",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["cable"],cues:"Cables at lowest setting. Arc upward across body to chest height. Squeeze.",points:["Cables low","Arc upward","Squeeze at chest"]},
-  c8: {name:"Dumbbell Pullover",muscle:"Chest + Lats",group:"chest",icon:"\uD83D\uDCAA",tag:"Chest + Lat stretch",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["dumbbell"],cues:"Lie across bench, dumbbell over chest. Lower behind head in arc, stretch, pull back. Chest AND lat builder.",points:["Across bench","Arc behind head","Big stretch","Chest and lat combo"]},
-  // -- SHOULDERS ----------------------------------------------------------------
-  sh1:{name:"Overhead Press (Dumbbell)",muscle:"Shoulders",group:"shoulders",icon:"\uD83C\uDFCB\uFE0F",tag:"Shoulder mass",rest:90,inc:2.5,sets:3,reps:"10-12",repsMin:10,eq:["dumbbell"],cues:"Dumbbells at ear level. Press straight up. Core tight, don't lean back.",points:["Start at ear level","Press straight up","Core tight","Don't lean back"]},
-  sh2:{name:"Lateral Raise",muscle:"Side Delts",group:"shoulders",icon:"\uD83C\uDFCB\uFE0F",tag:"Shoulder width",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["dumbbell","cable","resistance_band"],cues:"Slight elbow bend. SHOULDER HEIGHT only. Lead with elbows. Much lighter than you think.",points:["Slight elbow bend","Shoulder height ONLY","Lead with elbows","Go lighter"]},
-  sh3:{name:"Cable Lateral Raise",muscle:"Side Delts",group:"shoulders",icon:"\uD83C\uDFCB\uFE0F",tag:"Cable constant tension",rest:60,inc:2.5,sets:3,reps:"15 each",repsMin:15,uni:true,eq:["cable"],cues:"Cable at low setting, raise arm out to side to shoulder height. Cable keeps tension at bottom unlike dumbbells.",points:["Low cable","Raise to shoulder height","Constant tension throughout"]},
-  sh4:{name:"Front Raise",muscle:"Front Delts",group:"shoulders",icon:"\uD83C\uDFCB\uFE0F",tag:"Front delt",rest:60,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["dumbbell","barbell","cable"],cues:"Raise one or both arms forward to shoulder height. Lower slowly. Front delts.",points:["Forward to shoulder height","Slow return","Front delt focus"]},
-  sh5:{name:"Rear Delt Fly",muscle:"Rear Delts",group:"shoulders",icon:"\uD83C\uDFCB\uFE0F",tag:"Posture + rear delts",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["dumbbell","cable","machine"],cues:"Hinged forward or on pec-deck reversed. Arms arc out to sides. Squeeze rear delts. Critical for posture.",points:["Hinge forward","Arc out to sides","Squeeze rear delts","Critical for posture"]},
-  sh6:{name:"Arnold Press",muscle:"Shoulders (all heads)",group:"shoulders",icon:"\uD83C\uDFCB\uFE0F",tag:"Full shoulder rotation",rest:90,inc:2.5,sets:3,reps:"10",repsMin:10,eq:["dumbbell"],cues:"Start with palms facing you, elbows low. Rotate out as you press up. Hits all 3 delt heads.",points:["Palms facing you at start","Rotate as you press","Hits all 3 delt heads"]},
-  sh7:{name:"Machine Shoulder Press",muscle:"Shoulders",group:"shoulders",icon:"\uD83C\uDFCB\uFE0F",tag:"Machine controlled",rest:90,inc:5,sets:3,reps:"12",repsMin:12,eq:["machine"],cues:"Adjust seat so handles are at ear level. Press overhead. Controlled motion, good for beginners.",points:["Handles at ear level","Press overhead","Controlled motion"]},
-  // -- ARMS ---------------------------------------------------------------------
-  a1: {name:"Barbell Curl",muscle:"Biceps",group:"arms",icon:"\uD83D\uDCAA",tag:"Bicep mass builder",rest:75,inc:2.5,sets:3,reps:"10-12",repsMin:10,eq:["barbell","cable"],cues:"Elbows pinned at sides. Full extension at bottom. Squeeze at top. Don't swing.",points:["Elbows pinned at sides","Full extension","Squeeze at top","No swinging"]},
-  a2: {name:"Dumbbell Curl",muscle:"Biceps",group:"arms",icon:"\uD83D\uDCAA",tag:"Bilateral curl",rest:60,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["dumbbell"],cues:"Both arms or alternating. Full extension, full contraction. Elbows stay at sides.",points:["Full extension","Elbows at sides","Control both ways"]},
-  a3: {name:"Hammer Curl",muscle:"Biceps + Forearms",group:"arms",icon:"\uD83D\uDCAA",tag:"Forearm builder",rest:60,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["dumbbell","cable"],cues:"Palms facing inward throughout. Hits the brachialis and forearms. Great for arm thickness.",points:["Palms face inward","Hits brachialis","Great for thickness"]},
-  a4: {name:"Cable Curl",muscle:"Biceps",group:"arms",icon:"\uD83D\uDCAA",tag:"Constant tension",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["cable"],cues:"Low cable. Full extension, full curl. Cable keeps tension at bottom where dumbbells don't.",points:["Low cable","Full range","Tension at bottom = growth"]},
-  a5: {name:"Preacher Curl",muscle:"Biceps (lower)",group:"arms",icon:"\uD83D\uDCAA",tag:"Strict isolation",rest:75,inc:2.5,sets:3,reps:"10",repsMin:10,eq:["machine","barbell","dumbbell"],cues:"Arms on pad. No swinging possible. Full extension at bottom, full squeeze at top.",points:["Arms on pad","Full extension","No cheating possible"]},
-  a6: {name:"Tricep Pushdown",muscle:"Triceps",group:"arms",icon:"\uD83D\uDCAA",tag:"Tricep builder",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["cable"],cues:"Elbows at sides, pin them. Push bar/rope down to full extension. Squeeze triceps at bottom.",points:["Elbows pinned","Full extension","Squeeze at bottom"]},
-  a7: {name:"Skull Crushers",muscle:"Triceps",group:"arms",icon:"\uD83D\uDCAA",tag:"Tricep mass",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["barbell","dumbbell","cable"],cues:"Lying on bench. Lower bar/dumbbells to forehead level (hence the name). Extend arms back up.",points:["Lower to forehead level","Elbows don't flare","Control the descent"]},
-  a8: {name:"Overhead Tricep Extension",muscle:"Triceps (long head)",group:"arms",icon:"\uD83D\uDCAA",tag:"Long head focus",rest:60,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["dumbbell","cable"],cues:"Arms overhead, elbows close to head. Lower weight behind head, extend up. Best for the long head.",points:["Arms overhead","Elbows close to ears","Extend all the way up","Long head = most of the tricep"]},
-  a9: {name:"Rope Tricep Pushdown",muscle:"Triceps",group:"arms",icon:"\uD83D\uDCAA",tag:"Rope variation",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["cable"],cues:"Use the rope handle. At the bottom, flare the rope outward to fully contract all tricep heads.",points:["Use rope handle","Flare out at bottom","Full contraction of all heads"]},
-  // -- CORE ---------------------------------------------------------------------
-  co1:{name:"Cable Crunch",muscle:"Abs",group:"core",icon:"\uD83D\uDD25",tag:"Weighted abs",rest:60,inc:2.5,sets:3,reps:"20",repsMin:20,eq:["cable"],cues:"Kneel at cable. Rope at head. Crunch DOWN, not forward. Focus on contracting abs.",points:["Kneel facing cable","Crunch DOWN not forward","Squeeze abs hard"]},
-  co2:{name:"Ab Wheel Rollout",muscle:"Core",group:"core",icon:"\uD83D\uDD25",tag:"Core destroyer",rest:75,inc:0,sets:3,reps:"10-15",repsMin:10,eq:["machine","bodyweight"],cues:"Roll forward from knees, back flat, then pull back. One of the best core exercises. Start on knees.",points:["Start on knees","Back stays flat","Control both ways","Progress to standing"]},
-  co3:{name:"Hanging Leg Raise",muscle:"Lower Abs",group:"core",icon:"\uD83D\uDD25",tag:"Lower ab focus",rest:60,inc:0,sets:3,reps:"15",repsMin:15,eq:["bodyweight"],cues:"Hang from bar. Raise legs to parallel (beginner) or vertical (advanced). No swinging.",points:["Hang from pull-up bar","Legs to parallel first","No swinging","Advanced: vertical"]},
-  co4:{name:"Plank Variations",muscle:"Core",group:"core",icon:"\uD83D\uDD25",tag:"Core stability",rest:60,inc:0,sets:3,reps:"30-60 sec",repsMin:1,eq:["bodyweight"],cues:"Standard, side, or RKC plank. Body rigid. Great ADHD focus exercise \u2014 count your breaths.",points:["Body completely rigid","Count your breaths","Great focus exercise","Progress from knees"]},
-  co5:{name:"Russian Twist",muscle:"Obliques",group:"core",icon:"\uD83D\uDD25",tag:"Oblique rotation",rest:60,inc:2.5,sets:3,reps:"20 total",repsMin:20,eq:["bodyweight","medicine_ball"],cues:"Sit at 45\u00B0, feet up. Rotate side to side. Add medicine ball for more challenge.",points:["Sit at 45\u00B0","Feet up for challenge","Rotate fully each side","Medicine ball = harder"]},
-  co6:{name:"Medicine Ball Slam",muscle:"Core + Full Body",group:"core",icon:"\uD83D\uDD25",tag:"Power + Core",rest:60,inc:0,sets:3,reps:"15",repsMin:15,eq:["medicine_ball"],cues:"Raise ball overhead, slam down hard. Catch and repeat. Explosive core power. Great stress release.",points:["Raise overhead","SLAM down hard","Catch and repeat","Perfect for stress/energy release"]},
-  // -- LOWER BACK / COMPOUND ----------------------------------------------------
-  lb1:{name:"Hyperextension / Back Extension",muscle:"Lower Back + Glutes",group:"back",icon:"\uD83D\uDD19",tag:"Lower back strength",rest:75,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["machine","bodyweight"],cues:"On hyperextension bench. Lower torso down, squeeze glutes to rise. Don't hyperextend past parallel.",points:["Use hyperextension bench","Lower torso down","Squeeze glutes to rise","Stop at parallel"]},
-  lb2:{name:"Deadlift",muscle:"Full Posterior Chain",group:"back",icon:"\uD83D\uDD19",tag:"Queen of all lifts",rest:240,inc:5,sets:3,reps:"5",repsMin:5,eq:["barbell"],cues:"Hinge at hips, bar over mid-foot. Chest up, back flat. Drive floor away. This builds EVERYTHING.",points:["Bar over mid-foot","Chest up, back flat","Drive the floor away","Builds everything"]},
-  lb3:{name:"Sumo Deadlift",muscle:"Glutes + Hamstrings + Back",group:"back",icon:"\uD83D\uDD19",tag:"Wide stance DL",rest:240,inc:5,sets:3,reps:"5",repsMin:5,eq:["barbell"],cues:"Wide stance, toes out. Hips drop lower, torso more upright. Great for glutes and inner thighs.",points:["Wide stance","Toes out","Hips drop lower","More upright torso"]},
-  // -- CALVES ------------------------------------------------------------------
-  ca1:{name:"Standing Calf Raise",muscle:"Calves",group:"calves",icon:"\uD83E\uDDB5",tag:"Calf builder",rest:45,inc:5,sets:4,reps:"20",repsMin:20,eq:["machine","bodyweight","dumbbell"],cues:"Full stretch at bottom, full contraction at top. Slow and controlled. Calves respond to high reps.",points:["Full stretch at bottom","Full contraction at top","Slow tempo","High reps = calf growth"]},
-  ca2:{name:"Seated Calf Raise",muscle:"Soleus (lower calf)",group:"calves",icon:"\uD83E\uDDB5",tag:"Soleus focus",rest:45,inc:5,sets:4,reps:"20",repsMin:20,eq:["machine"],cues:"Knees at 90\u00B0. Full range. Seated version hits the soleus (deeper calf muscle) more than standing.",points:["Knees at 90\u00B0","Full range","Hits deeper soleus muscle"]},
-  // -- GLUTES (extra) ----------------------------------------------------------
-  g11:{name:"Single-Leg Hip Thrust",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"Unilateral glute",rest:75,inc:5,sets:3,reps:"10 each",repsMin:10,uni:true,eq:["bodyweight","barbell","dumbbell"],cues:"One foot on bench, one leg extended. Drive through the grounded heel only. Harder than bilateral \u2014 use bodyweight first.",points:["One foot on bench","Other leg extended or bent","Drive through grounded heel","Full hip extension at top"]},
-  g12:{name:"Curtsy Lunge",muscle:"Glutes + Inner Thigh",group:"glutes",icon:"\uD83C\uDF51",tag:"Outer glute shape",rest:60,inc:5,sets:3,reps:"12 each",repsMin:12,uni:true,eq:["bodyweight","dumbbell"],cues:"Step one foot diagonally behind, lower back knee toward floor. Targets outer glute and hip differently than a regular lunge.",points:["Step diagonally behind","Front knee stays forward","Torso upright","Great for outer glute shape"]},
-  g13:{name:"Lateral Band Walk",muscle:"Glutes (side)",group:"glutes",icon:"\uD83C\uDF51",tag:"Glute med activation",rest:45,inc:0,sets:3,reps:"20 each direction",repsMin:20,eq:["resistance_band"],cues:"Band above knees. Slight squat position. Step side to side keeping tension on the band throughout. Essential glute med work.",points:["Band above knees","Stay in squat position","Keep tension on band","Don't let feet come together fully"]},
-  g14:{name:"Clamshell",muscle:"Glutes (outer hip)",group:"glutes",icon:"\uD83C\uDF51",tag:"Hip stability",rest:45,inc:0,sets:3,reps:"20 each",repsMin:20,uni:true,eq:["bodyweight","resistance_band"],cues:"Side-lying, feet together, knees bent. Rotate top knee open like a clamshell. Add band for resistance.",points:["Side-lying position","Feet stay together","Rotate knee open","Great for hip health"]},
-  g15:{name:"Frog Pump",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"Deep glute contraction",rest:45,inc:0,sets:3,reps:"25",repsMin:25,eq:["bodyweight"],cues:"Lie on back, soles of feet together (frog position). Drive hips up, squeeze hard at top. Feels weird, works incredibly well.",points:["Soles of feet together","Drive hips up","Squeeze hard at top","High reps work best"]},
-  g16:{name:"Smith Machine Hip Thrust",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"Machine hip thrust",rest:90,inc:10,sets:4,reps:"12",repsMin:12,eq:["smith"],cues:"Same as barbell hip thrust but the Smith machine keeps the bar path fixed. Great for loading heavy safely.",points:["Bar across hips with pad","Drive through heels","Full extension at top","Machine handles the balance"]},
-  // -- HAMSTRINGS (extra) ------------------------------------------------------
-  h7:{name:"Stability Ball Hamstring Curl",muscle:"Hamstrings",group:"hamstrings",icon:"\uD83E\uDDB5",tag:"Functional ham curl",rest:60,inc:0,sets:3,reps:"12",repsMin:12,eq:["balance_ball"],cues:"Lie on back, heels on ball. Lift hips, curl ball toward glutes. Unstable = more muscle activation.",points:["Hips stay elevated","Curl ball toward you","Straighten back out","Keep hips up throughout"]},
-  h8:{name:"Cable Romanian Deadlift",muscle:"Hamstrings + Glutes",group:"hamstrings",icon:"\uD83E\uDDB5",tag:"Cable variation RDL",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["cable"],cues:"Cable at ankle height from behind. Same hip hinge as RDL but cable adds constant tension at the top unlike a barbell.",points:["Cable at low setting","Same hinge as barbell RDL","Constant tension advantage","Great stretch at bottom"]},
-  // -- QUADS (extra) ------------------------------------------------------------
-  q7:{name:"Smith Machine Squat",muscle:"Quads + Glutes",group:"quads",icon:"\uD83E\uDDB5",tag:"Smith variation",rest:90,inc:10,sets:4,reps:"10",repsMin:10,eq:["smith"],cues:"Feet slightly forward of the bar. Full depth squat. Smith handles balance so you can focus on the muscle.",points:["Feet slightly forward","Full depth","Smith handles stability","Great for beginners"]},
-  q8:{name:"Sissy Squat",muscle:"Quads",group:"quads",icon:"\uD83E\uDDB5",tag:"Extreme quad isolation",rest:75,inc:0,sets:3,reps:"10",repsMin:10,eq:["bodyweight","machine"],cues:"Hold something stable, lean back as you bend knees and rise on toes simultaneously. Pure quad isolation. Start very light.",points:["Hold something stable","Lean back as you lower","Rise on toes","Extreme quad stretch"]},
-  q9:{name:"Terminal Knee Extension",muscle:"Quads (VMO)",group:"quads",icon:"\uD83E\uDDB5",tag:"Knee rehab + VMO",rest:45,inc:2.5,sets:3,reps:"20",repsMin:20,eq:["resistance_band","cable"],cues:"Band behind knee. Straighten leg against resistance. Targets the teardrop muscle (VMO) \u2014 excellent for knee health.",points:["Band behind knee","Straighten against resistance","Targets VMO teardrop","Essential for knee health"]},
-  q10:{name:"Front Squat",muscle:"Quads",group:"quads",icon:"\uD83E\uDDB5",tag:"More quad than back squat",rest:90,inc:5,sets:3,reps:"8",repsMin:8,eq:["barbell"],cues:"Bar rests on front delts, elbows high. More upright torso than back squat. Hits quads harder.",points:["Bar on front delts","Elbows high","Stay very upright","More quad dominant"]},
-  // -- BACK (extra) -------------------------------------------------------------
-  b10:{name:"Chest Supported Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"No cheat possible",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["dumbbell","machine"],cues:"Chest on incline bench. Row dumbbells or use machine. Chest support eliminates all body English \u2014 pure back work.",points:["Chest on incline pad","No swinging possible","Full stretch at bottom","Pure back isolation"]},
-  b11:{name:"Kneeling Lat Pulldown",muscle:"Lats",group:"back",icon:"\uD83D\uDD19",tag:"Core + lats",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["cable"],cues:"Kneel at the cable, no seat. Core must engage to stay upright. Same pull motion \u2014 elbows drive down to ribs.",points:["Kneel, don't sit","Core braces for stability","Elbows drive down","Great core + lat combo"]},
-  b13:{name:"Rack Pull",muscle:"Back + Posterior Chain",group:"back",icon:"\uD83D\uDD19",tag:"Partial deadlift",rest:240,inc:10,sets:3,reps:"5",repsMin:5,eq:["barbell"],cues:"Like a deadlift but bar starts at knee height. Allows heavier loading of the back. Great for upper back thickness.",points:["Bar at knee height","Same back position as DL","Heavier than full DL","Builds upper back thickness"]},
-  b14:{name:"Resistance Band Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"Home or warmup row",rest:60,inc:0,sets:3,reps:"15",repsMin:15,eq:["resistance_band"],cues:"Band around a post or feet. Row elbows back, squeeze blades. Perfect for warming up or at home.",points:["Band fixed around anchor","Row elbows back","Squeeze shoulder blades","Great warmup exercise"]},
-  // -- CHEST (extra) ------------------------------------------------------------
-  c9:{name:"Chest Press Machine",muscle:"Chest",group:"chest",icon:"\uD83D\uDCAA",tag:"Controlled chest press",rest:75,inc:5,sets:3,reps:"12",repsMin:12,eq:["machine"],cues:"Adjust seat so handles are at chest height. Press straight out. Machine guides the path \u2014 good for feeling the chest working.",points:["Handles at chest height","Press straight out","Squeeze at full extension","Great mind-muscle connection"]},
-  c10:{name:"Floor Press",muscle:"Chest + Triceps",group:"chest",icon:"\uD83D\uDCAA",tag:"Half range press",rest:90,inc:5,sets:3,reps:"10",repsMin:10,eq:["barbell","dumbbell"],cues:"Lie on floor, arms bend until triceps hit floor. Eliminates leg drive and reduces shoulder strain. Great for triceps.",points:["Lie flat on floor","Stop when triceps touch floor","No leg drive","Shoulder-friendly variation"]},
-  c11:{name:"Incline Chest Press Machine",muscle:"Upper Chest",group:"chest",icon:"\uD83D\uDCAA",tag:"Machine upper chest",rest:75,inc:5,sets:3,reps:"12",repsMin:12,eq:["machine"],cues:"Inclined machine press. Adjust seat low so arms press upward. Targets upper chest without shoulder strain.",points:["Seat adjusted low","Arms press upward","Hits upper chest hard","Shoulder-friendly"]},
-  c12:{name:"High to Low Cable Fly",muscle:"Lower Chest",group:"chest",icon:"\uD83D\uDCAA",tag:"Lower chest definition",rest:60,inc:2.5,sets:3,reps:"15",repsMin:15,eq:["cable"],cues:"Cables at top position. Arc downward and inward. Hits lower chest where it meets the abs. Great for shape.",points:["Cables at top","Arc downward and in","Slight forward lean","Lower chest focus"]},
-  // -- SHOULDERS (extra) --------------------------------------------------------
-  sh8:{name:"Cable Upright Row",muscle:"Shoulders + Traps",group:"shoulders",icon:"\uD83C\uDFCB\uFE0F",tag:"Cable upright row",rest:60,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["cable"],cues:"Low cable, pull straight up to chin. Elbows lead and flare out. Hits side delts and traps.",points:["Cable at lowest setting","Pull to chin","Elbows flare out and lead","Wide grip is safer on shoulders"]},
-  sh9:{name:"Band Pull-Apart",muscle:"Rear Delts + Upper Back",group:"shoulders",icon:"\uD83C\uDFCB\uFE0F",tag:"Posture essential",rest:45,inc:0,sets:3,reps:"20",repsMin:20,eq:["resistance_band"],cues:"Hold band in front at chest height, arms straight. Pull apart until band touches chest. Never skip this for posture.",points:["Band at chest height","Arms straight","Pull until band hits chest","Do these DAILY for posture"]},
-  sh10:{name:"Seated Dumbbell Press",muscle:"Shoulders",group:"shoulders",icon:"\uD83C\uDFCB\uFE0F",tag:"Seated variation",rest:90,inc:2.5,sets:3,reps:"10",repsMin:10,eq:["dumbbell"],cues:"Seated with back support. Dumbbells at ear level. Press overhead. Seated removes the temptation to lean back.",points:["Sit with back supported","Dumbbells at ears","Press straight up","Less cheating than standing"]},
-  sh11:{name:"Plate Front Raise",muscle:"Front Delts",group:"shoulders",icon:"\uD83C\uDFCB\uFE0F",tag:"Plate variation",rest:60,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["barbell"],cues:"Hold a weight plate with both hands. Raise to eye level. The plate shape makes you grip differently \u2014 hits front delts.",points:["Hold plate with both hands","Raise to eye level","Slow controlled descent","Different feel from dumbbells"]},
-  // -- ARMS (extra) -------------------------------------------------------------
-  a10:{name:"Incline Dumbbell Curl",muscle:"Biceps (long head)",group:"arms",icon:"\uD83D\uDCAA",tag:"Best for bicep peak",rest:60,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["dumbbell"],cues:"Sit on incline bench, arms hang behind you. Curl up. The stretched starting position hits the long head for peak.",points:["Sit on incline bench","Arms hang naturally behind","Don't swing to start","Best exercise for bicep peak"]},
-  a11:{name:"Concentration Curl",muscle:"Biceps",group:"arms",icon:"\uD83D\uDCAA",tag:"Strict isolation",rest:60,inc:2.5,sets:3,reps:"12 each",repsMin:12,uni:true,eq:["dumbbell"],cues:"Seated, elbow braced against inner thigh. Curl up \u2014 no swing possible. Best way to feel bicep contracting.",points:["Elbow braced on thigh","No swing possible","Full contraction at top","Best mind-muscle bicep"]},
-  a12:{name:"Tricep Dips",muscle:"Triceps",group:"arms",icon:"\uD83D\uDCAA",tag:"Bodyweight triceps",rest:75,inc:0,sets:3,reps:"max",repsMin:8,eq:["bodyweight","machine"],cues:"Hands on bench or bars. Lower until elbows hit 90\u00B0. Use machine assist if needed. Stay upright for more tricep.",points:["Stay upright","Elbows go to 90\u00B0","Don't flare elbows","Lean forward = more chest, upright = more tricep"]},
-  a13:{name:"Zottman Curl",muscle:"Biceps + Forearms",group:"arms",icon:"\uD83D\uDCAA",tag:"Curls both ways",rest:60,inc:2.5,sets:3,reps:"10",repsMin:10,eq:["dumbbell"],cues:"Curl up with palms up, rotate to palms down at the top, lower with palms facing down. Works biceps AND forearms.",points:["Curl up palms facing up","Rotate at the top","Lower with palms down","Works 2 muscles in 1 move"]},
-  a14:{name:"21s",muscle:"Biceps",group:"arms",icon:"\uD83D\uDCAA",tag:"Bicep finisher",rest:60,inc:2.5,sets:3,reps:"21",repsMin:21,eq:["barbell","dumbbell","cable"],cues:"7 reps bottom half, 7 reps top half, 7 full reps = 21. Exhausts every range of the bicep in one set.",points:["7 reps bottom half (0-90\u00B0)","7 reps top half (90\u00B0-top)","7 full range reps","Bicep completely done after this"]},
-  a15:{name:"Skull Crusher with Dumbbell",muscle:"Triceps",group:"arms",icon:"\uD83D\uDCAA",tag:"Dumbbell variation",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["dumbbell"],cues:"Same as barbell but uses dumbbells. Arms slightly back, lower to temples, extend up. Easier on wrists than barbell.",points:["Arms angled slightly back","Lower to temples","Easier on wrists","Neutral grip option"]},
-  // -- CORE (extra) --------------------------------------------------------------
-  co7:{name:"Dead Bug",muscle:"Core (anti-rotation)",group:"core",icon:"\uD83D\uDD25",tag:"Back-safe core",rest:45,inc:0,sets:3,reps:"10 each",repsMin:10,eq:["bodyweight"],cues:"Lie on back, arms up, knees at 90\u00B0. Extend opposite arm and leg simultaneously. Lower back stays pressed to floor.",points:["Lower back stays flat","Opposite arm and leg extend","Slow and controlled","Best back-safe core exercise"]},
-  co8:{name:"Bird Dog",muscle:"Core + Back",group:"core",icon:"\uD83D\uDD25",tag:"Balance + core",rest:45,inc:0,sets:3,reps:"10 each",repsMin:10,eq:["bodyweight"],cues:"On all fours, extend opposite arm and leg. Hold 2 seconds. Excellent for spine stability and lower back health.",points:["On all fours","Extend opposite arm and leg","Hold 2 seconds","Great for spine health"]},
-  co9:{name:"Hollow Body Hold",muscle:"Core",group:"core",icon:"\uD83D\uDD25",tag:"Gymnast core",rest:60,inc:0,sets:3,reps:"20-30 sec",repsMin:1,eq:["bodyweight"],cues:"Lie on back, arms extended overhead, legs straight. Lift everything slightly off floor. Lower back pressed down. This is what gymnasts use.",points:["Lower back pressed flat","Arms and legs both lifted","Everything slightly off floor","True core tension throughout"]},
-  co10:{name:"Bicycle Crunch",muscle:"Obliques + Abs",group:"core",icon:"\uD83D\uDD25",tag:"Oblique and abs together",rest:45,inc:0,sets:3,reps:"20 total",repsMin:20,eq:["bodyweight"],cues:"Alternate elbow to opposite knee with legs cycling. Don't pull your neck. The rotation hits obliques.",points:["Don't pull your neck","Elbow to opposite knee","Legs fully extend","Slow for more muscle, fast for cardio"]},
-  co11:{name:"Side Plank",muscle:"Obliques",group:"core",icon:"\uD83D\uDD25",tag:"Oblique stability",rest:45,inc:0,sets:3,reps:"30 sec each",repsMin:1,uni:true,eq:["bodyweight"],cues:"Side position, one elbow on floor, hips stacked. Hold. Progress to raising the top leg or adding rotation.",points:["Hips stacked, not sagging","Body in straight line","Top arm can extend up","Progress by raising top leg"]},
-  co12:{name:"Leg Raise",muscle:"Lower Abs",group:"core",icon:"\uD83D\uDD25",tag:"Lower ab focus",rest:45,inc:0,sets:3,reps:"15",repsMin:15,eq:["bodyweight"],cues:"Lie flat. Raise straight legs to 90\u00B0 then lower slowly. Don't let feet touch floor between reps. Lower back stays down.",points:["Legs stay straight","Lower back stays flat","Slow the descent","Don't let feet touch"]},
-  // -- CARDIO + FULL BODY --------------------------------------------------------
-  fb1:{name:"Farmers Carry",muscle:"Full Body + Grip",group:"core",icon:"\uD83C\uDFCB\uFE0F",tag:"Functional strength",rest:90,inc:5,sets:3,reps:"40 steps",repsMin:40,eq:["dumbbell","barbell"],cues:"Pick up heavy dumbbells, walk with perfect posture. Builds grip, core, traps, and everything else. Underrated.",points:["Stand tall, chest up","Short controlled steps","Heavy as possible","Builds everything at once"]},
-  fb2:{name:"Battle Ropes",muscle:"Full Body + Cardio",group:"core",icon:"\uD83D\uDD25",tag:"Conditioning",rest:60,inc:0,sets:3,reps:"30 sec",repsMin:1,eq:["machine"],cues:"Alternate waves, slams, or circles. 30 seconds hard. Great for conditioning without impact on joints.",points:["Stay in slight squat","Drive from the hips","Arms stay slightly bent","Great low-impact conditioning"]},
-  fb3:{name:"Box Jump",muscle:"Legs + Explosive Power",group:"quads",icon:"\uD83E\uDDB5",tag:"Power development",rest:90,inc:0,sets:3,reps:"8",repsMin:8,eq:["bodyweight"],cues:"Squat slightly, jump onto box landing softly with bent knees. Step down, don't jump down. Builds explosive glute power.",points:["Squat to load","Land softly, knees bent","Step down (don't jump)","Explosive glute activation"]},
-  fb4:{name:"Jump Rope",muscle:"Calves + Cardio",group:"calves",icon:"\uD83E\uDDB5",tag:"Calf and cardio",rest:60,inc:0,sets:3,reps:"60 sec",repsMin:1,eq:["bodyweight"],cues:"Stay on the balls of your feet. Wrists turn the rope, not your whole arm. Great calf builder and warmup.",points:["Stay on balls of feet","Wrists turn the rope","Slight knee bend","Great as warmup or finisher"]},
-  // -- CALVES (extra) -----------------------------------------------------------
-  ca3:{name:"Single Leg Calf Raise",muscle:"Calves",group:"calves",icon:"\uD83E\uDDB5",tag:"Unilateral calf",rest:45,inc:5,sets:4,reps:"15 each",repsMin:15,uni:true,eq:["bodyweight","dumbbell","machine"],cues:"One foot only. Full stretch at bottom. Calves respond to full range and high reps. Harder than bilateral \u2014 really feel the burn.",points:["Full stretch at bottom","Single leg only","High reps work best","Hold something for balance"]},
-  ca4:{name:"Donkey Calf Raise",muscle:"Calves (gastrocnemius)",group:"calves",icon:"\uD83E\uDDB5",tag:"Old school calf builder",rest:45,inc:5,sets:4,reps:"20",repsMin:20,eq:["machine","bodyweight"],cues:"Hinge forward with weight on lower back or use machine. Extended hip position pre-stretches the calf. Maximum stretch.",points:["Hinge forward at hips","Maximizes calf stretch","Full range is key","Old school bodybuilding staple"]},
 
-  // -- FULL BODY --------------------------------------------------------------
-  fb5:{name:"Burpee",muscle:"Full Body",group:"fullbody",icon:"\uD83D\uDD25",tag:"Total body conditioning",rest:60,inc:0,sets:3,reps:"10",repsMin:10,eq:["bodyweight"],cues:"Squat down, jump feet back to plank, do a push-up, jump feet forward, explode up and jump. Modify: step instead of jump, skip push-up.",points:["Modify by stepping not jumping","Explode up at the top","Keep core tight in plank","Full range of motion every rep"]},
-  fb6:{name:"Thruster",muscle:"Legs + Shoulders",group:"fullbody",icon:"\uD83C\uDFCB\uFE0F",tag:"Squat + press combo",rest:90,inc:5,sets:3,reps:"10",repsMin:10,eq:["barbell","dumbbell"],cues:"Front squat into overhead press \u2014 one continuous movement. Drive up from the squat and use that momentum to press overhead. Brutally effective.",points:["Front rack position","Drive from legs into press","One fluid movement","Great for conditioning"]},
-  fb7:{name:"Kettlebell Swing",muscle:"Posterior Chain",group:"fullbody",icon:"\uD83D\uDD14",tag:"Hip hinge power",rest:60,inc:5,sets:3,reps:"20",repsMin:20,eq:["dumbbell"],cues:"Hinge at hips, swing bell between legs, drive hips forward to project bell to chest height. This is a hip hinge \u2014 NOT a squat. Power comes from glutes.",points:["Hinge at hips, not squat","Hips drive the swing","Bell chest height at top","Glutes do the work"]},
-  fb8:{name:"Sled Push",muscle:"Full Body + Legs",group:"fullbody",icon:"\u26A1",tag:"Pure power conditioning",rest:90,inc:10,sets:4,reps:"20-30 yards",repsMin:1,eq:["machine"],cues:"Low athletic stance, drive the sled forward with powerful leg drive, keeping your back flat and arms extended.",points:["Low, powerful stance","Drive through the legs","Back stays flat","No eccentric \u2014 easy on joints"]},
-  fb9:{name:"Renegade Row",muscle:"Back + Core + Arms",group:"fullbody",icon:"\uD83D\uDCAA",tag:"Plank + row combo",rest:75,inc:2.5,sets:3,reps:"8 each",repsMin:8,uni:true,eq:["dumbbell"],cues:"High plank on dumbbells. Row one arm at a time while preventing hip rotation. Core works overtime to stay square. Start light.",points:["Feet wide for stability","Don't rotate hips","Row to hip not armpit","Anti-rotation core work"]},
-  fb10:{name:"Mountain Climber",muscle:"Core + Cardio",group:"fullbody",icon:"\uD83D\uDD25",tag:"Cardio + core",rest:45,inc:0,sets:3,reps:"30 sec",repsMin:1,eq:["bodyweight"],cues:"High plank. Drive knees to chest alternating rapidly. Keep hips down. Slow = more core. Fast = more cardio. Both are valid.",points:["Hips stay level and down","Drive knee toward chest","Slow for core, fast for cardio","Full plank tension throughout"]},
-  fb11:{name:"Devil's Press",muscle:"Full Body",group:"fullbody",icon:"\uD83D\uDE08",tag:"Hardest dumbbell exercise",rest:90,inc:2.5,sets:3,reps:"8",repsMin:8,eq:["dumbbell"],cues:"Dumbbells on floor, burpee down, row both dumbbells at bottom, jump to standing, snatch both overhead in one move. Combines everything.",points:["Burpee with dumbbells","Row at the bottom","Snatch overhead to finish","Start VERY light"]},
-  fb12:{name:"Dumbbell Squat to Press",muscle:"Legs + Shoulders",group:"fullbody",icon:"\uD83D\uDCAA",tag:"Legs and shoulders together",rest:75,inc:2.5,sets:3,reps:"12",repsMin:12,eq:["dumbbell"],cues:"Dumbbells at shoulders. Squat fully down, then as you stand up, press overhead. Separate the squat from the press \u2014 squat first, press second.",points:["Squat to full depth first","Stand, then press","Don't rush the sequence","Great beginner full body"]},
-  fb13:{name:"Bear Crawl",muscle:"Full Body Stability",group:"fullbody",icon:"\uD83D\uDC3B",tag:"Primal movement",rest:60,inc:0,sets:3,reps:"20 steps",repsMin:20,eq:["bodyweight"],cues:"On hands and feet, knees hover 2 inches off ground. Move opposite hand and foot simultaneously. Core stays completely rigid. Harder than it looks.",points:["Knees hover 2 inches up","Opposite arm and leg move","Stay low, core rigid","Looks easy, absolutely isn't"]},
-  fb14:{name:"Clean and Press",muscle:"Full Body Power",group:"fullbody",icon:"\uD83C\uDFCB\uFE0F",tag:"Olympic lift variation",rest:240,inc:5,sets:3,reps:"6",repsMin:6,eq:["barbell","dumbbell"],cues:"Pull bar from hip height to shoulder (clean), then press overhead. Combines a hip hinge pull with an overhead press. Use dumbbells first to learn the movement.",points:["Clean: pull to front rack","Dip and drive for press","Dumbbells are easier to learn","Power from hip extension"]},
-  // -- CARDIO MACHINES (in-gym) --------------------------------------------------
-  fb21:{name:"Treadmill",muscle:"Legs + Cardio",group:"fullbody",icon:"\uD83C\uDFC3",tag:"Steady-state or intervals",rest:0,inc:0,sets:1,reps:"15-30 min",repsMin:1,eq:["machine"],noWeight:true,cues:"Life Fitness and Precor treadmills at most commercial gyms: set incline 1-2% to mimic outdoor resistance. Start at a walk to warm up, then either hold steady pace or alternate 1 min fast / 2 min recovery for intervals. Use the side rails only to step on/off, not to hold while running.",points:["Incline 1-2% mimics outdoor terrain","Warm up at a walk first","Intervals: 1 min fast, 2 min recovery","Don't grip the handrails while moving"]},
-  fb22:{name:"Elliptical",muscle:"Full Body + Cardio",group:"fullbody",icon:"\uD83D\uDD25",tag:"Low-impact cardio",rest:0,inc:0,sets:1,reps:"15-30 min",repsMin:1,eq:["machine"],noWeight:true,cues:"Precor and Life Fitness ellipticals let you push/pull the handles for upper body or let go and swing arms freely for legs-only. Increase resistance level rather than stride speed to raise intensity without joint strain. Great option on sore-joint days.",points:["Push/pull handles for upper body work","Raise resistance, not just speed","Zero impact on knees and hips","Good choice on sore-joint days"]},
-  fb23:{name:"Stationary Bike",muscle:"Quads + Cardio",group:"quads",icon:"\uD83D\uDEB4",tag:"Low-impact leg cardio",rest:0,inc:0,sets:1,reps:"15-30 min",repsMin:1,eq:["machine"],noWeight:true,cues:"Upright or recumbent bike (Life Fitness, Precor, Cybex). Seat height: slight bend in the knee at the bottom of the pedal stroke. Recumbent option is easier on the lower back if that's a concern.",points:["Seat height: slight knee bend at bottom","Recumbent = easier on lower back","Keep cadence steady, adjust resistance","Zero impact, good recovery-day option"]},
-  fb24:{name:"Stair Climber",muscle:"Glutes + Cardio",group:"fullbody",icon:"\uD83E\uDDB5",tag:"Glute-focused cardio",rest:0,inc:0,sets:1,reps:"10-20 min",repsMin:1,eq:["machine"],noWeight:true,cues:"StairMaster or Cybex stepmill: stand tall, avoid leaning on the handrails (that removes the glute work). Take full steps rather than tiny quick ones. Light hand-rest for balance only, not weight support.",points:["Stand tall, avoid leaning on rails","Full steps, not tiny quick ones","Hands rest lightly, don't bear weight","Great glute-focused warmup"]},
-  fb25:{name:"ARC Trainer",muscle:"Glutes + Quads + Cardio",group:"fullbody",icon:"\uD83D\uDD25",tag:"Low-impact glute/quad cardio",rest:0,inc:0,sets:1,reps:"15-30 min",repsMin:1,eq:["machine"],noWeight:true,cues:"Cybex ARC Trainer: adjust the ramp/incline to shift emphasis toward glutes (higher ramp) or quads (lower ramp). The foot path is an arc, not a circle like an elliptical, so it feels different \u2014 give it a minute to adjust.",points:["Higher ramp = more glute emphasis","Lower ramp = more quad emphasis","Zero impact, joint-friendly","Takes a minute to get used to the motion"]},
-  fb26:{name:"Rowing Machine",muscle:"Back + Legs + Cardio",group:"back",icon:"\uD83D\uDEA3",tag:"Full body pull cardio",rest:0,inc:0,sets:1,reps:"10-20 min",repsMin:1,eq:["machine"],noWeight:true,cues:"Concept2 or Life Fitness rower. Sequence is legs, then back, then arms on the drive; reverse it on the recovery \u2014 arms, then back, then legs. Most beginners pull too much with arms too early; let the legs do most of the work.",points:["Drive order: legs, back, arms","Recovery order: arms, back, legs","Legs do most of the work, not arms","Keep back flat, don't round forward"]},
-  fb15:{name:"Wall Ball",muscle:"Legs + Shoulders + Core",group:"fullbody",icon:"\uD83C\uDFC0",tag:"Full body conditioning",rest:60,inc:0,sets:3,reps:"15",repsMin:15,eq:["medicine_ball"],cues:"Hold medicine ball, squat deep, explode up and throw ball to a wall target at 10 feet. Catch, immediately squat into next rep. Non-stop flow.",points:["Squat deep before throw","Use leg drive to throw","Catch and flow into next squat","Target 10 feet up on wall"]},
-  fb16:{name:"T Push-Up",muscle:"Chest + Core + Rotation",group:"fullbody",icon:"\uD83D\uDCAA",tag:"Push-up with rotation",rest:60,inc:0,sets:3,reps:"8 each",repsMin:8,uni:true,eq:["bodyweight","dumbbell"],cues:"Push-up, then rotate to side plank raising one arm to ceiling. Targets chest, obliques, and shoulder stability in one move.",points:["Push-up first, then rotate","Stack feet or stagger for balance","Arm points straight up","Slow rotation = more oblique work"]},
+interface KindParams {
+  sets: number; reps: string; repsMin: number; rest: number; inc: number;
+  tag: string; cues: string; points: string[];
+}
 
-  // -- GLUTES (expanded) ---------------------------------------------------------
-  g17:{name:"Barbell Glute Bridge",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"Ground-based bridge",rest:75,inc:5,sets:3,reps:"12",repsMin:12,eq:["barbell","bodyweight"],cues:"Shoulders stay on the floor (not a bench), bar across hips. Drive up through heels, squeeze glutes hard at the top.",points:["Shoulders stay on floor","Drive through heels","Squeeze hard at top","Good regression from hip thrust"]},
-  g19:{name:"Monster Walk",muscle:"Glutes (outer)",group:"glutes",icon:"\uD83C\uDF51",tag:"Diagonal band walk",rest:45,inc:0,sets:3,reps:"10 steps each direction",repsMin:10,eq:["resistance_band"],cues:"Band above knees, walk forward and diagonally in a mini-squat stance, keeping tension on the band throughout.",points:["Mini-squat stance","Walk diagonally forward","Constant band tension","Great warm-up activator"]},
-  g20:{name:"Banded Lateral Walk",muscle:"Glutes (outer)",group:"glutes",icon:"\uD83C\uDF51",tag:"Activation + warm-up",rest:45,inc:0,sets:3,reps:"15 steps each way",repsMin:15,eq:["resistance_band"],cues:"Band above knees or ankles, slight squat stance. Step sideways keeping tension on the band the whole time.",points:["Stay in a mini-squat","Keep constant band tension","Don't let knees cave in","Common warm-up staple"]},
-  g21:{name:"Standing Cable Hip Extension",muscle:"Glutes",group:"glutes",icon:"\uD83C\uDF51",tag:"Standing isolation",rest:60,inc:2.5,sets:3,reps:"15 each",repsMin:15,uni:true,eq:["cable"],cues:"Ankle strap on cable, stand facing the machine holding on for balance. Drive the leg straight back and up, squeezing at the top.",points:["Hold on for balance","Drive leg straight back","Squeeze glute at top","Keep torso mostly still"]},
-  g22:{name:"Zercher Squat",muscle:"Glutes + Quads + Core",group:"glutes",icon:"\uD83C\uDF51",tag:"Front-loaded squat",rest:90,inc:5,sets:3,reps:"8-10",repsMin:8,eq:["barbell"],cues:"Bar cradled in the crooks of your elbows. Squat upright, core braced hard the whole way down.",points:["Bar sits in elbow creases","Torso stays upright","Brace your core hard","Pad the bar if needed"]},
-  g23:{name:"Landmine Squat",muscle:"Glutes + Quads",group:"glutes",icon:"\uD83C\uDF51",tag:"Joint-friendly squat",rest:75,inc:5,sets:3,reps:"12",repsMin:12,eq:["barbell","machine"],cues:"Hold the end of a landmine bar at chest height. Squat down keeping the bar close, drive up through heels.",points:["Bar stays close to chest","Drive through heels","Easier on the lower back","Great beginner squat pattern"]},
-  g24:{name:"Pistol Squat",muscle:"Glutes + Quads + Balance",group:"glutes",icon:"\uD83E\uDDB5",tag:"Advanced single-leg",rest:90,inc:0,sets:3,reps:"5 each",repsMin:5,uni:true,eq:["bodyweight"],cues:"One leg extended out front, squat all the way down on the other. Use a chair or TRX for assistance at first.",points:["Extend the free leg forward","Use support if needed at first","Full depth on standing leg","Builds serious single-leg strength"]},
-  g26:{name:"Deficit Reverse Lunge",muscle:"Glutes + Hamstrings",group:"glutes",icon:"\uD83E\uDDB5",tag:"Extra range of motion",rest:75,inc:2.5,sets:3,reps:"10 each",repsMin:10,uni:true,eq:["bodyweight","dumbbell"],cues:"Stand on a small platform, step one leg back and down into a lunge. The extra height means a deeper stretch.",points:["Stand on a plate or step","Step back into deep lunge","Deeper stretch than flat ground","Control the descent"]},
-
-  // -- HAMSTRINGS (expanded) ------------------------------------------------------
-  h9:{name:"Sliding Leg Curl",muscle:"Hamstrings",group:"hamstrings",icon:"\uD83E\uDDB5",tag:"Sliders or towel variation",rest:60,inc:0,sets:3,reps:"10-12",repsMin:10,eq:["bodyweight"],cues:"Lie on back, heels on sliders or a towel on a smooth floor, hips lifted. Slide feet out straight, then curl back in.",points:["Hips stay lifted","Slide feet out fully","Curl back in with hamstrings","No equipment needed"]},
-  h10:{name:"Trap Bar Deadlift",muscle:"Hamstrings + Glutes + Back",group:"hamstrings",icon:"\uD83D\uDD19",tag:"Beginner-friendly deadlift",rest:120,inc:5,sets:3,reps:"8",repsMin:8,eq:["barbell"],cues:"Step inside the trap bar, hinge down keeping your chest up, drive through the floor to stand. Easier on the back than a straight bar.",points:["Stand inside the bar","Chest stays up","Drive through the floor","More beginner-friendly than barbell deadlift"]},
-  h12:{name:"Glute-Ham Raise",muscle:"Hamstrings + Glutes",group:"hamstrings",icon:"\uD83E\uDDB5",tag:"Advanced hamstring builder",rest:90,inc:0,sets:3,reps:"6-10",repsMin:6,eq:["machine"],cues:"Anchor feet in the GHD, lower your torso forward under control, then curl back up using your hamstrings.",points:["Feet anchored securely","Lower under full control","Curl back up with hamstrings","Very advanced \u2014 progress slowly"]},
-  h13:{name:"Dumbbell Stiff-Leg Deadlift",muscle:"Hamstrings",group:"hamstrings",icon:"\uD83D\uDD19",tag:"Straighter-leg variation",rest:75,inc:5,sets:3,reps:"10-12",repsMin:10,eq:["dumbbell"],cues:"Legs stay straighter than an RDL (small knee bend only). Hinge at hips, dumbbells trace down your shins.",points:["Legs straighter than RDL","Dumbbells trace shins","Deep hamstring stretch","Keep back flat throughout"]},
-
-  // -- QUADS (expanded) ------------------------------------------------------------
-  q11:{name:"Cyclist Squat",muscle:"Quads",group:"quads",icon:"\uD83E\uDDB5",tag:"Heel-elevated squat",rest:75,inc:5,sets:3,reps:"12",repsMin:12,eq:["dumbbell","bodyweight"],cues:"Heels elevated on a small plate or wedge, feet close together. Squat down keeping your torso very upright \u2014 pure quad focus.",points:["Heels elevated on a plate","Feet close together","Torso stays very upright","Maximum quad isolation"]},
-  q12:{name:"Single-Leg Leg Press",muscle:"Quads",group:"quads",icon:"\uD83E\uDDB5",tag:"Unilateral leg press",rest:75,inc:5,sets:3,reps:"10 each",repsMin:10,uni:true,eq:["machine"],cues:"One foot on the platform at a time. Press through the heel, control the descent, never lock the knee out at the top.",points:["One leg at a time","Press through the heel","Never lock the knee out","Great for fixing imbalances"]},
-  q13:{name:"Bulgarian Split Squat (quad-focused)",muscle:"Quads",group:"quads",icon:"\uD83E\uDDB5",tag:"Upright torso variation",rest:90,inc:5,sets:3,reps:"10 each",repsMin:10,uni:true,eq:["bodyweight","dumbbell"],cues:"Same setup as the glute version, but keep your torso upright instead of leaning forward \u2014 this shifts the emphasis to quads.",points:["Back foot elevated","Torso stays upright","Front knee tracks over toes","Upright = more quad focus"]},
-  q14:{name:"Landmine Reverse Lunge",muscle:"Quads + Glutes",group:"quads",icon:"\uD83E\uDDB5",tag:"Joint-friendly lunge",rest:75,inc:5,sets:3,reps:"10 each",repsMin:10,uni:true,eq:["barbell","machine"],cues:"Hold the landmine bar at chest height, step back into a reverse lunge. The counterbalance makes this easier to control than a barbell.",points:["Bar held at chest","Step back into lunge","Easier balance than free barbell","Front knee tracks toes"]},
-  q15:{name:"Dumbbell Step-Down",muscle:"Quads + Balance",group:"quads",icon:"\uD83E\uDDB5",tag:"Eccentric control",rest:60,inc:2.5,sets:3,reps:"10 each",repsMin:10,uni:true,eq:["bodyweight","dumbbell"],cues:"Stand on a box, slowly lower one leg down to lightly tap the floor, then push back up. All about the slow negative.",points:["Slow controlled lowering","Light tap, don't collapse","Push back up through the standing leg","Great knee-friendly builder"]},
-
-  // -- BACK (expanded) --------------------------------------------------------------
-  b15:{name:"Pendlay Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"Explosive dead-stop row",rest:90,inc:5,sets:3,reps:"8",repsMin:8,eq:["barbell"],cues:"Torso parallel to floor, bar starts on the ground each rep. Pull explosively to the lower chest, reset fully between reps.",points:["Bar rests on floor between reps","Torso stays parallel","Pull explosively","Full reset each rep"]},
-  b17:{name:"Straight-Arm Pulldown",muscle:"Lats",group:"back",icon:"\uD83D\uDD19",tag:"Lat isolation",rest:60,inc:2.5,sets:3,reps:"12-15",repsMin:12,eq:["cable"],cues:"Arms stay nearly straight the whole rep. Pull the bar down in an arc to your thighs, feeling it purely in the lats.",points:["Arms stay almost straight","Pull in an arc to thighs","Pure lat isolation","No elbow bending"]},
-  b18:{name:"Seal Row",muscle:"Mid Back",group:"back",icon:"\uD83D\uDD19",tag:"Chest-supported, no cheating",rest:75,inc:5,sets:3,reps:"10-12",repsMin:10,eq:["barbell","machine"],cues:"Lying face-down on a raised bench, pull the bar straight up to your chest. Zero momentum possible \u2014 pure back isolation.",points:["Lying face-down on bench","Pull straight up to chest","Zero body momentum","Very strict back builder"]},
-  b19:{name:"Inverted Row",muscle:"Mid Back + Biceps",group:"back",icon:"\uD83D\uDD19",tag:"Bodyweight row",rest:75,inc:0,sets:3,reps:"10-15",repsMin:10,eq:["bodyweight"],cues:"Under a bar or rings, body straight, pull your chest up to the bar. Raise your feet to make it harder, bend knees to make it easier.",points:["Body stays straight","Pull chest to bar","Feet higher = harder","Adjustable for any level"]},
-  b20:{name:"Kroc Row",muscle:"Back + Grip",group:"back",icon:"\uD83D\uDD19",tag:"Heavy high-rep row",rest:90,inc:5,sets:2,reps:"15-20 each",repsMin:15,uni:true,eq:["dumbbell"],cues:"A heavier, higher-rep single-arm row. Some body English is fine here \u2014 it's meant to build raw pulling strength and grip.",points:["Go heavier than usual","Higher reps than typical rows","Some momentum is okay here","Builds grip and pulling strength"]},
-  b21:{name:"Dumbbell Shrug",muscle:"Traps",group:"back",icon:"\uD83D\uDD19",tag:"Trap builder",rest:60,inc:5,sets:3,reps:"12-15",repsMin:12,eq:["dumbbell","barbell"],cues:"Arms straight, shrug shoulders straight up toward your ears. Hold briefly at the top, don't roll your shoulders.",points:["Straight up, not rolled","Hold briefly at top","Arms stay straight","Heavy weight works well here"]},
-
-  // -- CHEST (expanded) -------------------------------------------------------------
-  c13:{name:"Incline Barbell Press",muscle:"Upper Chest",group:"chest",icon:"\uD83D\uDCAA",tag:"Upper chest builder",rest:90,inc:5,sets:3,reps:"8-10",repsMin:8,eq:["barbell"],cues:"Bench at 30-45\u00B0. Lower the bar to your upper chest, press up and slightly back. Don't set the incline too steep or shoulders take over.",points:["30-45\u00B0 incline only","Bar to upper chest","Press up and slightly back","Too steep = shoulder takeover"]},
-  c14:{name:"Decline Bench Press",muscle:"Lower Chest",group:"chest",icon:"\uD83D\uDCAA",tag:"Lower chest focus",rest:90,inc:5,sets:3,reps:"10",repsMin:10,eq:["barbell","dumbbell"],cues:"Bench angled down slightly. Lower the bar to your lower chest, press straight up. Have a spotter for heavier loads.",points:["Slight downward angle","Bar to lower chest","Press straight up","Use a spotter if heavy"]},
-  c15:{name:"Svend Press",muscle:"Chest (inner)",group:"chest",icon:"\uD83D\uDCAA",tag:"Inner chest squeeze",rest:60,inc:0,sets:3,reps:"15",repsMin:15,eq:["dumbbell"],cues:"Press two plates together at chest height, then push them straight out and back. Constant tension on the inner chest.",points:["Squeeze plates together hard","Push straight out and back","Constant tension \u2014 no rest at any point","Light weight, high squeeze"]},
-  c16:{name:"Landmine Press",muscle:"Chest + Shoulders",group:"chest",icon:"\uD83D\uDCAA",tag:"Shoulder-friendly press",rest:75,inc:5,sets:3,reps:"10 each",repsMin:10,uni:true,eq:["barbell","machine"],cues:"Hold the landmine bar at shoulder height, press up and slightly forward at an angle. Easier on the shoulders than a straight overhead press.",points:["Press at an angle, not straight up","Easier on shoulders","Can do one or two arms","Good beginner pressing pattern"]},
-  c17:{name:"Single-Arm Cable Crossover",muscle:"Chest (inner)",group:"chest",icon:"\uD83D\uDCAA",tag:"Unilateral fly",rest:60,inc:2.5,sets:3,reps:"12 each",repsMin:12,uni:true,eq:["cable"],cues:"One arm at a time, pull the cable across your body to the opposite hip, squeezing your chest at the finish.",points:["One arm at a time","Pull across to opposite hip","Squeeze chest at the end","Great mind-muscle isolation"]},
-
-  // -- SHOULDERS (expanded) ----------------------------------------------------------
-  sh12:{name:"Cuban Press",muscle:"Shoulders (rotator cuff)",group:"shoulders",icon:"\uD83E\uDD1D",tag:"Shoulder health combo",rest:60,inc:0,sets:3,reps:"10-12",repsMin:10,eq:["dumbbell"],cues:"Upright row to elbow height, external rotation to a goal-post position, then press overhead. Three movements in one, light weight only.",points:["Three phases in one rep","Keep weight light","Great rotator cuff exercise","Slow and controlled throughout"]},
-  sh13:{name:"Landmine Lateral Raise",muscle:"Side Delts",group:"shoulders",icon:"\uD83E\uDD1D",tag:"Alternative lateral raise",rest:60,inc:0,sets:3,reps:"12 each",repsMin:12,uni:true,eq:["barbell","machine"],cues:"Hold the landmine bar with one hand, raise it out to the side to shoulder height, control the descent.",points:["One hand on the bar","Raise to shoulder height","Control the negative","Good alternative to dumbbells"]},
-  sh14:{name:"Behind-the-Back Cable Raise",muscle:"Side Delts",group:"shoulders",icon:"\uD83E\uDD1D",tag:"Constant tension lateral",rest:60,inc:2.5,sets:3,reps:"12-15",repsMin:12,uni:true,eq:["cable"],cues:"Cable behind you at low height, raise your arm out to the side across your body. Keeps tension on the delt through the whole rep.",points:["Cable positioned behind you","Raise out and across","Constant tension throughout","Different angle than dumbbells"]},
-  sh15:{name:"Bus Driver",muscle:"Front + Side Delts + Core",group:"shoulders",icon:"\uD83E\uDD1D",tag:"Rotational shoulder move",rest:60,inc:0,sets:3,reps:"10 each way",repsMin:10,eq:["dumbbell"],cues:"Hold a light plate or dumbbell out in front, rotate it side to side like turning a steering wheel, arms staying extended.",points:["Arms stay extended","Rotate like a steering wheel","Light weight only","Great finisher move"]},
-  sh16:{name:"Pike Push-Up",muscle:"Shoulders",group:"shoulders",icon:"\uD83E\uDD1D",tag:"Bodyweight overhead press",rest:75,inc:0,sets:3,reps:"8-12",repsMin:8,eq:["bodyweight"],cues:"Hips high in an inverted-V position, lower your head toward the floor between your hands, press back up.",points:["Hips high, inverted V shape","Head lowers toward floor","Press back up through shoulders","Feet on a box = harder version"]},
-
-  // -- ARMS (expanded) ----------------------------------------------------------------
-  a16:{name:"Spider Curl",muscle:"Biceps",group:"arms",icon:"\uD83D\uDCAA",tag:"Strict peak contraction",rest:60,inc:2.5,sets:3,reps:"10-12",repsMin:10,eq:["dumbbell"],cues:"Chest against an incline bench, arms hanging straight down. Curl up with zero swing possible \u2014 pure bicep isolation.",points:["Chest against incline bench","Arms hang straight down","Zero momentum possible","Strong peak contraction"]},
-  a17:{name:"Reverse Barbell Curl",muscle:"Forearms + Biceps",group:"arms",icon:"\uD83D\uDCAA",tag:"Overhand grip curl",rest:60,inc:2.5,sets:3,reps:"10-12",repsMin:10,eq:["barbell"],cues:"Overhand (palms-down) grip on the bar, curl up keeping elbows pinned. Hits forearms and brachialis harder than a normal curl.",points:["Overhand grip throughout","Elbows stay pinned to sides","Lighter weight than normal curls","Great forearm builder"]},
-  a18:{name:"JM Press",muscle:"Triceps",group:"arms",icon:"\uD83D\uDCAA",tag:"Hybrid press/extension",rest:75,inc:2.5,sets:3,reps:"8-10",repsMin:8,eq:["barbell"],cues:"A cross between a close-grip bench and a skull crusher. Lower the bar toward your neck/chin, elbows tucked, then press up.",points:["Hybrid of two tricep movements","Bar lowers toward chin","Elbows stay tucked","Advanced tricep builder"]},
-  a19:{name:"Diamond Push-Up",muscle:"Triceps + Chest",group:"arms",icon:"\uD83D\uDCAA",tag:"Bodyweight tricep builder",rest:60,inc:0,sets:3,reps:"8-15",repsMin:8,eq:["bodyweight"],cues:"Hands together forming a diamond shape under your chest. Lower down and press up, elbows staying close to your body.",points:["Hands form a diamond","Elbows stay close to body","Harder than standard push-up","Knees down to scale it back"]},
-  a20:{name:"Cable Rope Hammer Curl",muscle:"Biceps + Forearms",group:"arms",icon:"\uD83D\uDCAA",tag:"Cable variation of hammer curl",rest:60,inc:2.5,sets:3,reps:"12-15",repsMin:12,eq:["cable"],cues:"Rope attachment on a low cable, neutral grip. Curl up keeping palms facing each other the whole time. Constant tension unlike dumbbells.",points:["Neutral grip on rope","Constant cable tension","Palms face each other throughout","Different feel than dumbbell version"]},
-  a21:{name:"Close-Grip Bench Press",muscle:"Triceps + Chest",group:"arms",icon:"\uD83D\uDCAA",tag:"Compound tricep builder",rest:90,inc:5,sets:3,reps:"8-10",repsMin:8,eq:["barbell"],cues:"Hands just inside shoulder width. Lower the bar to your lower chest, elbows tucked, press up focusing on triceps.",points:["Hands just inside shoulder width","Elbows stay tucked","Lower to lower chest","Heavier tricep builder than isolation moves"]},
-
-  // -- CORE (expanded) -----------------------------------------------------------------
-  co13:{name:"Pallof Press",muscle:"Core (anti-rotation)",group:"core",icon:"\uD83D\uDD25",tag:"Anti-rotation classic",rest:60,inc:2.5,sets:3,reps:"10-12 each side",repsMin:10,uni:true,eq:["cable","resistance_band"],cues:"Cable at chest height, stand sideways to it. Press the handle straight out, resisting the pull that wants to rotate you.",points:["Stand sideways to the cable","Press straight out from chest","Resist the rotational pull","Core works to stay square"]},
-  co14:{name:"Cable Woodchopper",muscle:"Obliques + Core",group:"core",icon:"\uD83D\uDD25",tag:"Rotational power",rest:60,inc:2.5,sets:3,reps:"12 each",repsMin:12,uni:true,eq:["cable"],cues:"Cable set high, pull it diagonally down across your body like chopping wood, rotating through your torso and hips.",points:["Cable starts high","Chop diagonally across body","Rotate through hips and torso","Control the return"]},
-  co15:{name:"Copenhagen Plank",muscle:"Inner Thigh + Core",group:"core",icon:"\uD83D\uDD25",tag:"Adductor + core stability",rest:60,inc:0,sets:3,reps:"15-20 sec each side",repsMin:1,uni:true,eq:["bodyweight"],cues:"Side plank position with your top leg resting on a bench, bottom leg lifted. Extremely challenging on the inner thigh and core together.",points:["Top leg rests on a bench","Bottom leg lifts and holds","Very advanced \u2014 progress slowly","Hits inner thigh hard"]},
-  co16:{name:"Weighted Sit-Up",muscle:"Core",group:"core",icon:"\uD83D\uDD25",tag:"Loaded ab builder",rest:60,inc:2.5,sets:3,reps:"12-15",repsMin:12,eq:["dumbbell"],cues:"Hold a plate or dumbbell against your chest, sit all the way up with control, lower back down slowly.",points:["Weight held at chest","Sit up with control","Slow controlled descent","Progress weight over time"]},
-  co17:{name:"Toes to Bar",muscle:"Abs (lower)",group:"core",icon:"\uD83D\uDD25",tag:"Advanced hanging ab move",rest:75,inc:0,sets:3,reps:"8-12",repsMin:8,eq:["bodyweight"],cues:"Hang from a pull-up bar, raise your legs straight up to touch the bar, keeping control on the way down.",points:["Full hang to start","Legs stay as straight as possible","Control the descent","Very advanced \u2014 bend knees to scale it back"]},
-  co18:{name:"V-Up",muscle:"Abs",group:"core",icon:"\uD83D\uDD25",tag:"Full ab contraction",rest:45,inc:0,sets:3,reps:"12-15",repsMin:12,eq:["bodyweight"],cues:"Lying flat, simultaneously lift your straight legs and torso, reaching hands toward your toes to form a V shape.",points:["Lift legs and torso together","Reach hands toward toes","Full V shape at the top","Keep knees fairly straight"]},
-
-  // -- CALVES (expanded) ----------------------------------------------------------------
-  ca6:{name:"Standing Barbell Calf Raise",muscle:"Calves",group:"calves",icon:"\uD83E\uDDB5",tag:"Loaded standing raise",rest:60,inc:5,sets:3,reps:"15",repsMin:15,eq:["barbell"],cues:"Bar across your upper back, rise up onto your toes as high as possible, pause, lower slowly for a full stretch.",points:["Bar across upper back","Rise as high as possible","Pause at the top","Full stretch on the way down"]},
-  ca7:{name:"Tibialis Raise",muscle:"Shins",group:"calves",icon:"\uD83E\uDDB5",tag:"Shin strengthener",rest:45,inc:0,sets:3,reps:"15-20",repsMin:15,eq:["bodyweight"],cues:"Lean your back against a wall, heels planted, lift your toes up toward your shins as high as you can.",points:["Back against a wall","Lift toes toward shins","Often overlooked muscle","Helps balance out calf training"]},
-
-  // -- FULLBODY (expanded) ---------------------------------------------------------------
-  fb17:{name:"Kettlebell Clean and Press",muscle:"Full Body",group:"fullbody",icon:"\uD83D\uDCAA",tag:"Explosive full-body move",rest:90,inc:2.5,sets:3,reps:"8 each",repsMin:8,uni:true,eq:["dumbbell"],cues:"Hike the weight back, explosively bring it to your shoulder, then press overhead. One fluid, powerful motion.",points:["Explosive hip drive to start","Weight lands softly on shoulder","Press overhead to finish","Practice the clean with light weight first"]},
-  fb18:{name:"Turkish Get-Up",muscle:"Full Body + Stability",group:"fullbody",icon:"\uD83D\uDCAA",tag:"Complex stability builder",rest:90,inc:0,sets:3,reps:"5 each side",repsMin:5,uni:true,eq:["dumbbell"],cues:"A slow, multi-step sequence from lying to standing while holding a weight overhead the entire time. Learn it slowly with no weight first.",points:["Weight stays overhead throughout","Multi-step sequence, go slow","Learn with no weight first","Builds total-body stability"]},
-  fb20:{name:"Man Maker",muscle:"Full Body",group:"fullbody",icon:"\uD83D\uDCAA",tag:"Push-up + row + burpee combo",rest:90,inc:0,sets:3,reps:"6-8",repsMin:6,eq:["dumbbell"],cues:"Push-up on dumbbells with a row each side, then squat and press both weights overhead. A brutal, complete combo move.",points:["Push-up plus a row each side","Squat and press to finish","Extremely demanding","Scale reps down if needed"]},
-
-
+const KIND_PARAMS: Record<ExerciseKind, KindParams> = {
+  loaded_comp: {
+    sets: 3, reps: '8-10', repsMin: 8, rest: 90, inc: 2.5, tag: 'Compound',
+    cues: 'Brace your core and move through a range you control. Keep the weight steady on the way down as well as up.',
+    points: ['Brace your core', 'Controlled range', 'Steady lowering'],
+  },
+  loaded_iso: {
+    sets: 3, reps: '12-15', repsMin: 12, rest: 60, inc: 2.5, tag: 'Isolation',
+    cues: 'Slow and controlled. Feel the target muscle working through the full range, without swinging.',
+    points: ['Slow and controlled', 'Full range', 'No swinging'],
+  },
+  bw_comp: {
+    sets: 3, reps: '10-15', repsMin: 10, rest: 60, inc: 0, tag: 'Bodyweight',
+    cues: 'Move with control. Make it easier or harder by changing the angle or the range.',
+    points: ['Controlled reps', 'Adjust angle to fit you'],
+  },
+  bw_iso: {
+    sets: 3, reps: '12-20', repsMin: 12, rest: 45, inc: 0, tag: 'Bodyweight',
+    cues: 'Slow and controlled, and feel the target muscle. Stop the set when form starts to slip.',
+    points: ['Slow and controlled', 'Stop when form slips'],
+  },
+  hold: {
+    sets: 3, reps: '30-45 sec', repsMin: 1, rest: 45, inc: 0, tag: 'Hold',
+    cues: 'Hold steady and keep breathing. End the set when your form starts to slip, not before.',
+    points: ['Keep breathing', 'Stop when form slips'],
+  },
+  prehab: {
+    sets: 2, reps: '15-20', repsMin: 15, rest: 45, inc: 0, tag: 'Light and controlled',
+    cues: 'Light weight, slow reps. This is for joint health and control, not for going heavy.',
+    points: ['Keep it light', 'Slow reps'],
+  },
+  olympic: {
+    sets: 4, reps: '3-5', repsMin: 3, rest: 120, inc: 2.5, tag: 'Advanced lift',
+    cues: 'A technical lift. Use a light weight, learn the movement, and consider coaching before loading it.',
+    points: ['Light weight first', 'Technique over load'],
+  },
+  plyo: {
+    sets: 3, reps: '5-8', repsMin: 5, rest: 60, inc: 0, tag: 'Power',
+    cues: 'Explosive but controlled. Land softly, and stop the set when reps get sloppy.',
+    points: ['Explosive up, soft landing', 'Stop when sloppy'],
+  },
+  cardio_machine: {
+    sets: 1, reps: '15-30 min', repsMin: 1, rest: 0, inc: 0, tag: 'Cardio',
+    cues: 'Pick a pace where you can still talk in short sentences. Build time up gradually.',
+    points: ['Conversational pace', 'Build time gradually'],
+  },
+  cardio_move: {
+    sets: 3, reps: '30-45 sec', repsMin: 1, rest: 30, inc: 0, tag: 'Cardio',
+    cues: 'Keep a steady rhythm for the full interval. Slow down rather than skipping the rest.',
+    points: ['Steady rhythm', 'Slow down, do not skip'],
+  },
 };
-export const WGROUPS = {
-  "glutes": ['g1b', 'g3', 'g3b', 'g10', 'g11', 'g12', 'g13', 'g14', 'g15', 'g16', 'g17', 'g19', 'g20', 'g21', 'g22', 'g23', 'g24', 'g26'],
-  "back": ['b1b', 'b1c', 'b2b', 'b4b', 'b5b', 'lb1', 'lb2', 'lb3', 'b10', 'b11', 'b13', 'b14', 'b15', 'b17', 'b18', 'b19', 'b20', 'b21'],
-  "shoulders": ['sh1', 'sh2', 'sh3', 'sh4', 'sh5', 'sh6', 'sh7', 'sh8', 'sh9', 'sh10', 'sh11', 'sh12', 'sh13', 'sh14', 'sh15', 'sh16'],
-  "core": ['co1', 'co2', 'co3', 'co4', 'co5', 'co6', 'co7', 'co8', 'co9', 'co10', 'co11', 'co12', 'fb1', 'fb2', 'co13', 'co14', 'co15', 'co16', 'co17', 'co18'],
-  "calves": ['ca1', 'ca2', 'fb4', 'ca3', 'ca4', 'ca6', 'ca7'],
-  "hamstrings": ['h7', 'h8', 'h9', 'h10', 'h12', 'h13'],
-  "quads": ['q7', 'q8', 'q9', 'q10', 'fb3', 'q11', 'q12', 'q13', 'q14', 'q15'],
-  "chest": ['c9', 'c10', 'c11', 'c12', 'c13', 'c14', 'c15', 'c16', 'c17'],
-  "arms": ['a10', 'a11', 'a12', 'a13', 'a14', 'a15', 'a16', 'a17', 'a18', 'a19', 'a20', 'a21'],
-  "fullbody": ['fb5', 'fb6', 'fb7', 'fb8', 'fb9', 'fb10', 'fb11', 'fb12', 'fb13', 'fb14', 'fb15', 'fb16', 'fb17', 'fb18', 'fb20'],
-};
+
+const LOWER_BODY = new Set(['quads', 'glutes', 'hamstrings']);
+
+function buildExercise(row: CatalogRow): Exercise {
+  const p = KIND_PARAMS[row.kind];
+  const eqIds = Array.from(new Set(row.requires.flat()));
+  const eq = eqIds.length ? eqIds : ['bodyweight'];
+  const loadedInc =
+    row.kind === 'loaded_comp' && (LOWER_BODY.has(row.group) || /deadlift/i.test(row.name)) ? 5 : p.inc;
+  // Loadable holds (farmers walk, weighted plank) can be progressed; plain bodyweight stays at 0.
+  const inc = row.kind === 'hold' && eq[0] !== 'bodyweight' ? 2.5 : loadedInc;
+  return {
+    name: row.name,
+    muscle: row.muscle,
+    group: row.group,
+    icon: getBodyGroup(row.group)?.icon || '\uD83D\uDCAA',
+    tag: row.advanced ? 'Advanced' : p.tag,
+    rest: p.rest,
+    inc,
+    sets: p.sets,
+    reps: row.uni ? `${p.reps} each` : p.reps,
+    repsMin: p.repsMin,
+    ...(row.uni ? { uni: true } : {}),
+    eq,
+    cues: p.cues,
+    points: p.points,
+    requires: row.requires,
+    kind: row.kind,
+    compound: row.compound,
+    advanced: row.advanced,
+    ...(row.kind === 'cardio_machine' ? { noWeight: true } : {}),
+  };
+}
+
+/**
+ * The whole exercise list, built from the catalog (exerciseCatalog.ts), which
+ * was rebuilt from the StrengthLog directory and the readable part of the
+ * Calistree library. Sets, reps, rest and weight increments come from the
+ * kind of movement, and body goals then shape reps, rest and sets on top of
+ * that through trainingSchemes.ts, so the list itself carries no hand-tuned
+ * numbers that could disagree with the goal logic.
+ */
+export const WORKOUT_EXERCISES: Record<string, Exercise> = Object.fromEntries(
+  EXERCISE_CATALOG.map((row) => [row.id, buildExercise(row)] as const),
+);
 
 /**
  * True for an exercise with no weighted-equipment option at all (e.g.
@@ -269,43 +140,13 @@ export function isBodyweightOnlyExercise(exercise: Pick<Exercise, 'eq'>): boolea
 }
 
 /**
- * Every one of this file's exercises, individually reviewed by actual
- * movement pattern — not inferred from a heuristic. Two heuristics
- * were tried first and rejected after producing real, confirmed
- * misclassifications: matching on exercise name (missed compound
- * movements like "Lat Pulldown" and "Push-Up Variations" that don't
- * contain an obvious keyword), and checking whether the `muscle` field
- * names more than one region (misread genuine compound lifts like
- * Barbell Bent-Over Row and Incline Barbell Press as isolation, since
- * their muscle field only names one primary region despite being
- * real multi-joint movements). This set is the result of manually
- * checking every exercise against the actual definition — compound:
- * a genuine multi-joint movement (hip hinge, squat, lunge, press, row,
- * pull, carry, or full-body/power movement); isolation: a single-joint
- * movement targeting one muscle through one joint action.
- *
- * Used to order a session the way a trainer would — compound
- * movements first, while energy and neural drive are highest, matching
- * the well-established convention (multiple independent
- * exercise-science sources agree on this specific ordering principle).
+ * Compound (multi-joint) vs isolation (single-joint) is a field on each
+ * catalog row, so it can never drift out of sync with a separate id list.
+ * Used to order a session the way a trainer would: compound movements first,
+ * while energy and neural drive are highest.
  */
-const COMPOUND_EXERCISE_IDS = new Set([
-  'g1', 'g1b', 'g5', 'g6', 'g7', 'g8', 'g9', 'g10', 'g11', 'g12', 'g16', 'g17',
-  'g21', 'g22', 'g23', 'g24', 'g26',
-  'h1', 'h4', 'h6', 'h8', 'h10', 'h12', 'h13',
-  'q1', 'q5', 'q6', 'q7', 'q10', 'q12', 'q13', 'q14', 'q15',
-  'b1', 'b1b', 'b1c', 'b2', 'b2b', 'b3', 'b4', 'b4b', 'b5', 'b5b', 'b8', 'b9',
-  'b10', 'b11', 'b13', 'b14', 'b15', 'b18', 'b19', 'b20',
-  'c1', 'c2', 'c5', 'c6', 'c8', 'c9', 'c10', 'c11', 'c13', 'c14', 'c16',
-  'a12', 'a19', 'a21',
-  'sh1', 'sh6', 'sh7', 'sh10', 'sh16',
-  'lb1', 'lb2', 'lb3',
-  'fb1', 'fb2', 'fb3', 'fb4', 'fb5', 'fb6', 'fb7', 'fb8', 'fb9', 'fb10',
-  'fb11', 'fb12', 'fb13', 'fb14', 'fb15', 'fb16', 'fb17', 'fb18', 'fb20',
-]);
-
 export function isCompoundExercise(exerciseId: string): boolean {
-  return COMPOUND_EXERCISE_IDS.has(exerciseId);
+  return WORKOUT_EXERCISES?.[exerciseId]?.compound === true;
 }
 
 /**
@@ -430,19 +271,6 @@ if (typeof process !== 'undefined' && process.env?.NODE_ENV !== 'production') {
     throw new Error(
       `exercises.ts: duplicate exercise name(s) detected — the same movement was added twice under different ids.\n  ${details}\n` +
       `Remove or rename one of each pair before shipping. If these are genuinely different exercises (different equipment/movement) despite the name collision, rename one to disambiguate rather than suppressing this check.`
-    );
-  }
-
-  // Warning only, not a throw — see findSuspiciousParameterMatches doc
-  // comment for why a parameter-signature match isn't automatically a
-  // real duplicate the way a name collision is.
-  const suspicious = findSuspiciousParameterMatches(WORKOUT_EXERCISES);
-  if (suspicious.length > 0) {
-    const details = suspicious
-      .map((group) => group.map((e) => `${e.id}:"${e.name}"`).join(' + '))
-      .join('\n  ');
-    console.warn(
-      `exercises.ts: ${suspicious.length} group(s) of exercises share the same muscle/equipment/rep/rest/set signature — worth a manual look for possible duplicates:\n  ${details}`
     );
   }
 }

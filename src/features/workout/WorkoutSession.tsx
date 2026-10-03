@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
+import { View, Text, Pressable, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAppStore, selectAdhdFocusModeEnabled, selectFitnessPreferences } from '@/store/index';
@@ -7,6 +7,9 @@ import { WORKOUT_EXERCISES } from '@/content/exercises';
 import { getCommonFaults } from '@/content/kinesiology';
 import { getEffectiveExercise } from '@/content/trainingSchemes';
 import { Heading } from '@/shared/components/Heading';
+import GroupedExerciseList from './GroupedExerciseList';
+import { isExerciseAvailable } from './exerciseAvailability';
+import { useEquipmentContext } from './useEquipmentContext';
 
 const REST_COACHING_LINES = [
   'Take a drink.', 'A few deep breaths.', 'Shake it out.', 'Almost there.',
@@ -27,25 +30,23 @@ function formatElapsed(totalSeconds: number) {
 }
 
 // A lightweight full-screen picker for swapping the current exercise or
-// adding one to the rest of the queue. Filtered by the person's saved
-// equipment when they've set that preference, same rule Start Somewhere
-// and the browse screen already use, so it never suggests something
-// they can't actually do.
+// adding one to the rest of the queue. Filtered by the active gym's
+// equipment (or saved preferences with no gym) through the one shared
+// availability rule, so it never suggests something they can't do.
 function ExercisePickerModal({
   title, excludeIds, onPick, onClose,
 }: {
   title: string; excludeIds: string[]; onPick: (id: string) => void; onClose: () => void;
 }) {
-  const fitnessPreferences = useAppStore(selectFitnessPreferences);
+  const equipmentContext = useEquipmentContext();
   const [query, setQuery] = useState('');
 
   const options = useMemo(() => {
-    const equipment = fitnessPreferences?.equipment;
     return Object.entries(WORKOUT_EXERCISES || {})
       .filter(([id]) => !excludeIds.includes(id))
-      .filter(([, ex]) => !equipment?.length || (ex.eq || []).some((e) => equipment.includes(e)))
+      .filter(([id, ex]) => isExerciseAvailable(id, equipmentContext, ex))
       .filter(([, ex]) => !query || ex.name.toLowerCase().includes(query.toLowerCase()));
-  }, [fitnessPreferences, excludeIds, query]);
+  }, [equipmentContext, excludeIds, query]);
 
   return (
     <View className="absolute inset-0 bg-black/60 items-center justify-end">
@@ -59,17 +60,12 @@ function ExercisePickerModal({
           placeholderTextColor="#64748b"
           className="bg-slate-800 text-slate-100 rounded-xl px-3 py-2 mb-3"
         />
-        <ScrollView>
-          {options.map(([id, ex]) => (
-            <Pressable key={id} onPress={() => onPick(id)} className="py-3 border-b border-slate-800">
-              <Text className="text-slate-100 text-sm font-medium">{ex.icon} {ex.name}</Text>
-              <Text className="text-slate-500 text-xs mt-0.5">{ex.muscle} · {ex.sets}×{ex.reps}</Text>
-            </Pressable>
-          ))}
-          {options.length === 0 && (
-            <Text className="text-slate-500 text-sm py-6 text-center">No matches with your available equipment.</Text>
-          )}
-        </ScrollView>
+        <GroupedExerciseList
+          forceDark
+          items={options.map(([id, ex]) => ({ id, name: ex.name, muscle: ex.muscle, icon: ex.icon, group: ex.group }))}
+          onPick={onPick}
+          emptyText="No matches for your equipment."
+        />
         <Pressable onPress={onClose} className="py-3 mt-1">
           <Text className="text-slate-400 text-center text-sm">Cancel</Text>
         </Pressable>

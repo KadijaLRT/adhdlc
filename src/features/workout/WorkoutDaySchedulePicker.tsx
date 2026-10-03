@@ -7,6 +7,7 @@ import {
 } from '@/store/index';
 import { PROGRAMS } from '@/content/programs';
 import { buildDayLetterContent, WEEKDAY_LABELS } from './buildWeeklySplit';
+import { buildEquipmentContext } from './exerciseAvailability';
 import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
 
 const GROUP_EMOJI: Record<string, string> = {
@@ -38,9 +39,12 @@ export default function WorkoutDaySchedulePicker({ weekdayIndex }: { weekdayInde
   const activeProgram = (PROGRAMS || []).find((p) => p.id === activeProgramId);
   const activeGym = (gyms || []).find((g) => g.id === activeGymId);
 
+  const prefsEquipment = fitnessPreferences?.equipment;
+  const equipmentContext = useMemo(() => buildEquipmentContext(activeGym, prefsEquipment), [activeGym, prefsEquipment]);
+
   const dayContent = useMemo(
-    () => (activeProgram ? buildDayLetterContent(activeProgram, fitnessPreferences, activeGym?.equipment) : new Map()),
-    [activeProgram, fitnessPreferences, activeGym]
+    () => (activeProgram ? buildDayLetterContent(activeProgram, fitnessPreferences, equipmentContext) : new Map()),
+    [activeProgram, fitnessPreferences, equipmentContext]
   );
 
   const currentLetter = weekdayAssignment?.[weekdayIndex] ?? null;
