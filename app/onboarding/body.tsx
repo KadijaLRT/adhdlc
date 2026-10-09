@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useOnboardingStore } from '@/store/useOnboardingStore';
 import type { Gender, WeightGoalDirection, BodyType, ActivityLevel } from '@/store/index';
-import type { BloodType } from '@/content/bloodTypeAffinities';
 import { OnboardingStepHeader, OnboardingProgressBar } from '@/features/onboarding/OnboardingStepHeader';
 import { DateInput } from '@/shared/components/DateInput';
 
@@ -40,7 +39,6 @@ const EXERCISE_GOALS = [
   { id: 'general_health', label: 'General Health', emoji: '❤️' },
 ];
 const FOCUS_AREAS = FOCUS_AREA_GROUPS.map((g) => g.id);
-const BLOOD_TYPES: BloodType[] = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 function Pill({ label, active, onPress }: { label: string; active: boolean; onPress: () => void }) {
   return (
@@ -156,12 +154,6 @@ export default function BodyScreen() {
           <Text className="text-slate-100 text-base font-medium mb-2">Focus areas (pick all that apply)</Text>
           <View className="flex-row flex-wrap gap-2 mb-6">
             {FOCUS_AREAS.map((f) => <Pill key={f} label={bodyGroupLabel(f)} active={o.focusAreas.includes(f)} onPress={() => toggleInList('focusAreas', f)} />)}
-          </View>
-
-          <Text className="text-slate-100 text-base font-medium mb-2">Blood type</Text>
-          <Text className="text-slate-500 text-xs mb-3">Optional. Powers the opt-in meal lens in Wellness — not clinically validated, just a lens some people like.</Text>
-          <View className="flex-row flex-wrap gap-2 mb-6">
-            {BLOOD_TYPES.map((bt) => <Pill key={bt} label={bt} active={o.bloodType === bt} onPress={() => setField('bloodType', bt)} />)}
           </View>
 
           <Text className="text-slate-100 text-base font-medium mb-2">Height</Text>

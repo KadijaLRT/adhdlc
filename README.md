@@ -26,8 +26,7 @@ adhd-life-coach/
 │   ├── features/               # one folder per feature, owns its own UI
 │   │   ├── home/ stuck-flow/ gamification/ energy/ wellness/ aviva/
 │   ├── content/                 # static reference data (prompts,
-│   │                            #   milestone tiers, blood type /
-│   │                            #   cannabis reference data, meals)
+│   │                            #   milestone tiers, meals, exercises)
 │   └── shared/
 │       └── components/          # ErrorBoundary, etc.
 ├── supabase/schema.sql
@@ -50,7 +49,7 @@ adhd-life-coach/
 - **`src/content/`** — renamed from an earlier `src/data/` to avoid
   confusion with the storage layer. This folder is purely static
   reference content (prompt banks, milestone tier definitions, the
-  blood-type and cannabis reference tables), never persistence code.
+  exercise catalog), never persistence code.
 - **`src/features/`** — each feature folder owns its own components.
   `app/` routes stay thin, importing from here.
 
@@ -74,10 +73,6 @@ npm run lint
   fully offline with zero sign-in. Supabase sync is an optional,
   silent-if-absent upgrade layer, not a requirement — see
   `src/core/supabase/client.ts`.
-- **Wellness modules are opt-in and clearly labeled**: the blood-type
-  meal lens and the cannabis strain explorer are both off by default and
-  carry disclaimers directly in the UI, since neither is clinically
-  validated science; they're offered as optional wellness lenses only.
 
 ## Not Yet Built (known open items)
 

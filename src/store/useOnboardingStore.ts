@@ -3,7 +3,6 @@ import type {
   EnergyLevel, AgeBracket, ReminderStyle,
   Gender, WeightGoalDirection, BodyType, ActivityLevel,
 } from './index';
-import type { BloodType } from '@/content/bloodTypeAffinities';
 
 export type CoachingStyle = 'gentle' | 'funny' | 'reality_check' | 'friend' | 'scientific';
 
@@ -26,7 +25,6 @@ interface OnboardingState {
   activityLevel: ActivityLevel | null;
   exerciseGoals: string[];
   focusAreas: string[];
-  bloodType: BloodType | null;
   heightFt: string;
   heightIn: string;
   foodsLoved: string;
@@ -72,7 +70,7 @@ const DEFAULTS = {
   gender: null as Gender, weightGoalDirections: [] as WeightGoalDirection[],
   startingWeightLbs: '', goalWeightLbs: '', goalDate: '', bodyType: null as BodyType | null, activityLevel: null as ActivityLevel | null,
   exerciseGoals: [] as string[], focusAreas: [] as string[],
-  bloodType: null as BloodType | null, heightFt: '', heightIn: '',
+  heightFt: '', heightIn: '',
   foodsLoved: '', foodsAvoided: '', allergies: '',
   cycleTrackingEnabled: false, reminderStyle: null as ReminderStyle | null,
   coachingStyle: null as CoachingStyle | null,

@@ -1,7 +1,6 @@
 export type EnergyLevel = 'low' | 'medium' | 'high';
 export type ThemeMode = 'dark' | 'dim';
 export type BodyDoublingRoom = 'eat' | 'work' | 'gym' | null;
-export type BloodType = 'O+' | 'O-' | 'A+' | 'A-' | 'B+' | 'B-' | 'AB+' | 'AB-';
 export type TaskPriority = 'critical' | 'important' | 'nice';
 export type TaskCategory = 'home' | 'school' | 'health' | 'errands' | 'car' | 'personal' | 'general';
 // PINCH: what the ADHD brain actually finds compelling enough to get
@@ -42,9 +41,6 @@ export interface EnergyLogEntry { date: string; energyLevel: EnergyLevel; note?:
 export interface StressLogEntry { date: string; stressLevel: EnergyLevel; }
 export interface CycleLogEntry {
   date: string; phase: 'menstrual' | 'follicular' | 'ovulation' | 'luteal' | 'unspecified'; note?: string;
-}
-export interface WellnessPreferences {
-  bloodTypeEnabled: boolean; bloodType: BloodType | null;
 }
 export type ReminderStyle = 'consequence' | 'loud' | 'gentle';
 export type CoachingStyle = 'gentle' | 'funny' | 'reality_check' | 'friend' | 'scientific';

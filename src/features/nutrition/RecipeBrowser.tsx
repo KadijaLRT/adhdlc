@@ -2,12 +2,11 @@ import { useMemo, useState } from 'react';
 import { View, Text, Pressable, TextInput, FlatList, ActivityIndicator } from 'react-native';
 import {
   useAppStore, selectSavedRecipeIds, selectNutritionPreferences, selectNutritionCardDismissed,
-  selectWellnessPreferences, selectAiGeneratedRecipes, selectFitnessPreferences, type MealType,
+  selectAiGeneratedRecipes, selectFitnessPreferences, type MealType,
 } from '@/store/index';
 import PersonalizeNutritionCard from './PersonalizeNutritionCard';
 import { RECIPES, type Recipe } from '@/content/recipes';
 import { parseGramString } from '@/content/foodDatabase';
-import { getBloodTypeAffinity } from '@/content/bloodTypeAffinities';
 import { generateRecipeWithAI } from './recipeGeneration';
 import { useRouter } from 'expo-router';
 import { Heading } from '@/shared/components/Heading';
@@ -32,7 +31,6 @@ export default function RecipeBrowser() {
   const toggleSavedRecipe = useAppStore((s) => s.toggleSavedRecipe);
   const nutritionPreferences = useAppStore(selectNutritionPreferences);
   const nutritionCardDismissed = useAppStore(selectNutritionCardDismissed);
-  const wellnessPreferences = useAppStore(selectWellnessPreferences);
   const fitnessPreferences = useAppStore(selectFitnessPreferences);
   const aiGeneratedRecipes = useAppStore(selectAiGeneratedRecipes);
   const addAiGeneratedRecipe = useAppStore((s) => s.addAiGeneratedRecipe);
@@ -42,7 +40,6 @@ export default function RecipeBrowser() {
   const [search, setSearch] = useState('');
   const [lovedFilter, setLovedFilter] = useState(false);
   const [showAvoided, setShowAvoided] = useState(false);
-  const [bloodTypeFilter, setBloodTypeFilter] = useState<'all' | 'beneficial' | 'avoid'>('all');
   const [generating, setGenerating] = useState(false);
   const [genError, setGenError] = useState<string | null>(null);
 
@@ -50,7 +47,6 @@ export default function RecipeBrowser() {
   const restrictions = (nutritionPreferences?.dietaryRestrictions || []).filter((r) => r !== 'none');
   const foodsLoved = (nutritionPreferences?.foodsLoved || []).map((f) => f.toLowerCase());
   const foodsAvoided = (nutritionPreferences?.foodsAvoided || []).map((f) => f.toLowerCase());
-  const bloodType = wellnessPreferences?.bloodTypeEnabled ? wellnessPreferences?.bloodType : null;
 
   // Same soft-boost pattern as the dietary-restriction sort below: a
   // weight goal reorders results toward recipes that fit it better, it
@@ -85,7 +81,7 @@ export default function RecipeBrowser() {
   };
 
   // Performance fix: this whole chain (allergy/avoided filtering,
-  // restriction+goal sorting, then cuisine/type/search/loved/blood-type
+  // restriction+goal sorting, then cuisine/type/search/loved
   // filtering) used to be plain consts recomputed from scratch on
   // every render — including every single keystroke in the search box,
   // since search is component state and any state change re-renders
@@ -134,10 +130,8 @@ export default function RecipeBrowser() {
     const matchesSearch = !search.trim() || (r.n || '').toLowerCase().includes(search.toLowerCase());
     const ingredients = (r.g || []).map((i) => i.toLowerCase());
     const matchesLoved = !lovedFilter || foodsLoved.some((f) => ingredients.some((i) => i.includes(f)));
-    const affinity = getBloodTypeAffinity(r, bloodType);
-    const matchesBloodType = bloodTypeFilter === 'all' || affinity === bloodTypeFilter;
-    return matchesCuisine && matchesType && matchesSearch && matchesLoved && matchesBloodType;
-  }), [sortedByRestrictions, cuisine, mealType, search, lovedFilter, foodsLoved, bloodTypeFilter, bloodType]);
+    return matchesCuisine && matchesType && matchesSearch && matchesLoved;
+  }), [sortedByRestrictions, cuisine, mealType, search, lovedFilter, foodsLoved]);
 
   const hiddenAvoidedCount = useMemo(() => allRecipes.filter(recipeHasAvoided).length, [allRecipes, foodsAvoided]);
   const showGenerateButton = search.trim().length > 2 && filtered.length === 0;
@@ -232,24 +226,6 @@ export default function RecipeBrowser() {
           </Pressable>
         )}
 
-        {bloodType && (
-          <View className="flex-row gap-2 mb-3">
-            {(['all', 'beneficial', 'avoid'] as const).map((option) => {
-              const isActive = bloodTypeFilter === option;
-              const label = option === 'all' ? `${bloodType} type: All` : option === 'beneficial' ? '✅ Best for me' : '❌ Avoid';
-              return (
-                <Pressable
-                  key={option}
-                  onPress={() => setBloodTypeFilter(option)}
-                  className={isActive ? 'bg-emerald-400/10 border-2 border-emerald-400 rounded-full py-1.5 px-3' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-full py-1.5 px-3'}
-                >
-                  <Text className={isActive ? 'text-emerald-700 dark:text-emerald-400 text-xs font-medium' : 'text-slate-600 dark:text-slate-300 text-xs font-medium'}>{label}</Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        )}
-
         {hiddenAvoidedCount > 0 && (
           <View className="bg-amber-400/10 border border-amber-400/40 rounded-xl px-3 py-2 mb-3 flex-row items-center justify-between">
             <Text className="text-amber-700 dark:text-amber-400 text-xs flex-1">
@@ -277,7 +253,6 @@ export default function RecipeBrowser() {
             recipe={item}
             isSaved={(savedRecipeIds || []).includes(item.id)}
             onToggleSave={() => toggleSavedRecipe(item.id)}
-            bloodTypeAffinity={bloodType ? getBloodTypeAffinity(item, bloodType) : 'neutral'}
             isAiGenerated={item.id.startsWith('ai-')}
             goalBadge={goalBadge(item)}
           />
@@ -289,9 +264,9 @@ export default function RecipeBrowser() {
 }
 
 function RecipeCard({
-  recipe, isSaved, onToggleSave, bloodTypeAffinity, isAiGenerated, goalBadge,
+  recipe, isSaved, onToggleSave, isAiGenerated, goalBadge,
 }: {
-  recipe: Recipe; isSaved: boolean; onToggleSave: () => void; bloodTypeAffinity: 'beneficial' | 'avoid' | 'neutral'; isAiGenerated: boolean; goalBadge: string | null;
+  recipe: Recipe; isSaved: boolean; onToggleSave: () => void; isAiGenerated: boolean; goalBadge: string | null;
 }) {
   const router = useRouter();
   const logFood = useAppStore((s) => s.logFood);
@@ -333,11 +308,6 @@ function RecipeCard({
       </View>
       <Text className="text-slate-500 text-xs mb-2 capitalize">{recipe?.c} · {recipe?.t} · {recipe?.prep} prep · {recipe?.cook} cook</Text>
       <Text className="text-slate-500 text-xs mb-2">{recipe?.cal || 0} cal · {recipe?.pro} protein · {recipe?.carb} carb · {recipe?.fat} fat</Text>
-      {bloodTypeAffinity !== 'neutral' && (
-        <Text className={bloodTypeAffinity === 'beneficial' ? 'text-emerald-600 dark:text-emerald-400 text-xs font-medium mb-2' : 'text-red-500 text-xs font-medium mb-2'}>
-          {bloodTypeAffinity === 'beneficial' ? '✅ Good match for your type' : '❌ Best avoided for your type'}
-        </Text>
-      )}
       {goalBadge && (
         <Text className="text-emerald-600 dark:text-emerald-400 text-xs font-medium mb-2">{goalBadge}</Text>
       )}

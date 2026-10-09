@@ -6,7 +6,6 @@ import { createMilestoneSlice, type MilestoneSlice } from './slices/milestoneSli
 import { createEnergySlice, type EnergySlice } from './slices/energySlice';
 import { createStressSlice, type StressSlice } from './slices/stressSlice';
 import { createCycleSlice, type CycleSlice } from './slices/cycleSlice';
-import { createWellnessSlice, type WellnessSlice } from './slices/wellnessSlice';
 import { createProfileSlice, type ProfileSlice } from './slices/profileSlice';
 import { createHydrationSlice, type HydrationSlice } from './slices/hydrationSlice';
 import { createNutritionFitnessSlice, type NutritionFitnessSlice } from './slices/nutritionFitnessSlice';
@@ -18,7 +17,6 @@ import { createRoutineSlice, type RoutineSlice } from './slices/routineSlice';
 import { createRpgSlice, type RpgSlice } from './slices/rpgSlice';
 import { createSettingsSlice, type SettingsSlice } from './slices/settingsSlice';
 import { createReflectionSlice, type ReflectionSlice } from './slices/reflectionSlice';
-import { createWorkbookSlice, type WorkbookSlice } from './slices/workbookSlice';
 import { createScheduleSlice, type ScheduleSlice } from './slices/scheduleSlice';
 export type { ScheduleItem } from './slices/scheduleSlice';
 import { createSchoolSlice, type SchoolSlice } from './slices/schoolSlice';
@@ -38,7 +36,7 @@ export type { CountdownEvent } from './slices/countdownSlice';
 export type { RecoveryLogEntry } from './slices/workoutSlice';
 
 export type AppState = UiSlice & TaskSlice & StreakSlice & MilestoneSlice &
-  EnergySlice & StressSlice & CycleSlice & WellnessSlice & ProfileSlice & HydrationSlice & NutritionFitnessSlice & WorkoutSlice & ProgramSlice & CustomProgramSlice & GrocerySlice & RoutineSlice & RpgSlice & SettingsSlice & ReflectionSlice & WorkbookSlice & ScheduleSlice & SchoolSlice & BodyProgressSlice & MomentumSlice & NutritionTrackingSlice & CountdownSlice;
+  EnergySlice & StressSlice & CycleSlice & ProfileSlice & HydrationSlice & NutritionFitnessSlice & WorkoutSlice & ProgramSlice & CustomProgramSlice & GrocerySlice & RoutineSlice & RpgSlice & SettingsSlice & ReflectionSlice & ScheduleSlice & SchoolSlice & BodyProgressSlice & MomentumSlice & NutritionTrackingSlice & CountdownSlice;
 
 // Combined store. To add a new domain: create slices/xSlice.ts exporting
 // createXSlice + XSlice, spread it in here, add its storage keys to
@@ -53,7 +51,6 @@ export const useAppStore = create<AppState>()((...args) => ({
   ...createEnergySlice(...args),
   ...createStressSlice(...args),
   ...createCycleSlice(...args),
-  ...createWellnessSlice(...args),
   ...createProfileSlice(...args),
   ...createHydrationSlice(...args),
   ...createNutritionFitnessSlice(...args),
@@ -65,7 +62,6 @@ export const useAppStore = create<AppState>()((...args) => ({
   ...createRpgSlice(...args),
   ...createSettingsSlice(...args),
   ...createReflectionSlice(...args),
-  ...createWorkbookSlice(...args),
   ...createScheduleSlice(...args),
   ...createSchoolSlice(...args),
   ...createBodyProgressSlice(...args),
@@ -87,14 +83,10 @@ export const selectEnergyLogs = (s: AppState) => s.energyLogs || [];
 export const selectStressLogs = (s: AppState) => s.stressLogs || [];
 export const selectCycleTrackingEnabled = (s: AppState) => s.cycleTrackingEnabled;
 export const selectCycleLogs = (s: AppState) => s.cycleLogs || [];
-export const selectWellnessPreferences = (s: AppState) => s.wellnessPreferences;
 export const selectProfile = (s: AppState) => s.profile;
 export const selectIsHydrated = (s: AppState) => s.isHydrated;
 export const selectStorageWorking = (s: AppState) => s.storageWorking;
 export const selectReflections = (s: AppState) => s.reflections || [];
-export const selectThoughtReframes = (s: AppState) => s.thoughtReframes || [];
-export const selectFrustrationEntries = (s: AppState) => s.frustrationEntries || [];
-export const selectSabotageChecks = (s: AppState) => s.sabotageChecks || [];
 export const selectScheduleItems = (s: AppState) => s.scheduleItems || [];
 export const selectCourses = (s: AppState) => s.courses || [];
 export const selectAssignments = (s: AppState) => s.assignments || [];

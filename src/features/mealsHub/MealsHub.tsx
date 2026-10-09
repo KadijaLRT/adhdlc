@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAppStore, selectSavedRecipeIds, selectEnergyLevel, selectWellnessPreferences, selectFoodLog, selectPantryItems, selectMealPlan } from '@/store/index';
+import { useAppStore, selectSavedRecipeIds, selectEnergyLevel, selectFoodLog, selectPantryItems, selectMealPlan } from '@/store/index';
 import { RECIPES } from '@/content/recipes';
 import { getMealSuggestions } from '@/content/mealSuggestions';
 import { buildMergedGroceryList } from '@/content/groceryListBuilder';
@@ -21,7 +21,6 @@ export default function MealsHub() {
   const router = useRouter();
   const savedRecipeIds = useAppStore(selectSavedRecipeIds);
   const energyLevel = useAppStore(selectEnergyLevel);
-  const wellnessPreferences = useAppStore(selectWellnessPreferences);
   const foodLog = useAppStore(selectFoodLog);
   const pantryItems = useAppStore(selectPantryItems);
   const mealPlan = useAppStore(selectMealPlan);
@@ -34,9 +33,9 @@ export default function MealsHub() {
   const savedRecipes = useMemo(() => (RECIPES || []).filter((r) => (savedRecipeIds || []).includes(r.id)), [savedRecipeIds]);
 
   const suggestion = useMemo(() => {
-    const matches = getMealSuggestions(energyLevel, wellnessPreferences?.bloodTypeEnabled ? wellnessPreferences?.bloodType : null);
+    const matches = getMealSuggestions(energyLevel);
     return matches[0] || null;
-  }, [energyLevel, wellnessPreferences]);
+  }, [energyLevel]);
 
   // Bug fix: this used to call buildMergedGroceryList(savedRecipes, [])
   // — only saved recipes, and an empty pantry regardless of what was
@@ -91,10 +90,6 @@ export default function MealsHub() {
           <Pressable onPress={() => router?.push?.('/nutrition/groceries')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
             <Text className="text-slate-900 dark:text-slate-100 text-sm">🛒 This week's groceries</Text>
             <Text className="text-slate-500 text-xs">{groceryCount} items</Text>
-          </Pressable>
-          <Pressable onPress={() => router?.push?.('/wellness/meals')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
-            <Text className="text-slate-900 dark:text-slate-100 text-sm">🩸 Blood type meal lens</Text>
-            <Text className="text-slate-500 text-xs">optional →</Text>
           </Pressable>
         </View>
       </View>

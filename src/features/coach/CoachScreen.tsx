@@ -12,6 +12,8 @@ export default function CoachScreen() {
   const reflections = useAppStore(selectReflections);
   const profile = useAppStore(selectProfile);
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const selectedLabel = selectedAgentId ? ((AGENTS || []).find((a) => a.id === selectedAgentId)?.label || 'Auto') : 'Auto (I\'ll route it)';
   const [message, setMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [reply, setReply] = useState<{ agentLabel: string; message: string; reasoning: string } | null>(null);
@@ -51,25 +53,34 @@ export default function CoachScreen() {
         <Heading className="mb-1 mt-2">Chat with Aviva</Heading>
         <Text className="text-slate-500 text-sm mb-4">Pick a specialist, or just ask and I&apos;ll route it for you.</Text>
 
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="mb-4">
-          <View className="flex-row gap-2">
-            <Pressable
-              onPress={() => setSelectedAgentId(null)}
-              className={selectedAgentId === null ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-full py-2 px-4' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-full py-2 px-4'}
-            >
-              <Text className={selectedAgentId === null ? 'text-indigo-700 dark:text-indigo-300 text-xs' : 'text-slate-700 dark:text-slate-300 text-xs'}>Auto</Text>
-            </Pressable>
-            {(AGENTS || []).map((agent) => (
-              <Pressable
-                key={agent.id}
-                onPress={() => setSelectedAgentId(agent.id)}
-                className={selectedAgentId === agent.id ? 'bg-indigo-600/20 border-2 border-indigo-400 rounded-full py-2 px-4' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-full py-2 px-4'}
-              >
-                <Text className={selectedAgentId === agent.id ? 'text-indigo-700 dark:text-indigo-300 text-xs' : 'text-slate-700 dark:text-slate-300 text-xs'}>{agent.label}</Text>
-              </Pressable>
-            ))}
-          </View>
-        </ScrollView>
+        <View className="mb-4">
+          <Pressable
+            onPress={() => setMenuOpen((o) => !o)}
+            accessibilityRole="button"
+            accessibilityLabel="Choose a specialist"
+            accessibilityState={{ expanded: menuOpen }}
+            className="bg-white dark:bg-slate-900 border-2 border-indigo-400/40 rounded-xl px-4 py-3 flex-row items-center justify-between"
+          >
+            <Text className="text-slate-900 dark:text-slate-100 text-sm">{selectedLabel}</Text>
+            <Text className="text-slate-500 text-xs">{menuOpen ? '▲' : '▼'}</Text>
+          </Pressable>
+          {menuOpen && (
+            <View className="bg-white dark:bg-slate-900 rounded-xl mt-2 overflow-hidden border border-slate-200 dark:border-slate-800">
+              {[{ id: null as string | null, label: 'Auto (I\'ll route it)' }, ...(AGENTS || []).map((a) => ({ id: a.id as string | null, label: a.label }))].map((opt) => {
+                const active = selectedAgentId === opt.id;
+                return (
+                  <Pressable
+                    key={opt.id ?? 'auto'}
+                    onPress={() => { setSelectedAgentId(opt.id); setMenuOpen(false); }}
+                    className={active ? 'bg-indigo-600/20 px-4 py-3' : 'px-4 py-3 active:bg-slate-100 dark:active:bg-slate-800'}
+                  >
+                    <Text className={active ? 'text-indigo-700 dark:text-indigo-300 text-sm font-medium' : 'text-slate-700 dark:text-slate-300 text-sm'}>{opt.label}</Text>
+                  </Pressable>
+                );
+              })}
+            </View>
+          )}
+        </View>
 
         <TextInput
           value={message}

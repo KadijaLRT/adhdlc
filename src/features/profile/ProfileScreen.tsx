@@ -13,7 +13,6 @@ export default function ProfileScreen() {
   const scheduleItems = useAppStore(selectScheduleItems);
   const setNutritionPreferences = useAppStore((s) => s.setNutritionPreferences);
   const setFitnessPreferences = useAppStore((s) => s.setFitnessPreferences);
-  const setWellnessPreferences = useAppStore((s) => s.setWellnessPreferences);
   const setCycleTrackingEnabled = useAppStore((s) => s.setCycleTrackingEnabled);
   const removeScheduleItem = useAppStore((s) => s.removeScheduleItem);
   const [confirmingReset, setConfirmingReset] = useState(false);
@@ -22,7 +21,6 @@ export default function ProfileScreen() {
     await clearProfile();
     await setNutritionPreferences({ allergies: [], dietaryRestrictions: [], foodsLoved: [], foodsAvoided: [] });
     await setFitnessPreferences({ equipment: [], primaryGoal: null });
-    await setWellnessPreferences({ bloodTypeEnabled: false, bloodType: null });
     await setCycleTrackingEnabled(false);
     // Only removes items onboarding itself created (see the `med-`
     // prefix used in onboarding/final.tsx) — anything the person added

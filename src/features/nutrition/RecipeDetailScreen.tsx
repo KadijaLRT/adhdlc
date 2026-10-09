@@ -3,11 +3,10 @@ import { View, Text, Pressable, ScrollView, ActivityIndicator } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import {
   useAppStore, selectSavedRecipeIds, selectAiGeneratedRecipes, selectRecipeInstructionsCache,
-  selectWellnessPreferences, type MealType,
+  type MealType,
 } from '@/store/index';
 import { RECIPES } from '@/content/recipes';
 import { parseGramString } from '@/content/foodDatabase';
-import { getBloodTypeAffinity } from '@/content/bloodTypeAffinities';
 import { generateRecipeDirections } from './recipeGeneration';
 import { Heading } from '@/shared/components/Heading';
 import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
@@ -27,7 +26,6 @@ export default function RecipeDetailScreen({ recipeId }: { recipeId: string }) {
   const savedRecipeIds = useAppStore(selectSavedRecipeIds);
   const aiGeneratedRecipes = useAppStore(selectAiGeneratedRecipes);
   const instructionsCache = useAppStore(selectRecipeInstructionsCache);
-  const wellnessPreferences = useAppStore(selectWellnessPreferences);
   const toggleSavedRecipe = useAppStore((s) => s.toggleSavedRecipe);
   const setRecipeInstructions = useAppStore((s) => s.setRecipeInstructions);
   const logFood = useAppStore((s) => s.logFood);
@@ -43,8 +41,6 @@ export default function RecipeDetailScreen({ recipeId }: { recipeId: string }) {
   );
 
   const isSaved = savedRecipeIds.includes(recipeId);
-  const bloodType = wellnessPreferences?.bloodTypeEnabled ? wellnessPreferences?.bloodType : null;
-  const affinity = recipe ? getBloodTypeAffinity(recipe, bloodType) : 'neutral';
   const directions = recipe ? (recipe.instructions || instructionsCache[recipeId]) : undefined;
 
   const handleGenerateDirections = async () => {
@@ -98,14 +94,6 @@ export default function RecipeDetailScreen({ recipeId }: { recipeId: string }) {
           </View>
           <Text className="text-slate-500 text-sm mb-1 capitalize">{recipe.c} · {recipe.t} · {recipe.prep} prep · {recipe.cook} cook</Text>
           <Text className="text-slate-500 text-sm mb-3">{recipe.cal} cal · {recipe.pro} protein · {recipe.carb} carb · {recipe.fat} fat</Text>
-
-          {affinity !== 'neutral' && (
-            <View className={affinity === 'beneficial' ? 'bg-emerald-400/10 border border-emerald-400 rounded-xl p-3 mb-4' : 'bg-red-400/10 border border-red-400 rounded-xl p-3 mb-4'}>
-              <Text className={affinity === 'beneficial' ? 'text-emerald-700 dark:text-emerald-400 text-sm font-medium' : 'text-red-600 dark:text-red-400 text-sm font-medium'}>
-                {affinity === 'beneficial' ? '✅ Good match for your type' : '❌ Best avoided for your type'}
-              </Text>
-            </View>
-          )}
 
           {justLogged ? (
             <View className="bg-emerald-400/10 border border-emerald-400 rounded-xl py-3 items-center mb-6">

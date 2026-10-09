@@ -4,10 +4,9 @@ import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
-  useAppStore, selectFitnessPreferences, selectWellnessPreferences,
+  useAppStore, selectFitnessPreferences,
   type Gender, type WeightGoalDirection, type BodyType, type ActivityLevel, type SessionTimeBudget,
 } from '@/store/index';
-import type { BloodType } from '@/content/bloodTypeAffinities';
 import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
 
 const EQUIPMENT_OPTIONS = ['bodyweight', 'dumbbell', 'barbell', 'machine', 'cable', 'resistance_band'];
@@ -48,7 +47,6 @@ const SESSION_TIME_BUDGETS: { id: SessionTimeBudget; label: string; blurb: strin
   { id: 'long', label: 'Long', blurb: 'More exercises per session \u2014 when you have extra time' },
 ];
 const FOCUS_AREAS = FOCUS_AREA_GROUPS.map((g) => g.id);
-const BLOOD_TYPES: BloodType[] = ['A+', 'A-', 'B+', 'B-', 'AB+', 'AB-', 'O+', 'O-'];
 
 function goalFromExerciseGoals(exerciseGoals: string[]): 'strength' | 'endurance' | 'mobility' | 'general' {
   if (exerciseGoals.includes('get_stronger') || exerciseGoals.includes('build_muscle')) return 'strength';
@@ -68,14 +66,12 @@ function Pill({ label, active, onPress }: { label: string; active: boolean; onPr
 // The same questions asked during onboarding's body.tsx step, reused
 // here as a real edit screen rather than the old stripped-down
 // equipment+goal card. Pre-filled from what's actually saved, and only
-// writes back the domains this screen owns (fitness + blood type),
+// writes back the domains this screen owns (fitness),
 // never silently touching weight/goal-date, which live in Progress.
 export default function EditFitnessPreferencesScreen() {
   const router = useRouter();
   const fitnessPreferences = useAppStore(selectFitnessPreferences);
-  const wellnessPreferences = useAppStore(selectWellnessPreferences);
   const setFitnessPreferences = useAppStore((s) => s.setFitnessPreferences);
-  const setWellnessPreferences = useAppStore((s) => s.setWellnessPreferences);
 
   const [equipment, setEquipment] = useState<string[]>(fitnessPreferences?.equipment || ['bodyweight']);
   const [gender, setGender] = useState<Gender>(fitnessPreferences?.gender ?? null);
@@ -85,7 +81,6 @@ export default function EditFitnessPreferencesScreen() {
   const [sessionTimeBudget, setSessionTimeBudget] = useState<SessionTimeBudget>(fitnessPreferences?.sessionTimeBudget || 'standard');
   const [exerciseGoals, setExerciseGoals] = useState<string[]>(fitnessPreferences?.exerciseGoals || []);
   const [focusAreas, setFocusAreas] = useState<string[]>(expandLegacyGroups(fitnessPreferences?.focusAreas));
-  const [bloodType, setBloodType] = useState<BloodType | null>((wellnessPreferences?.bloodType as BloodType | null) || null);
   const [saved, setSaved] = useState(false);
 
   const toggleIn = (list: string[], setList: (v: string[]) => void, item: string) => {
@@ -98,9 +93,6 @@ export default function EditFitnessPreferencesScreen() {
       equipment, gender, weightGoalDirections, bodyType, activityLevel, exerciseGoals, focusAreas, sessionTimeBudget,
       primaryGoal: goalFromExerciseGoals(exerciseGoals),
     });
-    if (bloodType) {
-      await setWellnessPreferences({ bloodTypeEnabled: true, bloodType });
-    }
     setSaved(true);
   };
 
@@ -191,14 +183,8 @@ export default function EditFitnessPreferencesScreen() {
           <Text className="text-slate-500 text-xs mb-6">Changes how many exercises are in each day of your split immediately \u2014 swaps you've made mid-workout for today's session aren't affected, but the underlying plan updates right away.</Text>
 
           <Text className="text-slate-900 dark:text-slate-100 text-base font-medium mb-2">Focus areas</Text>
-          <View className="flex-row flex-wrap gap-2 mb-6">
-            {FOCUS_AREAS.map((f) => <Pill key={f} label={bodyGroupLabel(f)} active={focusAreas.includes(f)} onPress={() => toggleIn(focusAreas, setFocusAreas, f)} />)}
-          </View>
-
-          <Text className="text-slate-900 dark:text-slate-100 text-base font-medium mb-2">Blood type</Text>
-          <Text className="text-slate-500 text-xs mb-3">Optional. Powers the opt-in meal lens in Recipes — not clinically validated, just a lens some people like.</Text>
           <View className="flex-row flex-wrap gap-2 mb-8">
-            {BLOOD_TYPES.map((bt) => <Pill key={bt} label={bt} active={bloodType === bt} onPress={() => { setBloodType(bt); setSaved(false); }} />)}
+            {FOCUS_AREAS.map((f) => <Pill key={f} label={bodyGroupLabel(f)} active={focusAreas.includes(f)} onPress={() => toggleIn(focusAreas, setFocusAreas, f)} />)}
           </View>
 
           <Pressable onPress={handleSave} className="bg-indigo-600 rounded-full py-4 items-center active:bg-indigo-500 mb-3">

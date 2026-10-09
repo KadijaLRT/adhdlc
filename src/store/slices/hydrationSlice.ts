@@ -6,13 +6,11 @@ import type { MilestoneSlice } from './milestoneSlice';
 import type { EnergySlice } from './energySlice';
 import type { StressSlice } from './stressSlice';
 import type { CycleSlice } from './cycleSlice';
-import type { WellnessSlice } from './wellnessSlice';
 import type { ProfileSlice } from './profileSlice';
 import type { RoutineSlice } from './routineSlice';
 import type { RpgSlice } from './rpgSlice';
 import type { SettingsSlice } from './settingsSlice';
 import type { ReflectionSlice } from './reflectionSlice';
-import type { WorkbookSlice } from './workbookSlice';
 import type { ScheduleSlice } from './scheduleSlice';
 import type { SchoolSlice } from './schoolSlice';
 import type { BodyProgressSlice } from './bodyProgressSlice';
@@ -37,7 +35,7 @@ function today(): string {
 }
 
 type FullState = TaskSlice & StreakSlice & MilestoneSlice & EnergySlice &
-  StressSlice & CycleSlice & WellnessSlice & ProfileSlice & HydrationSlice & RoutineSlice & RpgSlice & SettingsSlice & ReflectionSlice & WorkbookSlice & ScheduleSlice & SchoolSlice & BodyProgressSlice & MomentumSlice &
+  StressSlice & CycleSlice & ProfileSlice & HydrationSlice & RoutineSlice & RpgSlice & SettingsSlice & ReflectionSlice & ScheduleSlice & SchoolSlice & BodyProgressSlice & MomentumSlice &
   NutritionFitnessSlice & WorkoutSlice & ProgramSlice & CustomProgramSlice & GrocerySlice & NutritionTrackingSlice & UiSlice & CountdownSlice;
 
 // The only place that reads every domain's storage at once. Adding a new
@@ -56,12 +54,12 @@ export const createHydrationSlice: StateCreator<FullState, [], [], HydrationSlic
       const repo = await getRepository();
       const [
         tasks, streaks, milestones, energyLogs, cycleLogs, cycleTrackingEnabledStored, stressLogs,
-        wellnessPreferences, profile, routines, rpgState, settingsState, reflectionState, workbookState,
+        profile, routines, rpgState, settingsState, reflectionState,
         nutritionFitnessState, workoutState, programState, customPrograms, groceryState, scheduleState, schoolState, bodyProgressState, momentumState, nutritionTrackingState, countdownState,
       ] = await Promise.all([
           repo.getTasks(), repo.getStreaks(), repo.getMilestones(),
           repo.getEnergyLogs(), repo.getCycleLogs(), repo.getCycleTrackingEnabled(), repo.getStressLogs(),
-          repo.getWellnessPreferences(), repo.getProfile(), repo.getRoutines(), repo.getRpgState(), repo.getSettingsState(), repo.getReflectionState(), repo.getWorkbookState(),
+          repo.getProfile(), repo.getRoutines(), repo.getRpgState(), repo.getSettingsState(), repo.getReflectionState(),
           repo.getNutritionFitnessState(), repo.getWorkoutState(), repo.getProgramState(), repo.getCustomPrograms(), repo.getGroceryState(), repo.getScheduleState(), repo.getSchoolState(), repo.getBodyProgressState(), repo.getMomentumState(), repo.getNutritionTrackingState(), repo.getCountdownState(),
         ]);
       set((state) => ({
@@ -81,7 +79,6 @@ export const createHydrationSlice: StateCreator<FullState, [], [], HydrationSlic
         cycleLogs: cycleLogs || [],
         cycleTrackingEnabled: cycleTrackingEnabledStored ?? state.cycleTrackingEnabled,
         stressLogs: stressLogs || [],
-        wellnessPreferences: wellnessPreferences || state.wellnessPreferences,
         profile: profile || null,
         routines: routines || [],
         totalXp: rpgState?.totalXp ?? state.totalXp,
@@ -97,9 +94,6 @@ export const createHydrationSlice: StateCreator<FullState, [], [], HydrationSlic
         unitSystem: settingsState?.unitSystem ?? state.unitSystem,
         notificationsEnabled: settingsState?.notificationsEnabled ?? state.notificationsEnabled,
         reflections: reflectionState?.reflections ?? state.reflections,
-        thoughtReframes: workbookState?.thoughtReframes ?? state.thoughtReframes,
-        frustrationEntries: workbookState?.frustrationEntries ?? state.frustrationEntries,
-        sabotageChecks: workbookState?.sabotageChecks ?? state.sabotageChecks,
         scheduleItems: scheduleState?.scheduleItems ?? state.scheduleItems,
         runningBehindMinutes: scheduleState?.runningBehindMinutes ?? state.runningBehindMinutes,
         courses: schoolState?.courses ?? state.courses,

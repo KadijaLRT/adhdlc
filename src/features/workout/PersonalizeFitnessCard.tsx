@@ -3,8 +3,8 @@ import { useRouter } from 'expo-router';
 import { useAppStore } from '@/store/index';
 
 // Routes to the same comprehensive questions asked during onboarding
-// (equipment, goals, body type, activity level, focus areas, blood
-// type) rather than duplicating a stripped-down version of them here.
+// (equipment, goals, body type, activity level, focus areas)
+// rather than duplicating a stripped-down version of them here.
 export default function PersonalizeFitnessCard() {
   const router = useRouter();
   const dismissFitnessCard = useAppStore((s) => s.dismissFitnessCard);

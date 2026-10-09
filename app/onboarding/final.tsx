@@ -64,7 +64,6 @@ export default function FinalScreen() {
   const addTask = useAppStore((s) => s.addTask);
   const setNutritionPreferences = useAppStore((s) => s.setNutritionPreferences);
   const setFitnessPreferences = useAppStore((s) => s.setFitnessPreferences);
-  const setWellnessPreferences = useAppStore((s) => s.setWellnessPreferences);
   const setCycleTrackingEnabled = useAppStore((s) => s.setCycleTrackingEnabled);
   const logWeight = useAppStore((s) => s.logWeight);
   const setWeightGoal = useAppStore((s) => s.setWeightGoal);
@@ -123,10 +122,6 @@ export default function FinalScreen() {
         exerciseGoals: o.exerciseGoals,
         focusAreas: o.focusAreas,
       });
-
-      if (o.bloodType) {
-        await setWellnessPreferences({ bloodTypeEnabled: true, bloodType: o.bloodType });
-      }
 
       if (o.startingWeightLbs && Number(o.startingWeightLbs) > 0) {
         await logWeight(Number(o.startingWeightLbs));

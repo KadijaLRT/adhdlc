@@ -1,12 +1,11 @@
 import type {
   Task, RoutineStreak, MilestoneProgress, EnergyLogEntry,
-  CycleLogEntry, StressLogEntry, WellnessPreferences, UserProfile,
+  CycleLogEntry, StressLogEntry, UserProfile,
   Routine,
 } from '@/store/index';
 import type { RpgState } from '@/store/slices/rpgSlice';
 import type { SettingsState } from '@/store/slices/settingsSlice';
 import type { ReflectionState } from '@/store/slices/reflectionSlice';
-import type { WorkbookState } from '@/store/slices/workbookSlice';
 import type { ScheduleState } from '@/store/slices/scheduleSlice';
 import type { SchoolState } from '@/store/slices/schoolSlice';
 import type { BodyProgressState } from '@/store/slices/bodyProgressSlice';
@@ -50,8 +49,6 @@ export interface TaskRepository {
   saveCycleTrackingEnabled(enabled: boolean): Promise<void>;
   getStressLogs(): Promise<StressLogEntry[]>;
   saveStressLogs(logs: StressLogEntry[]): Promise<void>;
-  getWellnessPreferences(): Promise<WellnessPreferences | null>;
-  saveWellnessPreferences(prefs: WellnessPreferences): Promise<void>;
   getProfile(): Promise<UserProfile | null>;
   saveProfile(profile: UserProfile): Promise<void>;
   getRoutines(): Promise<Routine[]>;
@@ -62,8 +59,6 @@ export interface TaskRepository {
   saveSettingsState(state: SettingsState): Promise<void>;
   getReflectionState(): Promise<ReflectionState | null>;
   saveReflectionState(state: ReflectionState): Promise<void>;
-  getWorkbookState(): Promise<WorkbookState | null>;
-  saveWorkbookState(state: WorkbookState): Promise<void>;
   getScheduleState(): Promise<ScheduleState | null>;
   saveScheduleState(state: ScheduleState): Promise<void>;
   getSchoolState(): Promise<SchoolState | null>;
