@@ -3,7 +3,7 @@ import { bodyGroupLabel, expandLegacyGroups, getBodyGroup } from '@/content/body
 import type { ProgramDefinition } from '@/content/programs';
 import type { FitnessPreferences, SessionTimeBudget } from '@/store/slices/nutritionFitnessSlice';
 import { interleaveByGroup } from './interleaveExercises';
-import { targetsGroup, UNRESTRICTED, filterAutoPickEntries, isAutoPickable, isExerciseAvailable, rankForPlanning, type EquipmentContext } from './exerciseAvailability';
+import { targetsGroup, UNRESTRICTED, filterAutoPickEntries, isAutoSelectable, rankForPlanning, type EquipmentContext } from './exerciseAvailability';
 
 // Full calendar week, Sunday first. The 6 lettered training days
 // (A–F) land on Monday–Saturday; Sunday is always a rest day with no
@@ -304,7 +304,7 @@ export function getEnergyAdjustedExerciseIds(
       // typed with no cast needed. Left as any, a typo like ex.grop
       // would have silently compiled and returned undefined forever
       // instead of being caught here.
-      .find(([id, ex]) => muscleGroups.includes(ex.group) && !exerciseIds.includes(id) && isAutoPickable(ex) && isExerciseAvailable(id, equipment, ex));
+      .find(([id, ex]) => muscleGroups.includes(ex.group) && !exerciseIds.includes(id) && isAutoSelectable(id, ex, equipment));
     return bonus ? [...exerciseIds, bonus[0]] : exerciseIds;
   }
   return exerciseIds;

@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { View, Text, TextInput, Pressable, ScrollView, ActivityIndicator } from 'react-native';
-import { useAppStore, selectReflections, selectProfile } from '@/store/index';
+import { useAppStore, selectReflections, selectProfile, selectFitnessPreferences } from '@/store/index';
 import { AGENTS } from '@/core/ai/agents';
 import { askOrchestrator } from '@/core/ai/orchestrator';
 import { resolveBrainTypeTraits } from '@/content/brainTypes';
+import { buildRestrictionBrief } from '@/core/ai/restrictionBrief';
 import { Heading } from '@/shared/components/Heading';
 
 export default function CoachScreen() {
@@ -11,6 +12,7 @@ export default function CoachScreen() {
   const isOverwhelmed = useAppStore((s) => s.isOverwhelmed);
   const reflections = useAppStore(selectReflections);
   const profile = useAppStore(selectProfile);
+  const savedRestrictions = useAppStore(selectFitnessPreferences)?.restrictions;
   const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const selectedLabel = selectedAgentId ? ((AGENTS || []).find((a) => a.id === selectedAgentId)?.label || 'Auto') : 'Auto (I\'ll route it)';
@@ -31,7 +33,7 @@ export default function CoachScreen() {
     try {
       const { agentLabel, response } = await askOrchestrator(
         message,
-        { energyLevel, isOverwhelmed, timeOfDay, recentReflection: mostRecentReflection?.note, coachingStyle: profile?.coachingStyle, brainTypeTraits: resolveBrainTypeTraits(profile?.brainTypes) },
+        { energyLevel, isOverwhelmed, timeOfDay, recentReflection: mostRecentReflection?.note, coachingStyle: profile?.coachingStyle, brainTypeTraits: resolveBrainTypeTraits(profile?.brainTypes), restrictionBrief: buildRestrictionBrief(savedRestrictions) },
         selectedAgentId || undefined
       );
 

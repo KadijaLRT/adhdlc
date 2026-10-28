@@ -6,6 +6,11 @@ import { useAppStore, selectEnergyLevel } from '@/store/index';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
 import { BODY_PARTS, BODY_PART_SECTIONS, computeCheckinAdjustment, applySkipToExerciseIds, type PainSeverity } from './bodyCheckin';
 import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
+import RestrictionPicker from './RestrictionPicker';
+import { useRestrictionPrefs } from './useRestrictionPrefs';
+import { useEquipmentContext } from './useEquipmentContext';
+import { applyRestrictionsToSession } from './restrictionSession';
+import { RESTRICTIONS_DISCLAIMER } from '@/content/restrictions';
 
 const SEVERITY_OPTIONS: { value: PainSeverity; label: string }[] = [
   { value: 1, label: '🟡 A little' },
@@ -20,15 +25,21 @@ const SEVERITY_OPTIONS: { value: PainSeverity; label: string }[] = [
 // (that's /body/progress), which has nothing to do with today's
 // workout.
 export default function BodyCheckinScreen({
-  exerciseIds, programId, dayTitle,
+  exerciseIds, programId, dayTitle, restrictionsApplied = false,
 }: {
   exerciseIds: string[]; programId?: string; dayTitle?: string;
+  /** True when the list already has restriction changes in it (a resumed session), so they are not applied twice. */
+  restrictionsApplied?: boolean;
 }) {
   const router = useRouter();
   const energyLevel = useAppStore(selectEnergyLevel);
   const isLowEnergyToday = energyLevel === 'low';
   const [severityByPart, setSeverityByPart] = useState<Record<string, PainSeverity>>({});
   const [notes, setNotes] = useState('');
+  const { restrictions, toggleRestriction } = useRestrictionPrefs();
+  const equipmentContext = useEquipmentContext();
+  const [showOngoing, setShowOngoing] = useState(false);
+  const [restrictionSaveError, setRestrictionSaveError] = useState(false);
 
   const flaggedParts = Object.keys(severityByPart);
 
@@ -52,7 +63,14 @@ export default function BodyCheckinScreen({
   const [noExercisesError, setNoExercisesError] = useState(false);
 
   const handleContinue = () => {
-    const adjustedIds = applySkipToExerciseIds(exerciseIds, adjustment.skipGroups, (id) => WORKOUT_EXERCISES?.[id]?.group);
+    // Ongoing restrictions first (so changes made on this screen count), then today's soreness on top.
+    const withRestrictions = restrictionsApplied
+      ? exerciseIds
+      : applyRestrictionsToSession(exerciseIds, equipmentContext, {
+          energyLevel,
+          seed: Number(new Date().toISOString().slice(0, 10).replace(/-/g, '')),
+        });
+    const adjustedIds = applySkipToExerciseIds(withRestrictions, adjustment.skipGroups, (id) => WORKOUT_EXERCISES?.[id]?.group);
     // Bug fix: this used to silently call router.back() whenever
     // adjustedIds came out empty, with zero explanation — a jarring,
     // unexplained bounce back to the previous screen that looks
@@ -131,6 +149,27 @@ export default function BodyCheckinScreen({
           </View>
           </View>
           ))}
+
+          <Pressable onPress={() => setShowOngoing((o) => !o)} className="bg-white dark:bg-slate-900 rounded-xl p-3 mb-2 flex-row items-center justify-between">
+            <Text className="text-slate-700 dark:text-slate-300 text-sm">
+              Ongoing issues{restrictions.length > 0 ? ` (${restrictions.length})` : ''}
+            </Text>
+            <Text className="text-slate-500 text-xs">{showOngoing ? 'Hide' : 'Add or change'}</Text>
+          </Pressable>
+          {showOngoing && (
+            <View className="mb-4">
+              <Text className="text-slate-500 text-xs leading-5 mb-3">Things like runner's knee or weak hips. They stay saved and shape every workout, not just today's.</Text>
+              <RestrictionPicker
+                selected={restrictions}
+                onToggle={async (id) => {
+                  setRestrictionSaveError(false);
+                  try { await toggleRestriction(id); } catch { setRestrictionSaveError(true); }
+                }}
+              />
+              {restrictionSaveError && <Text className="text-red-500 text-xs mb-2">Couldn't save that just now. Try again in a moment.</Text>}
+              <Text className="text-slate-500 text-[11px] leading-4">{RESTRICTIONS_DISCLAIMER}</Text>
+            </View>
+          )}
 
           <TextInput
             value={notes}

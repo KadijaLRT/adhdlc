@@ -1,5 +1,6 @@
 import { getBodyGroup } from './bodyGroups';
 import { EXERCISE_CATALOG, type CatalogRow, type ExerciseKind } from './exerciseCatalog';
+import { REHAB_CATALOG, type RehabRow } from './exerciseRehab';
 
 export interface Exercise {
   name: string; muscle: string; group: string; icon: string; tag: string;
@@ -82,8 +83,20 @@ const KIND_PARAMS: Record<ExerciseKind, KindParams> = {
 
 const LOWER_BODY = new Set(['quads', 'glutes', 'hamstrings']);
 
-function buildExercise(row: CatalogRow): Exercise {
-  const p = KIND_PARAMS[row.kind];
+function buildExercise(row: CatalogRow | RehabRow): Exercise {
+  const base = KIND_PARAMS[row.kind];
+  // Rehab rows may override the kind defaults (holds and breathing work do not fit a generic template).
+  const over: Partial<RehabRow> = row as Partial<RehabRow>;
+  const p: KindParams = {
+    sets: over.sets ?? base.sets,
+    reps: over.reps ?? base.reps,
+    repsMin: over.repsMin ?? base.repsMin,
+    rest: over.rest ?? base.rest,
+    inc: base.inc,
+    tag: base.tag,
+    cues: over.cues ?? base.cues,
+    points: over.points ?? base.points,
+  };
   const eqIds = Array.from(new Set(row.requires.flat()));
   const eq = eqIds.length ? eqIds : ['bodyweight'];
   const loadedInc =
@@ -99,7 +112,7 @@ function buildExercise(row: CatalogRow): Exercise {
     rest: p.rest,
     inc,
     sets: p.sets,
-    reps: row.uni ? `${p.reps} each` : p.reps,
+    reps: row.uni && !over.reps ? `${p.reps} each` : p.reps,
     repsMin: p.repsMin,
     ...(row.uni ? { uni: true } : {}),
     eq,
@@ -122,7 +135,7 @@ function buildExercise(row: CatalogRow): Exercise {
  * numbers that could disagree with the goal logic.
  */
 export const WORKOUT_EXERCISES: Record<string, Exercise> = Object.fromEntries(
-  EXERCISE_CATALOG.map((row) => [row.id, buildExercise(row)] as const),
+  [...EXERCISE_CATALOG, ...REHAB_CATALOG].map((row) => [row.id, buildExercise(row)] as const),
 );
 
 /**

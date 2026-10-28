@@ -7,10 +7,13 @@ import type { SetLogEntry } from '@/store/slices/workoutSlice';
 import { WORKOUT_EXERCISES, isBodyweightOnlyExercise, parseTimeBasedSeconds, type Exercise } from '@/content/exercises';
 import { getEffectiveExercise } from '@/content/trainingSchemes';
 import GroupedExerciseList, { type PickableExercise } from './GroupedExerciseList';
+import RestrictionFitNote from './RestrictionFitNote';
 import { suggestNextSet } from './weightProgress';
 import { buildEquipmentContext, isExerciseAvailable, type EquipmentContext } from './exerciseAvailability';
 import { toLocalDateString } from '@/shared/formatDate';
 import { getWarmupForGroups, warmupCategoryForGroups } from '@/content/warmupContent';
+import { buildCareRoutine } from '@/content/restrictionCare';
+import { restrictionLabels } from './restrictionSession';
 import InlineStepTimer from '@/shared/components/InlineStepTimer';
 import InlineSetTimer from '@/shared/components/InlineSetTimer';
 import { Heading } from '@/shared/components/Heading';
@@ -101,10 +104,17 @@ export default function WorkoutDaySession({
   const gyms = useAppStore(selectGyms);
   const activeGymId = useAppStore(selectActiveGymId);
   const prefsEquipment = fitnessPreferences?.equipment;
+  const savedRestrictions = fitnessPreferences?.restrictions;
+  const savedCorrectiveModes = fitnessPreferences?.correctiveModes;
   const equipmentContext = useMemo(
-    () => buildEquipmentContext((gyms || []).find((g) => g.id === activeGymId) || null, prefsEquipment),
-    [gyms, activeGymId, prefsEquipment]
+    () => buildEquipmentContext((gyms || []).find((g) => g.id === activeGymId) || null, prefsEquipment, savedRestrictions, savedCorrectiveModes),
+    [gyms, activeGymId, prefsEquipment, savedRestrictions, savedCorrectiveModes]
   );
+  const careWarmup = useMemo(() => {
+    const plan = equipmentContext.plan;
+    if (!plan || !plan.modes.has('warmup')) return null;
+    return buildCareRoutine('warmup', plan.restrictions.map((r) => r.id));
+  }, [equipmentContext]);
 
   // Single choke point for every exercise lookup in this file — the
   // person's stated weight goal (lose/gain/maintain) adjusts an
@@ -119,7 +129,7 @@ export default function WorkoutDaySession({
   // one of several read sites was missed.
   const getExercise = (id: string): Exercise | undefined => {
     const base = WORKOUT_EXERCISES?.[id];
-    return base ? getEffectiveExercise(base, fitnessPreferences?.weightGoalDirections) : undefined;
+    return base ? getEffectiveExercise(base, fitnessPreferences) : undefined;
   };
 
   const [sessionExerciseIds, setSessionExerciseIds] = useState<string[]>(exerciseIds);
@@ -560,6 +570,14 @@ export default function WorkoutDaySession({
               <InlineStepTimer steps={warmup.steps} />
             </View>
           )}
+          {!!careWarmup && (
+            <Pressable
+              onPress={() => router?.push?.({ pathname: '/fitness/stretch-run', params: { routineId: careWarmup.id } })}
+              className="border-2 border-indigo-400/60 rounded-xl py-3 items-center mb-3"
+            >
+              <Text className="text-indigo-600 dark:text-indigo-300 text-xs">🩹 Targeted warm-up for {restrictionLabels(equipmentContext)} ({careWarmup.durationMinutes} min)</Text>
+            </Pressable>
+          )}
 
           {sessionExerciseIds.map((exerciseId, exerciseIndex) => {
             const exercise = getExercise(exerciseId);
@@ -587,6 +605,7 @@ export default function WorkoutDaySession({
                       <Text className="text-slate-500 text-xs">
                         {exercise.muscle} · {exercise.uni ? Math.round(rows.length / 2) : rows.length} set{(exercise.uni ? Math.round(rows.length / 2) : rows.length) === 1 ? '' : 's'}{exercise.uni ? ' · each side' : ''}{isReducedThisExercise ? ' · lightened' : ''}
                       </Text>
+                      <RestrictionFitNote exerciseId={exerciseId} ctx={equipmentContext} />
                       {(() => {
                         // Recomputed from setLogs (past sessions), not
                         // the live row state — this should keep

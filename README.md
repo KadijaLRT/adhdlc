@@ -74,6 +74,22 @@ npm run lint
   silent-if-absent upgrade layer, not a requirement — see
   `src/core/supabase/client.ts`.
 
+- **Injuries and weak spots** (`src/content/restrictions.ts` and
+  `restrictionsMore.ts`): a fixed list of 56 conditions across knees,
+  lower legs and feet, hips, pelvic floor and pregnancy, back and core,
+  shoulders, arms, wrists and neck, and whole-body conditions (nothing
+  is typed). A person picks theirs in settings, onboarding, or Body
+  Check-in. Each one also has a guided warm-up and stretch routine
+  (`restrictionCare.ts`) that runs in the stretch runner, combined across
+  everything they picked. Each one lists gentle
+  strengthening exercises and moves that often bother that area. Avoided
+  moves are left out of anything the app picks on its own, but stay
+  visible with a warning when browsing or swapping. Strengthening is
+  added as a warm-up block, one mixed-in move, and/or a separate short
+  routine, all limited to the active gym's equipment. This is general
+  guidance, not medical advice; the disclaimer is shown wherever
+  restrictions are chosen.
+
 ## Not Yet Built (known open items)
 
 - Sign-up/sign-in screens (deliberately deferred; app is account-free

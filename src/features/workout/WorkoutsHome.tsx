@@ -10,6 +10,7 @@ import { getCurrentProgramWeek, getSessionsThisWeek } from './buildProgramSessio
 import { buildWeeklySplit, getEnergyAdjustedExerciseIds, getVariedExerciseSelection, orderExercisesLikeATrainer, type WeeklySplitDay } from './buildWeeklySplit';
 import { getWeightProgressLabel } from './weightProgress';
 import { pickStartSomewhereExercise } from './pickStartSomewhere';
+import { applyRestrictionsToSession, restrictionLabels } from './restrictionSession';
 import { bodyGroupLabel } from '@/content/bodyGroups';
 import { buildEquipmentContext } from './exerciseAvailability';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
@@ -69,9 +70,11 @@ function firstSixTwelveTwentyFiveGroup(muscleGroups: string[]): SixTwelveTwentyF
 }
 
 function DayCard({
-  day, onStart, onBodyCheckin, onLayout, programId, isResumable, resumingExerciseIds, isCheckingResume,
+  day, onStart, onBodyCheckin, onLayout, programId, isResumable, resumingExerciseIds, isCheckingResume, restrictionNote,
 }: {
   day: WeeklySplitDay; onStart: () => void; onBodyCheckin: () => void; onLayout: (y: number) => void; programId?: string; isResumable?: boolean; resumingExerciseIds?: string[]; isCheckingResume?: boolean;
+  /** One line explaining how saved restrictions shape this workout. Empty when there are none. */
+  restrictionNote?: string;
 }) {
   const router = useRouter();
   const [showCardioLog, setShowCardioLog] = useState(false);
@@ -128,6 +131,9 @@ function DayCard({
         <Text className="text-slate-400 text-xs mb-4">Checking for a workout in progress…</Text>
       ) : (
         <Text className="text-slate-500 text-xs mb-4">~{day.estimatedMinutes} min (estimate) · {displayedExerciseIds.length} exercises</Text>
+      )}
+      {!!restrictionNote && !isResumable && !isCheckingResume && (
+        <Text className="text-emerald-600 dark:text-emerald-400 text-xs -mt-2 mb-4">🩹 {restrictionNote}</Text>
       )}
 
       <View className="gap-2 mb-4">
@@ -292,9 +298,11 @@ export default function WorkoutsHome() {
   const activeGym = gyms.find((g) => g.id === activeGymId) || null;
 
   const prefsEquipment = fitnessPreferences?.equipment;
+  const savedRestrictions = fitnessPreferences?.restrictions;
+  const savedCorrectiveModes = fitnessPreferences?.correctiveModes;
   const equipmentContext = useMemo(
-    () => buildEquipmentContext(activeGym, prefsEquipment),
-    [activeGym, prefsEquipment]
+    () => buildEquipmentContext(activeGym, prefsEquipment, savedRestrictions, savedCorrectiveModes),
+    [activeGym, prefsEquipment, savedRestrictions, savedCorrectiveModes]
   );
   const [noFitNotice, setNoFitNotice] = useState(false);
 
@@ -302,6 +310,13 @@ export default function WorkoutsHome() {
     () => (activeProgram ? buildWeeklySplit(activeProgram, fitnessPreferences, weekdayAssignment, equipmentContext) : []),
     [activeProgram, fitnessPreferences, weekdayAssignment, equipmentContext]
   );
+  const restrictionPlan = equipmentContext.plan;
+  const restrictionNote = restrictionPlan
+    ? restrictionPlan.modes.has('warmup') || restrictionPlan.modes.has('mixed')
+      ? `Adds targeted work and skips moves that bother: ${restrictionLabels(equipmentContext)}`
+      : `Skips moves that often bother: ${restrictionLabels(equipmentContext)}`
+    : '';
+  const showRehabRoutine = !!restrictionPlan && restrictionPlan.modes.has('routine');
   const equipmentBlocksEverything =
     !!activeProgram && equipmentContext.restricted && weeklySplit.every((d) => d.isRestDay);
 
@@ -336,7 +351,7 @@ export default function WorkoutsHome() {
    * produced two different exercise sets for the exact same day,
    * depending purely on which button was tapped.
    */
-  const resolveEffectiveExerciseIds = (day: WeeklySplitDay): { exerciseIds: string[]; sessionStartedAt?: string } => {
+  const resolveEffectiveExerciseIds = (day: WeeklySplitDay): { exerciseIds: string[]; sessionStartedAt?: string; resumed: boolean } => {
     const sessionKey = buildSessionKey(activeProgram?.id, day.title);
     const matchingDraft = inProgressDraft?.sessionKey === sessionKey ? inProgressDraft : null;
 
@@ -346,6 +361,8 @@ export default function WorkoutsHome() {
       return {
         exerciseIds: draftIds.length ? draftIds : day.exerciseIds,
         sessionStartedAt: matchingDraft.sessionStartedAt,
+        // A resumed session already has its restriction changes baked in; applying them again would duplicate them.
+        resumed: true,
       };
     }
 
@@ -361,12 +378,21 @@ export default function WorkoutsHome() {
     const energyAdjustedIds = getEnergyAdjustedExerciseIds(baseIds, day.muscleGroups, energyLevel, equipmentContext);
     const effectiveExerciseIds = orderExercisesLikeATrainer(energyAdjustedIds, fitnessPreferences?.focusAreas);
     recordUsedExerciseCombo(day.title, baseIds);
-    return { exerciseIds: effectiveExerciseIds };
+    return { exerciseIds: effectiveExerciseIds, resumed: false };
   };
+
+  /** Restrictions are applied once, right before a fresh session opens (Start Day here, Body Check-in on its Continue). */
+  const withRestrictions = (ids: string[]): string[] =>
+    applyRestrictionsToSession(ids, equipmentContext, {
+      energyLevel,
+      seed: Number(new Date().toISOString().slice(0, 10).replace(/-/g, '')),
+    });
 
   const handleStartDay = (day: WeeklySplitDay) => {
     if (!day.exerciseIds.length) return;
-    const { exerciseIds: effectiveExerciseIds, sessionStartedAt } = resolveEffectiveExerciseIds(day);
+    const { exerciseIds: baseExerciseIds, sessionStartedAt, resumed } = resolveEffectiveExerciseIds(day);
+    const effectiveExerciseIds = resumed ? baseExerciseIds : withRestrictions(baseExerciseIds);
+    if (!effectiveExerciseIds.length) return;
 
     router?.push?.({
       pathname: '/workout/day-session',
@@ -385,10 +411,16 @@ export default function WorkoutsHome() {
 
   const handleBodyCheckin = (day: WeeklySplitDay) => {
     if (!day.exerciseIds.length) return;
-    const { exerciseIds: effectiveExerciseIds } = resolveEffectiveExerciseIds(day);
+    const { exerciseIds: effectiveExerciseIds, resumed } = resolveEffectiveExerciseIds(day);
     router?.push?.({
       pathname: '/workout/checkin',
-      params: { exerciseIds: effectiveExerciseIds.join(','), programId: activeProgram?.id || '', dayTitle: day.title },
+      params: {
+        exerciseIds: effectiveExerciseIds.join(','),
+        programId: activeProgram?.id || '',
+        dayTitle: day.title,
+        // Tells Body Check-in whether restrictions still need applying to this list.
+        restrictionsApplied: resumed ? '1' : '',
+      },
     });
   };
 
@@ -397,7 +429,7 @@ export default function WorkoutsHome() {
     setNoFitNotice(!picked);
     if (picked) {
       const base = WORKOUT_EXERCISES?.[picked.id];
-      const sets = (base ? getEffectiveExercise(base, fitnessPreferences?.weightGoalDirections).sets : 0) || 3;
+      const sets = (base ? getEffectiveExercise(base, fitnessPreferences).sets : 0) || 3;
       router?.push?.({
         pathname: `/workout/session/${picked.id}`,
         params: {
@@ -443,6 +475,13 @@ export default function WorkoutsHome() {
           </Pressable>
         </View>
 
+        {showRehabRoutine && (
+          <Pressable onPress={() => router?.push?.('/fitness/rehab')} className="bg-emerald-400/10 border border-emerald-400/40 rounded-2xl py-3 px-4 mb-4 flex-row items-center justify-between">
+            <Text className="text-emerald-700 dark:text-emerald-400 text-sm font-medium">🩹 Targeted routine</Text>
+            <Text className="text-emerald-700 dark:text-emerald-400 text-xs">for {restrictionLabels(equipmentContext)}</Text>
+          </Pressable>
+        )}
+
         {noFitNotice && (
           <View className="bg-slate-100 dark:bg-slate-900 rounded-xl p-3 mb-3">
             <Text className="text-slate-600 text-xs dark:text-slate-300">Nothing fits {activeGym ? `${activeGym.name}'s` : 'your'} equipment list yet. Add what the gym has under Programs and it will show up here.</Text>
@@ -482,6 +521,7 @@ export default function WorkoutsHome() {
                   isResumable={!!matchingDraft}
                   resumingExerciseIds={matchingDraft?.sessionExerciseIds?.filter((id) => !!WORKOUT_EXERCISES?.[id])}
                   isCheckingResume={!isDraftCheckComplete}
+                  restrictionNote={restrictionNote}
                 />
               );
             })}
@@ -494,6 +534,10 @@ export default function WorkoutsHome() {
 
         <Pressable onPress={() => router?.push?.('/fitness/exercises')} className="py-3 items-center">
           <Text className="text-indigo-600 text-sm font-medium">Browse all exercises by muscle group →</Text>
+        </Pressable>
+
+        <Pressable onPress={() => router?.push?.('/settings/restrictions')} className="py-3 items-center">
+          <Text className="text-slate-500 text-sm">{restrictionPlan ? 'Change injuries and weak spots' : 'Working around an injury or weak spot?'}</Text>
         </Pressable>
       </View>
     </ScrollView>

@@ -2,6 +2,7 @@ import { z } from 'zod';
 // @ts-ignore - plain JS by design, see file header.
 import { BODY_GROUP_IDS } from '@/content/bodyGroups';
 import { sanitizeString, sanitizePayload } from './groqSanitizer';
+import { restrictionPromptLine } from './restrictionBrief';
 import { callGroqCompletion, GroqProxyError, type GroqMessage } from './groqProxyClient';
 
 export interface AvivaContext {
@@ -251,13 +252,14 @@ Time of day: ${cleanContext.timeOfDay}${cleanContext.recentReflection ? `\nTheir
    * the real system-wide limit (2-8 exercises per session), not a
    * smaller self-imposed one.
    */
-  async generateWorkoutProgram(description: string): Promise<GeneratedProgram | null> {
+  async generateWorkoutProgram(description: string, restrictionBrief?: string): Promise<GeneratedProgram | null> {
     this.lastErrorReason = null;
     const cleanDescription = sanitizeString(description);
     if (!cleanDescription) return null;
 
+    const restrictionLine = restrictionPromptLine(sanitizeString(restrictionBrief || '') || undefined);
     const systemPrompt = `You design a workout program based on what someone describes wanting.
-Pick real values, not the smallest plausible ones — someone generating their own program explicitly does not want it artificially minimized. sessionExerciseCount can be anywhere from 2 to 8 (the app's real system-wide range), daysPerWeek 1-7, durationWeeks 1-16 — choose whatever actually fits their description, including a genuinely larger session or duration if that's what they asked for or implied.
+${restrictionLine ? `${restrictionLine} Choose targetGroups and a session size that fit this, and never build the program around an area they are working around.\n` : ''}Pick real values, not the smallest plausible ones — someone generating their own program explicitly does not want it artificially minimized. sessionExerciseCount can be anywhere from 2 to 8 (the app's real system-wide range), daysPerWeek 1-7, durationWeeks 1-16 — choose whatever actually fits their description, including a genuinely larger session or duration if that's what they asked for or implied.
 targetGroups must only use these exact values: ${VALID_EXERCISE_GROUPS.join(', ')}, or "all" for every group. Never invent a group name that isn't in that list — it wouldn't match any real exercise.
 emoji should be one relevant emoji character. forWhom is a short one-line description of who this fits. restBetweenSetsHint is a short, encouraging one-line note about pacing between sets — reflect current guidance, not outdated "push to failure" framing: recommend stopping a couple of reps short of failure (not grinding every set to zero), and for a program that's specifically about maximal strength (low reps, heavy compound lifts), longer rest (3-5 minutes) is appropriate; for general hypertrophy/fitness work, 60-180 seconds is enough.
 Respond with ONLY valid JSON, no markdown fences:

@@ -2,6 +2,7 @@ import type { StateCreator } from 'zustand';
 import { getRepository } from '@/core/storage';
 import { createWriteGuard } from '@/core/storage/writeGuard';
 import type { Recipe } from '@/content/recipes';
+import type { CorrectiveMode } from '@/content/restrictions';
 
 export interface NutritionPreferences {
   allergies: string[];
@@ -31,6 +32,10 @@ export interface FitnessPreferences {
   activityLevel?: ActivityLevel;
   exerciseGoals?: string[];
   focusAreas?: string[];
+  /** Ids from content/restrictions.ts (runner's knee, weak hips, and so on). */
+  restrictions?: string[];
+  /** How targeted work is added to workouts. Never chosen means all three. */
+  correctiveModes?: CorrectiveMode[];
 }
 
 export interface NutritionFitnessState {

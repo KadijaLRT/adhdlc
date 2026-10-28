@@ -40,7 +40,12 @@ export default function WorkoutDaySchedulePicker({ weekdayIndex }: { weekdayInde
   const activeGym = (gyms || []).find((g) => g.id === activeGymId);
 
   const prefsEquipment = fitnessPreferences?.equipment;
-  const equipmentContext = useMemo(() => buildEquipmentContext(activeGym, prefsEquipment), [activeGym, prefsEquipment]);
+  const savedRestrictions = fitnessPreferences?.restrictions;
+  const savedCorrectiveModes = fitnessPreferences?.correctiveModes;
+  const equipmentContext = useMemo(
+    () => buildEquipmentContext(activeGym, prefsEquipment, savedRestrictions, savedCorrectiveModes),
+    [activeGym, prefsEquipment, savedRestrictions, savedCorrectiveModes]
+  );
 
   const dayContent = useMemo(
     () => (activeProgram ? buildDayLetterContent(activeProgram, fitnessPreferences, equipmentContext) : new Map()),

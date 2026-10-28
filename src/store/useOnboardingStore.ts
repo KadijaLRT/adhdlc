@@ -25,6 +25,8 @@ interface OnboardingState {
   activityLevel: ActivityLevel | null;
   exerciseGoals: string[];
   focusAreas: string[];
+  /** Restriction ids from content/restrictions.ts, optional. */
+  restrictions: string[];
   heightFt: string;
   heightIn: string;
   foodsLoved: string;
@@ -42,7 +44,7 @@ interface OnboardingState {
   moduleScreenCount: number;
 
   setField: <K extends string>(key: K, value: any) => void;
-  toggleInList: (key: 'adhdSymptoms' | 'brainTypes' | 'supportMethods' | 'exerciseGoals' | 'focusAreas' | 'selectedModules' | 'sleepStruggles' | 'emotionalRegulationHelpers', value: string) => void;
+  toggleInList: (key: 'adhdSymptoms' | 'brainTypes' | 'supportMethods' | 'exerciseGoals' | 'focusAreas' | 'restrictions' | 'selectedModules' | 'sleepStruggles' | 'emotionalRegulationHelpers', value: string) => void;
   buildModuleScreenQueue: () => void;
   getStepInfo: (screenPath: string) => { step: number; total: number };
   goToNextModuleScreen: (router: { push: (href: string) => void; replace?: (href: string) => void }) => void;
@@ -69,7 +71,7 @@ const DEFAULTS = {
   supportMethods: [] as string[],
   gender: null as Gender, weightGoalDirections: [] as WeightGoalDirection[],
   startingWeightLbs: '', goalWeightLbs: '', goalDate: '', bodyType: null as BodyType | null, activityLevel: null as ActivityLevel | null,
-  exerciseGoals: [] as string[], focusAreas: [] as string[],
+  exerciseGoals: [] as string[], focusAreas: [] as string[], restrictions: [] as string[],
   heightFt: '', heightIn: '',
   foodsLoved: '', foodsAvoided: '', allergies: '',
   cycleTrackingEnabled: false, reminderStyle: null as ReminderStyle | null,

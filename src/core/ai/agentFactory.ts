@@ -1,5 +1,6 @@
 import { z } from 'zod';
 // @ts-ignore - plain JS by design
+import { restrictionPromptLine } from './restrictionBrief';
 import { sanitizeString, sanitizePayload } from './groqSanitizer';
 import { callGroqCompletion } from './groqProxyClient';
 
@@ -29,6 +30,8 @@ export interface AgentContext {
   // question) keeps working unchanged.
   coachingStyle?: 'gentle' | 'funny' | 'reality_check' | 'friend' | 'scientific';
   brainTypeTraits?: string[];
+  /** From buildRestrictionBrief: the person's saved injuries and moves that bother them. Built from the app's fixed list only. */
+  restrictionBrief?: string;
 }
 
 const COACHING_STYLE_INSTRUCTIONS: Record<NonNullable<AgentContext['coachingStyle']>, string> = {
@@ -57,6 +60,7 @@ export function createAgent(config: AgentConfig) {
 Never use guilt, urgency, or shaming language. Keep responses short and concrete.
 ${cleanContext.coachingStyle ? COACHING_STYLE_INSTRUCTIONS[cleanContext.coachingStyle] : ''}
 ${cleanContext.brainTypeTraits?.length ? `This person identifies with these ADHD traits: ${cleanContext.brainTypeTraits.join(', ')}. Let this inform your approach where relevant, without labeling or diagnosing them back.` : ''}
+${restrictionPromptLine(cleanContext.restrictionBrief)}
 If a recent reflection note is provided, you may reference it naturally if it's relevant to what the person is asking — but never quote it back verbatim or make it the focus unless they bring it up themselves.
 Respond with ONLY valid JSON, no markdown fences:
 {"message": string, "reasoning": string, "suggestedNextStep": string}`;

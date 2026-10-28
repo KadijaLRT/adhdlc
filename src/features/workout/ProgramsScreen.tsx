@@ -13,6 +13,7 @@ import { useAppStore, selectActiveProgramId, selectGyms, selectActiveGymId, sele
 import { PROGRAMS, getProgramById, type ProgramDefinition } from '@/content/programs';
 import { getCurrentProgramWeek, getSessionsThisWeek } from './buildProgramSession';
 import { recommendProgramId } from './recommendProgram';
+import { buildRestrictionBrief } from '@/core/ai/restrictionBrief';
 import { avivaBrain } from '@/core/ai/AvivaBrain';
 import { describeAiFailure } from '@/core/ai/describeAiFailure';
 import { generateId } from '@/shared/generateId';
@@ -205,7 +206,7 @@ export default function ProgramsScreen() {
     if (!generateInput.trim()) return;
     setGenerating(true);
     setGenerateError(null);
-    const generated = await avivaBrain.generateWorkoutProgram(generateInput);
+    const generated = await avivaBrain.generateWorkoutProgram(generateInput, buildRestrictionBrief(fitnessPreferences?.restrictions));
     setGenerating(false);
     if (!generated) {
       setGenerateError(describeAiFailure(avivaBrain.lastErrorReason));

@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAppStore } from '@/store/index';
 import { STRETCH_ROUTINES } from '@/content/recoveryContent';
+import { resolveCareRoutine } from '@/content/restrictionCare';
 import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
 
 function todayLocal(): string {
@@ -28,7 +29,7 @@ export default function StretchRunner({ routineId }: { routineId: string }) {
   const router = useRouter();
   const logRecoveryUpdate = useAppStore((s) => s.logRecoveryUpdate);
 
-  const routine = (STRETCH_ROUTINES || []).find((r) => r.id === routineId);
+  const routine = (STRETCH_ROUTINES || []).find((r) => r.id === routineId) || resolveCareRoutine(routineId);
   const steps = routine?.steps || [];
 
   const [currentIndex, setCurrentIndex] = useState(0);

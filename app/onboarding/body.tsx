@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import { FOCUS_AREA_GROUPS, bodyGroupLabel } from '@/content/bodyGroups';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -6,6 +7,8 @@ import { useOnboardingStore } from '@/store/useOnboardingStore';
 import type { Gender, WeightGoalDirection, BodyType, ActivityLevel } from '@/store/index';
 import { OnboardingStepHeader, OnboardingProgressBar } from '@/features/onboarding/OnboardingStepHeader';
 import { DateInput } from '@/shared/components/DateInput';
+import RestrictionPicker from '@/features/workout/RestrictionPicker';
+import { RESTRICTIONS_DISCLAIMER } from '@/content/restrictions';
 
 const GENDERS: { id: Gender; label: string; emoji: string }[] = [
   { id: 'female', label: 'Female', emoji: '👩' },
@@ -53,6 +56,7 @@ export default function BodyScreen() {
   const o = useOnboardingStore();
   const setField = useOnboardingStore((s) => s.setField);
   const toggleInList = useOnboardingStore((s) => s.toggleInList);
+  const [showRestrictions, setShowRestrictions] = useState(false);
   const getStepInfo = useOnboardingStore((s) => s.getStepInfo);
   const { step, total } = getStepInfo('/onboarding/body');
 
@@ -155,6 +159,20 @@ export default function BodyScreen() {
           <View className="flex-row flex-wrap gap-2 mb-6">
             {FOCUS_AREAS.map((f) => <Pill key={f} label={bodyGroupLabel(f)} active={o.focusAreas.includes(f)} onPress={() => toggleInList('focusAreas', f)} />)}
           </View>
+
+          <Pressable onPress={() => setShowRestrictions((v) => !v)} className="bg-slate-900 rounded-xl p-4 mb-6 flex-row items-center justify-between">
+            <View className="flex-1 pr-3">
+              <Text className="text-slate-100 text-base font-medium">Anything your body is working around?</Text>
+              <Text className="text-slate-500 text-xs">Optional. Runner's knee, weak hips, pelvic floor and more.</Text>
+            </View>
+            <Text className="text-slate-400 text-xs">{showRestrictions ? 'Hide' : o.restrictions.length > 0 ? `${o.restrictions.length} set` : 'Add'}</Text>
+          </Pressable>
+          {showRestrictions && (
+            <View className="mb-6">
+              <RestrictionPicker selected={o.restrictions} onToggle={(id) => toggleInList('restrictions', id)} forceDark />
+              <Text className="text-slate-500 text-[11px] leading-4">{RESTRICTIONS_DISCLAIMER}</Text>
+            </View>
+          )}
 
           <Text className="text-slate-100 text-base font-medium mb-2">Height</Text>
           <View className="flex-row gap-2 mb-8">

@@ -1,6 +1,8 @@
 import { useMemo, useState } from 'react';
 import { View, Text, Pressable, ScrollView } from 'react-native';
 import { BODY_GROUP_IDS, bodyGroupLabel } from '@/content/bodyGroups';
+import RestrictionFitNote from './RestrictionFitNote';
+import { useEquipmentContext } from './useEquipmentContext';
 
 export interface PickableExercise {
   id: string;
@@ -25,6 +27,7 @@ export default function GroupedExerciseList({
   maxHeight?: number;
 }) {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
+  const equipmentContext = useEquipmentContext();
   const safeItems = items || [];
 
   const groupsPresent = useMemo(() => {
@@ -80,6 +83,7 @@ export default function GroupedExerciseList({
                 <View className="flex-1">
                   <Text className={nameClass}>{ex.name}</Text>
                   <Text className="text-slate-500 text-xs">{ex.muscle}</Text>
+                  <RestrictionFitNote exerciseId={ex.id} ctx={equipmentContext} />
                 </View>
               </Pressable>
             ))}

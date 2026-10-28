@@ -121,6 +121,7 @@ export default function FinalScreen() {
         activityLevel: o.activityLevel || undefined,
         exerciseGoals: o.exerciseGoals,
         focusAreas: o.focusAreas,
+        restrictions: o.restrictions,
       });
 
       if (o.startingWeightLbs && Number(o.startingWeightLbs) > 0) {

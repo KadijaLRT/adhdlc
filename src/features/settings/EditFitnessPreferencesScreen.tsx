@@ -187,6 +187,14 @@ export default function EditFitnessPreferencesScreen() {
             {FOCUS_AREAS.map((f) => <Pill key={f} label={bodyGroupLabel(f)} active={focusAreas.includes(f)} onPress={() => toggleIn(focusAreas, setFocusAreas, f)} />)}
           </View>
 
+          <Pressable onPress={() => router?.push?.('/settings/restrictions')} className="bg-white dark:bg-slate-900 rounded-xl p-4 mb-6 flex-row items-center justify-between">
+            <View className="flex-1 pr-3">
+              <Text className="text-slate-900 dark:text-slate-100 text-sm font-medium">Injuries and weak spots</Text>
+              <Text className="text-slate-500 text-xs">Runner's knee, weak hips, pelvic floor and more. Adds strengthening and steers around aggravating moves.</Text>
+            </View>
+            <Text className="text-slate-500 text-xs">{(fitnessPreferences?.restrictions || []).length > 0 ? `${(fitnessPreferences?.restrictions || []).length} set` : 'Set up'}</Text>
+          </Pressable>
+
           <Pressable onPress={handleSave} className="bg-indigo-600 rounded-full py-4 items-center active:bg-indigo-500 mb-3">
             <Text className="text-white text-lg font-semibold">{saved ? 'Saved ✓' : 'Save changes'}</Text>
           </Pressable>

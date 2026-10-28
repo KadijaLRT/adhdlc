@@ -92,7 +92,7 @@ export default function WorkoutSession({
   // WorkoutDaySession.tsx now uses, so a single-exercise "Start
   // Somewhere" session is consistent with a full day session.
   const rawExercise = WORKOUT_EXERCISES?.[swappedExerciseId];
-  const exercise = rawExercise ? getEffectiveExercise(rawExercise, fitnessPreferences?.weightGoalDirections) : undefined;
+  const exercise = rawExercise ? getEffectiveExercise(rawExercise, fitnessPreferences) : undefined;
   // Only the single top fault, not the full list from ExerciseBrowser —
   // mid-set is a moment for one quick catch, not a study session; the
   // full breakdown with every fault plus muscle/joint detail is one tap
@@ -203,7 +203,7 @@ export default function WorkoutSession({
     setCurrentSet(1);
     setWeight('');
     const rawNewExercise = WORKOUT_EXERCISES?.[newId];
-    const effectiveNewExercise = rawNewExercise ? getEffectiveExercise(rawNewExercise, fitnessPreferences?.weightGoalDirections) : undefined;
+    const effectiveNewExercise = rawNewExercise ? getEffectiveExercise(rawNewExercise, fitnessPreferences) : undefined;
     setReps(String(effectiveNewExercise?.repsMin || 10));
     setPhase('set');
   };

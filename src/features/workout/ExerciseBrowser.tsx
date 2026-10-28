@@ -5,11 +5,12 @@ import { useAppStore, selectCompletedExerciseLog, selectFitnessPreferences } fro
 import { WORKOUT_EXERCISES, type Exercise } from '@/content/exercises';
 import { deriveMuscleInvolvement, getJointAction, getCommonFaults } from '@/content/kinesiology';
 import { getEffectiveExercise, getTrainingScheme } from '@/content/trainingSchemes';
-import type { WeightGoalDirection } from '@/store/slices/nutritionFitnessSlice';
+import type { FitnessPreferences } from '@/store/slices/nutritionFitnessSlice';
 import { Heading } from '@/shared/components/Heading';
 import { BODY_GROUP_IDS, bodyGroupLabel } from '@/content/bodyGroups';
 import { filterAvailableEntries } from './exerciseAvailability';
 import { useEquipmentContext } from './useEquipmentContext';
+import RestrictionFitNote from './RestrictionFitNote';
 
 // Secondary screen reached from "Browse all exercises" on the Workouts
 // landing page. The Start Somewhere button and Programs/Progress/
@@ -75,7 +76,7 @@ export default function ExerciseBrowser() {
         contentContainerStyle={{ padding: 16, gap: 10, paddingBottom: 40, width: '100%', maxWidth: 448, alignSelf: 'center' }}
         renderItem={({ item: [id, exercise] }) => {
           const completedCount = (completedLog || []).filter((l) => l.exerciseId === id).length;
-          return <ExerciseCard exercise={exercise} exerciseId={id} completedCount={completedCount} onLogCompletion={() => logExerciseCompletion(id)} weightGoalDirections={fitnessPreferences?.weightGoalDirections} />;
+          return <ExerciseCard exercise={exercise} exerciseId={id} completedCount={completedCount} onLogCompletion={() => logExerciseCompletion(id)} trainingInputs={fitnessPreferences} />;
         }}
         ListEmptyComponent={<Text className="text-slate-500 text-center mt-6">No exercises in this group yet.</Text>}
       />
@@ -84,12 +85,13 @@ export default function ExerciseBrowser() {
 }
 
 function ExerciseCard({
-  exercise, exerciseId, completedCount, onLogCompletion, weightGoalDirections,
+  exercise, exerciseId, completedCount, onLogCompletion, trainingInputs,
 }: {
   exercise: Exercise; exerciseId: string; completedCount: number; onLogCompletion: () => void;
-  weightGoalDirections?: WeightGoalDirection[];
+  trainingInputs?: FitnessPreferences | null;
 }) {
   const router = useRouter();
+  const cardEquipmentContext = useEquipmentContext();
   const [showWhy, setShowWhy] = useState(false);
   // Bug fix: this screen used to always show and use each exercise's
   // raw, un-adjusted baseline (sets/reps/rest straight from
@@ -102,8 +104,8 @@ function ExerciseCard({
   // really get, plus the scheme's own rationale so the connection
   // between "your stated goal" and "these numbers" is explicit, not
   // hidden.
-  const effectiveExercise = useMemo(() => getEffectiveExercise(exercise, weightGoalDirections), [exercise, weightGoalDirections]);
-  const scheme = useMemo(() => getTrainingScheme(weightGoalDirections), [weightGoalDirections]);
+  const effectiveExercise = useMemo(() => getEffectiveExercise(exercise, trainingInputs), [exercise, trainingInputs]);
+  const scheme = useMemo(() => getTrainingScheme(trainingInputs), [trainingInputs]);
   const muscleInvolvement = useMemo(() => deriveMuscleInvolvement(exercise), [exercise]);
   const jointAction = useMemo(() => getJointAction(exercise), [exercise]);
   const commonFaults = useMemo(() => getCommonFaults(exercise), [exercise]);
@@ -126,6 +128,7 @@ function ExerciseCard({
         {completedCount > 0 && <Text className="text-emerald-700 text-xs dark:text-emerald-400">done {completedCount}×</Text>}
       </View>
       <Text className="text-slate-500 text-xs mb-2">{exercise?.muscle} · {effectiveExercise?.sets} sets · {effectiveExercise?.reps} reps · rest {effectiveExercise?.rest}s</Text>
+      <View className="-mt-1 mb-2"><RestrictionFitNote exerciseId={exerciseId} ctx={cardEquipmentContext} /></View>
       <Text className="text-slate-500 text-xs mb-2">{exercise?.cues}</Text>
 
       <Pressable onPress={() => setShowWhy((v) => !v)} className="mb-3">

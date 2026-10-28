@@ -20,7 +20,7 @@ export default function ProfileScreen() {
   const handleResetOnboarding = async () => {
     await clearProfile();
     await setNutritionPreferences({ allergies: [], dietaryRestrictions: [], foodsLoved: [], foodsAvoided: [] });
-    await setFitnessPreferences({ equipment: [], primaryGoal: null });
+    await setFitnessPreferences({ equipment: [], primaryGoal: null, restrictions: [] });
     await setCycleTrackingEnabled(false);
     // Only removes items onboarding itself created (see the `med-`
     // prefix used in onboarding/final.tsx) — anything the person added
