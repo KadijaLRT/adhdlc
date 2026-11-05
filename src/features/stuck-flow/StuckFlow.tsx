@@ -58,7 +58,7 @@ export default function StuckFlow() {
           <Text className="text-indigo-700 text-xs uppercase tracking-wider mb-3 dark:text-indigo-300">Try this micro step</Text>
           <Text className="text-slate-50 text-xl text-center font-medium">{currentPrompt?.text || 'Take a sip of water.'}</Text>
         </View>
-        <Pressable onPress={handleNextStep} className="bg-indigo-600 rounded-full py-4 px-8 mb-4 active:bg-indigo-500">
+        <Pressable onPress={handleNextStep} className="bg-indigo-600 rounded-full py-4 px-8 mb-4 active:bg-indigo-500 btn3d btn3d-p">
           <Text className="text-white text-lg text-center font-semibold">Did it. What&apos;s next?</Text>
         </Pressable>
         <View className="mb-6">

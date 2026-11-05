@@ -7,8 +7,10 @@ import { resolveBrainTypeTraits } from '@/content/brainTypes';
 import { spreadStepsAcrossDays, groupStepsByDate } from './spreadWorkload';
 import { Heading } from '@/shared/components/Heading';
 import { formatDate } from '@/shared/formatDate';
+import { useThemeHex } from '@/theme/useThemeHex';
 
 export default function AssignmentDetailScreen({ assignmentId }: { assignmentId: string }) {
+  const themeHex = useThemeHex();
   const router = useRouter();
   const assignments = useAppStore(selectAssignments);
   const courses = useAppStore(selectCourses);
@@ -104,7 +106,7 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
 
         <Pressable
           onPress={() => toggleAssignmentComplete(assignment.id)}
-          className={assignment.isComplete ? 'bg-emerald-500 rounded-full py-4 mb-6' : 'bg-indigo-600 rounded-full py-4 mb-6 active:bg-indigo-500'}
+          className={assignment.isComplete ? 'bg-emerald-500 rounded-full py-4 mb-6 btn3d btn3d-s' : 'bg-indigo-600 rounded-full py-4 mb-6 active:bg-indigo-500 btn3d btn3d-p'}
         >
           <Text className={assignment.isComplete ? 'text-white text-center font-semibold' : 'text-white text-center font-semibold'}>
             {assignment.isComplete ? 'Marked done ✓' : 'Done'}
@@ -172,7 +174,7 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
           </View>
-          <Pressable onPress={handleSaveGrade} className="bg-indigo-600 rounded-xl py-2.5 items-center">
+          <Pressable onPress={handleSaveGrade} className="bg-indigo-600 rounded-xl py-2.5 items-center btn3d btn3d-p">
             <Text className="text-white text-sm font-semibold">{scoreSaved ? 'Saved ✓' : 'Save grade'}</Text>
           </Pressable>
         </View>
@@ -180,7 +182,7 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
         {(assignment.subSteps?.length || 0) === 0 ? (
           <>
             <Pressable onPress={handleBreakDown} disabled={breakingDown} className="border-2 border-indigo-500 rounded-full py-4 mb-2 items-center">
-              {breakingDown ? <ActivityIndicator color="#818cf8" /> : <Text className="text-indigo-700 font-semibold dark:text-indigo-300">Break this into steps</Text>}
+              {breakingDown ? <ActivityIndicator color={themeHex.primary400} /> : <Text className="text-indigo-700 font-semibold dark:text-indigo-300">Break this into steps</Text>}
             </Pressable>
             {breakDownError && <Text className="text-red-500 text-xs text-center mb-6">{breakDownError}</Text>}
           </>

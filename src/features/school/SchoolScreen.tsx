@@ -155,7 +155,7 @@ export default function SchoolScreen() {
                     keyboardType="decimal-pad"
                     className="flex-1 bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2"
                   />
-                  <Pressable onPress={handleSaveCreditsGoal} className="bg-indigo-600 rounded-xl px-4 justify-center">
+                  <Pressable onPress={handleSaveCreditsGoal} className="bg-indigo-600 rounded-xl px-4 justify-center btn3d btn3d-p">
                     <Text className="text-white text-sm font-semibold">Set</Text>
                   </Pressable>
                 </View>
@@ -165,7 +165,7 @@ export default function SchoolScreen() {
         )}
 
         {suggested && (
-          <Pressable onPress={() => router?.push?.(`/school/assignment/${suggested.id}`)} className="bg-indigo-600 rounded-2xl p-5 mb-4 active:bg-indigo-500">
+          <Pressable onPress={() => router?.push?.(`/school/assignment/${suggested.id}`)} className="bg-indigo-600 rounded-2xl p-5 mb-4 active:bg-indigo-500 btn3d btn3d-p">
             <Text className="text-indigo-100 text-xs uppercase tracking-wider mb-1">
               Recommended {daysUntil(suggested.dueDate) <= 0 ? '· due now' : `· due in ${daysUntil(suggested.dueDate)} day${daysUntil(suggested.dueDate) === 1 ? '' : 's'}`}
             </Text>
@@ -197,7 +197,7 @@ export default function SchoolScreen() {
               onSubmitEditing={handleAddCourse}
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-4 py-3 dark:text-slate-100 dark:bg-slate-800"
             />
-            <Pressable onPress={handleAddCourse} className="bg-indigo-600 rounded-xl px-5 justify-center">
+            <Pressable onPress={handleAddCourse} className="bg-indigo-600 rounded-xl px-5 justify-center btn3d btn3d-p">
               <Text className="text-white font-semibold">Add</Text>
             </Pressable>
           </View>

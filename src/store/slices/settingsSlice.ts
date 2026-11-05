@@ -1,6 +1,7 @@
 import type { StateCreator } from 'zustand';
 import { getRepository } from '@/core/storage';
 import { createWriteGuard } from '@/core/storage/writeGuard';
+import { DEFAULT_BUTTON_LOOK, DEFAULT_COLORWAY, isButtonLook, isColorwayId, type ButtonLook, type ColorwayId } from '@/theme/colorways';
 
 export type TextSize = 'small' | 'medium' | 'large';
 export type ColorSchemePreference = 'light' | 'dark' | 'system';
@@ -16,6 +17,8 @@ export interface SettingsState {
   dateFormat: DateFormat;
   unitSystem: UnitSystem;
   notificationsEnabled: boolean;
+  colorway: ColorwayId;
+  buttonLook: ButtonLook;
 }
 
 export interface SettingsSlice extends SettingsState {
@@ -27,6 +30,8 @@ export interface SettingsSlice extends SettingsState {
   setDateFormat: (format: DateFormat) => Promise<void>;
   setUnitSystem: (system: UnitSystem) => Promise<void>;
   setNotificationsEnabled: (enabled: boolean) => Promise<void>;
+  setColorway: (id: ColorwayId) => Promise<void>;
+  setButtonLook: (look: ButtonLook) => Promise<void>;
 }
 
 const DEFAULT_STATE: SettingsState = {
@@ -38,6 +43,8 @@ const DEFAULT_STATE: SettingsState = {
   dateFormat: 'MM-DD-YYYY',
   unitSystem: 'imperial',
   notificationsEnabled: false,
+  colorway: DEFAULT_COLORWAY,
+  buttonLook: DEFAULT_BUTTON_LOOK,
 };
 
 const persist = createWriteGuard(async (state: SettingsState) => {
@@ -55,6 +62,8 @@ function currentState(get: () => SettingsState): SettingsState {
     dateFormat: get().dateFormat || 'MM-DD-YYYY',
     unitSystem: get().unitSystem || 'imperial',
     notificationsEnabled: get().notificationsEnabled ?? false,
+    colorway: isColorwayId(get().colorway) ? get().colorway : DEFAULT_COLORWAY,
+    buttonLook: isButtonLook(get().buttonLook) ? get().buttonLook : DEFAULT_BUTTON_LOOK,
   };
 }
 
@@ -98,6 +107,18 @@ export const createSettingsSlice: StateCreator<SettingsSlice> = (set, get) => ({
   },
   setNotificationsEnabled: async (notificationsEnabled) => {
     const nextState = { ...currentState(get), notificationsEnabled };
+    set(nextState);
+    await persist(nextState);
+  },
+  setColorway: async (colorway) => {
+    if (!isColorwayId(colorway)) return;
+    const nextState = { ...currentState(get), colorway };
+    set(nextState);
+    await persist(nextState);
+  },
+  setButtonLook: async (buttonLook) => {
+    if (!isButtonLook(buttonLook)) return;
+    const nextState = { ...currentState(get), buttonLook };
     set(nextState);
     await persist(nextState);
   },

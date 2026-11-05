@@ -101,7 +101,7 @@ function GymSelectorCard() {
         <Text className="text-slate-700 text-xs font-medium mb-2 dark:text-slate-300">What equipment does this gym have?</Text>
         <GymEquipmentPicker value={newGymEquipment} onChange={setNewGymEquipment} />
         <View className="flex-row gap-2">
-          <Pressable onPress={handleAddGym} disabled={savingGym} className="flex-1 bg-indigo-600 rounded-xl py-3 items-center">
+          <Pressable onPress={handleAddGym} disabled={savingGym} className="flex-1 bg-indigo-600 rounded-xl py-3 items-center btn3d btn3d-p">
             <Text className="text-white text-sm font-semibold">{savingGym ? 'Saving...' : 'Save gym'}</Text>
           </Pressable>
           <Pressable onPress={resetAddForm} className="py-3 px-4">
@@ -119,7 +119,7 @@ function GymSelectorCard() {
         <Text className="text-slate-700 text-xs font-medium mb-2 dark:text-slate-300">Equipment available here</Text>
         <GymEquipmentPicker value={managingGym.equipment} onChange={(next) => updateGymEquipment(managingGym.id, next)} />
         <View className="flex-row gap-2">
-          <Pressable onPress={() => setManagingGymId(null)} className="flex-1 bg-indigo-600 rounded-xl py-3 items-center">
+          <Pressable onPress={() => setManagingGymId(null)} className="flex-1 bg-indigo-600 rounded-xl py-3 items-center btn3d btn3d-p">
             <Text className="text-white text-sm font-semibold">Done</Text>
           </Pressable>
           <Pressable onPress={() => { removeGym(managingGym.id); setManagingGymId(null); }} className="py-3 px-4">
@@ -304,7 +304,7 @@ export default function ProgramsScreen() {
               <Pressable
                 onPress={handleGenerate}
                 disabled={generating || !generateInput.trim()}
-                className={generating || !generateInput.trim() ? 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center' : 'flex-1 bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500'}
+                className={generating || !generateInput.trim() ? 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center' : 'flex-1 bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500 btn3d btn3d-p'}
               >
                 {generating ? <ActivityIndicator color="#fff" size="small" /> : <Text className="text-white text-sm font-semibold">✨ Generate</Text>}
               </Pressable>
@@ -373,7 +373,7 @@ export default function ProgramsScreen() {
                     You're {currentWeek} week{currentWeek === 1 ? '' : 's'} into {activeProgram?.title} with {sessionsCompletedInProgram} session{sessionsCompletedInProgram === 1 ? '' : 's'} logged — switching resets that progress.
                   </Text>
                   <View className="flex-row gap-2">
-                    <Pressable onPress={async () => { await startProgram(item.id); setConfirmingSwitchId(null); }} className="flex-1 bg-amber-500 rounded-full py-2 items-center active:bg-amber-400">
+                    <Pressable onPress={async () => { await startProgram(item.id); setConfirmingSwitchId(null); }} className="flex-1 bg-amber-500 rounded-full py-2 items-center active:bg-amber-400 btn3d btn3d-a">
                       <Text className="text-white text-xs font-semibold">Switch anyway</Text>
                     </Pressable>
                     <Pressable onPress={() => setConfirmingSwitchId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-full py-2 items-center">

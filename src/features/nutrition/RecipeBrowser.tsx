@@ -168,7 +168,7 @@ export default function RecipeBrowser() {
           <Pressable
             onPress={handleGenerate}
             disabled={generating}
-            className={generating ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 mb-3 items-center' : 'bg-emerald-500 rounded-xl py-3 mb-3 items-center active:bg-emerald-400'}
+            className={generating ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 mb-3 items-center' : 'bg-emerald-500 rounded-xl py-3 mb-3 items-center active:bg-emerald-400 btn3d btn3d-s'}
           >
             {generating ? (
               <View className="flex-row items-center gap-2">

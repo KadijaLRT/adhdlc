@@ -173,7 +173,7 @@ export default function SchoolProgramSetupCard() {
           <Pressable
             onPress={handleGenerateCourses}
             disabled={!localProgram.trim() || generating}
-            className={!localProgram.trim() || generating ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center mb-2' : 'bg-emerald-500 rounded-xl py-3 items-center active:bg-emerald-400 mb-2'}
+            className={!localProgram.trim() || generating ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center mb-2' : 'bg-emerald-500 rounded-xl py-3 items-center active:bg-emerald-400 mb-2 btn3d btn3d-s'}
           >
             {generating ? (
               <View className="flex-row items-center gap-2">

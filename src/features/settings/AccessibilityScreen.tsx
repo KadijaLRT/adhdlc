@@ -7,6 +7,7 @@ import {
 } from '@/store/index';
 import { Heading } from '@/shared/components/Heading';
 import { buildIcsContent, downloadIcsFile } from './exportCalendar';
+import { useThemeHex } from '@/theme/useThemeHex';
 
 const TEXT_SIZES: { id: TextSize; label: string; scale: number }[] = [
   { id: 'small', label: 'A', scale: 0.85 },
@@ -21,6 +22,7 @@ const DATE_FORMAT_OPTIONS: { id: DateFormat; example: string }[] = [
 ];
 
 export default function AccessibilityScreen() {
+  const themeHex = useThemeHex();
   const textSize = useAppStore(selectTextSize);
   const reduceMotion = useAppStore(selectReduceMotion);
   const highContrast = useAppStore(selectHighContrast);
@@ -121,7 +123,7 @@ export default function AccessibilityScreen() {
           <Text className="text-slate-500 text-xs mb-4">
             Downloads a .ics file with your open tasks and school assignments that have a due date. Import it into Google Calendar, Outlook, or Apple Calendar. Tasks show as all-day events since exact times aren't tracked yet. On iOS/Android, this opens your device's share sheet so you can save or send it.
           </Text>
-          <Pressable onPress={handleExportCalendar} className="bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500">
+          <Pressable onPress={handleExportCalendar} className="bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500 btn3d btn3d-p">
             <Text className="text-white font-semibold">🗓️ Export Schedule (.ics)</Text>
           </Pressable>
           {exportError && <Text className="text-red-500 text-xs mt-2">{exportError}</Text>}
@@ -154,7 +156,7 @@ export default function AccessibilityScreen() {
               <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold">Reduce Motion</Text>
               <Text className="text-slate-500 text-xs">Turns off breathing animations and transitions</Text>
             </View>
-            <Switch value={reduceMotion} onValueChange={setReduceMotion} trackColor={{ false: '#d6d3d1', true: '#4f46e5' }} thumbColor="#fff" />
+            <Switch value={reduceMotion} onValueChange={setReduceMotion} trackColor={{ false: '#d6d3d1', true: themeHex.primary600 }} thumbColor="#fff" />
           </View>
 
           <View className="h-px bg-stone-200 dark:bg-slate-800 my-4" />
@@ -164,7 +166,7 @@ export default function AccessibilityScreen() {
               <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold">High Contrast</Text>
               <Text className="text-slate-500 text-xs">Boosts contrast on headings and section titles app-wide. Not every screen uses these shared text styles yet.</Text>
             </View>
-            <Switch value={highContrast} onValueChange={setHighContrast} trackColor={{ false: '#d6d3d1', true: '#4f46e5' }} thumbColor="#fff" />
+            <Switch value={highContrast} onValueChange={setHighContrast} trackColor={{ false: '#d6d3d1', true: themeHex.primary600 }} thumbColor="#fff" />
           </View>
 
           <View className="h-px bg-stone-200 dark:bg-slate-800 my-4" />
@@ -174,7 +176,7 @@ export default function AccessibilityScreen() {
               <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold">Dyslexia-Friendly Font</Text>
               <Text className="text-slate-500 text-xs">Switches to Lexend, a font built for reading ease. Restart the app for it to fully apply.</Text>
             </View>
-            <Switch value={dyslexiaFont} onValueChange={setDyslexiaFont} trackColor={{ false: '#d6d3d1', true: '#4f46e5' }} thumbColor="#fff" />
+            <Switch value={dyslexiaFont} onValueChange={setDyslexiaFont} trackColor={{ false: '#d6d3d1', true: themeHex.primary600 }} thumbColor="#fff" />
           </View>
         </View>
       </View>

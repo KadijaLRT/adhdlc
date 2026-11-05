@@ -112,7 +112,7 @@ export default function RecipeDetailScreen({ recipeId }: { recipeId: string }) {
               </Pressable>
             </View>
           ) : (
-            <Pressable onPress={() => setShowMealPicker(true)} className="bg-indigo-600 rounded-xl py-3 items-center mb-6 active:bg-indigo-500">
+            <Pressable onPress={() => setShowMealPicker(true)} className="bg-indigo-600 rounded-xl py-3 items-center mb-6 active:bg-indigo-500 btn3d btn3d-p">
               <Text className="text-white text-sm font-semibold">+ Add to today&apos;s diary</Text>
             </Pressable>
           )}
@@ -148,7 +148,7 @@ export default function RecipeDetailScreen({ recipeId }: { recipeId: string }) {
               <Pressable
                 onPress={handleGenerateDirections}
                 disabled={generating}
-                className={generating ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center' : 'bg-emerald-500 rounded-xl py-3 items-center active:bg-emerald-400'}
+                className={generating ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center' : 'bg-emerald-500 rounded-xl py-3 items-center active:bg-emerald-400 btn3d btn3d-s'}
               >
                 {generating ? (
                   <View className="flex-row items-center gap-2">

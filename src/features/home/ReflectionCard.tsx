@@ -56,7 +56,7 @@ export default function ReflectionCard() {
 
       <Pressable
         onPress={handleSave}
-        className={saved ? 'bg-emerald-500/20 rounded-full py-3 items-center' : 'bg-indigo-600 rounded-full py-3 items-center active:bg-indigo-500'}
+        className={saved ? 'bg-emerald-500/20 rounded-full py-3 items-center' : 'bg-indigo-600 rounded-full py-3 items-center active:bg-indigo-500 btn3d btn3d-p'}
       >
         <Text className={saved ? 'text-emerald-700 dark:text-emerald-400 font-medium' : 'text-white font-semibold'}>
           {saved ? 'Saved ✓' : 'Save'}

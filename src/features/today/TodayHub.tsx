@@ -42,7 +42,7 @@ export default function TodayHub() {
         )}
 
         {suggested ? (
-          <Pressable onPress={() => router?.push?.(`/task/${suggested.id}`)} className="bg-indigo-600 rounded-2xl p-5 mb-4 active:bg-indigo-500">
+          <Pressable onPress={() => router?.push?.(`/task/${suggested.id}`)} className="bg-indigo-600 rounded-2xl p-5 mb-4 active:bg-indigo-500 btn3d btn3d-p">
             <Text className="text-indigo-100 text-xs uppercase tracking-wider mb-1">Next up</Text>
             <Text className="text-white text-lg font-semibold">{suggested.title}</Text>
           </Pressable>

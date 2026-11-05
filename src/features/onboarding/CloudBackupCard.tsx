@@ -60,7 +60,7 @@ export default function CloudBackupCard() {
           <Pressable
             onPress={handleSend}
             disabled={status === 'sending'}
-            className={status === 'sending' ? 'bg-slate-700 rounded-xl py-2.5 items-center' : 'bg-indigo-500 rounded-xl py-2.5 items-center active:bg-indigo-400'}
+            className={status === 'sending' ? 'bg-slate-700 rounded-xl py-2.5 items-center' : 'bg-indigo-500 rounded-xl py-2.5 items-center active:bg-indigo-400 btn3d btn3d-p'}
           >
             <Text className="text-white text-sm font-semibold">{status === 'sending' ? 'Sending…' : 'Email me a sign-in link'}</Text>
           </Pressable>

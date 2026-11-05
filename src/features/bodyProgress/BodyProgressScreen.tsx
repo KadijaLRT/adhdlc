@@ -184,7 +184,7 @@ export default function BodyProgressScreen() {
               onSubmitEditing={handleLogWeight}
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
-            <Pressable onPress={handleLogWeight} className="bg-indigo-600 rounded-xl px-4 justify-center">
+            <Pressable onPress={handleLogWeight} className="bg-indigo-600 rounded-xl px-4 justify-center btn3d btn3d-p">
               <Text className="text-white text-sm font-semibold">Log</Text>
             </Pressable>
           </View>
@@ -234,7 +234,7 @@ export default function BodyProgressScreen() {
               onSubmitEditing={handleLogMeasurement}
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
-            <Pressable onPress={handleLogMeasurement} className="bg-indigo-600 rounded-xl px-4 justify-center">
+            <Pressable onPress={handleLogMeasurement} className="bg-indigo-600 rounded-xl px-4 justify-center btn3d btn3d-p">
               <Text className="text-white text-sm font-semibold">Log</Text>
             </Pressable>
           </View>

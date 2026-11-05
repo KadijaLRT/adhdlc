@@ -113,7 +113,7 @@ export default function InlineStepTimer({ steps, onFinish }: { steps: TimedStep[
       </View>
 
       {isReady ? (
-        <Pressable onPress={() => setIsReady(false)} className="bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500">
+        <Pressable onPress={() => setIsReady(false)} className="bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500 btn3d btn3d-p">
           <Text className="text-white text-sm font-semibold">▶ Start</Text>
         </Pressable>
       ) : (
@@ -121,7 +121,7 @@ export default function InlineStepTimer({ steps, onFinish }: { steps: TimedStep[
           <Pressable onPress={() => setIsPaused(!isPaused)} className="flex-1 border-2 border-stone-300 dark:border-slate-700 rounded-xl py-2 items-center">
             <Text className="text-slate-600 dark:text-slate-300 text-xs font-semibold">{isPaused ? '▶ Resume' : '⏸ Pause'}</Text>
           </Pressable>
-          <Pressable onPress={goNext} className="flex-1 bg-emerald-500 rounded-xl py-2 items-center active:bg-emerald-400">
+          <Pressable onPress={goNext} className="flex-1 bg-emerald-500 rounded-xl py-2 items-center active:bg-emerald-400 btn3d btn3d-s">
             <Text className="text-white text-xs font-semibold">{currentIndex + 1 >= steps.length ? 'Finish' : 'Next →'}</Text>
           </Pressable>
         </View>

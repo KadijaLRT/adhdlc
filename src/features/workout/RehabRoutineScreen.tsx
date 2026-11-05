@@ -51,7 +51,7 @@ export default function RehabRoutineScreen() {
             <Text className="text-slate-500 text-sm mb-4">
               Tell the app about any injuries or weak spots and it will build a short strengthening routine for them.
             </Text>
-            <Pressable onPress={() => router?.push?.('/settings/restrictions')} className="bg-indigo-600 rounded-full py-4 items-center active:bg-indigo-500">
+            <Pressable onPress={() => router?.push?.('/settings/restrictions')} className="bg-indigo-600 rounded-full py-4 items-center active:bg-indigo-500 btn3d btn3d-p">
               <Text className="text-white font-semibold">Choose what to work on</Text>
             </Pressable>
           </View>
@@ -80,7 +80,7 @@ export default function RehabRoutineScreen() {
                     </View>
                   );
                 })}
-                <Pressable onPress={handleStart} className="bg-emerald-500 rounded-full py-4 items-center active:bg-emerald-400 mt-3 mb-3">
+                <Pressable onPress={handleStart} className="bg-emerald-500 rounded-full py-4 items-center active:bg-emerald-400 mt-3 mb-3 btn3d btn3d-s">
                   <Text className="text-white font-semibold">Start routine ({ids.length} moves)</Text>
                 </Pressable>
               </View>

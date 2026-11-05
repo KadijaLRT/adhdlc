@@ -173,7 +173,7 @@ export default function SixTwelveTwentyFiveRunner({
                 <Pressable
                   key={n}
                   onPress={() => handleStart(n)}
-                  className="flex-1 bg-indigo-600 rounded-2xl py-5 items-center active:bg-indigo-500"
+                  className="flex-1 bg-indigo-600 rounded-2xl py-5 items-center active:bg-indigo-500 btn3d btn3d-p"
                 >
                   <Text className="text-white text-2xl font-bold">{n}</Text>
                   <Text className="text-indigo-100 text-xs mt-1">{n === 1 ? 'round' : 'rounds'}</Text>
@@ -194,7 +194,7 @@ export default function SixTwelveTwentyFiveRunner({
           <Text className="text-slate-500 text-center mb-10">
             {completedSets} set{completedSets === 1 ? '' : 's'} logged across {rounds} round{rounds === 1 ? '' : 's'} · {formatElapsed(elapsedSeconds)}
           </Text>
-          <Pressable onPress={() => router?.replace?.('/(tabs)/workout')} className="bg-emerald-500 rounded-full py-4 px-10 active:bg-emerald-400">
+          <Pressable onPress={() => router?.replace?.('/(tabs)/workout')} className="bg-emerald-500 rounded-full py-4 px-10 active:bg-emerald-400 btn3d btn3d-s">
             <Text className="text-white font-semibold">Done ✓</Text>
           </Pressable>
         </View>
@@ -279,7 +279,7 @@ export default function SixTwelveTwentyFiveRunner({
               </View>
             </View>
 
-            <Pressable onPress={handleCompleteSet} className="bg-indigo-600 rounded-full py-4 active:bg-indigo-500">
+            <Pressable onPress={handleCompleteSet} className="bg-indigo-600 rounded-full py-4 active:bg-indigo-500 btn3d btn3d-p">
               <Text className="text-white text-center font-semibold text-lg">Complete set</Text>
             </Pressable>
           </View>
@@ -322,7 +322,7 @@ export default function SixTwelveTwentyFiveRunner({
               <Pressable onPress={() => setShowFinishConfirm(false)} className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-xl py-3 items-center">
                 <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Keep going</Text>
               </Pressable>
-              <Pressable onPress={() => router?.replace?.('/(tabs)/workout')} className="flex-1 bg-emerald-500 rounded-xl py-3 items-center">
+              <Pressable onPress={() => router?.replace?.('/(tabs)/workout')} className="flex-1 bg-emerald-500 rounded-xl py-3 items-center btn3d btn3d-s">
                 <Text className="text-white text-sm font-semibold">Done ✓</Text>
               </Pressable>
             </View>

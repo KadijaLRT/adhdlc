@@ -18,7 +18,7 @@ export default function PersonalizeNutritionCard() {
       <View className="flex-row gap-2">
         <Pressable
           onPress={() => router?.push?.('/settings/edit-nutrition')}
-          className="flex-1 bg-indigo-600 rounded-full py-3 items-center active:bg-indigo-500"
+          className="flex-1 bg-indigo-600 rounded-full py-3 items-center active:bg-indigo-500 btn3d btn3d-p"
         >
           <Text className="text-white text-sm font-semibold">Personalize my food</Text>
         </Pressable>

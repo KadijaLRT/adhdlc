@@ -83,7 +83,7 @@ export default function StretchRunner({ routineId }: { routineId: string }) {
         <Text className="text-4xl mb-4">{isFoamRolling ? '🧻' : '🧘'}</Text>
         <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold mb-2 text-center">Nice work.</Text>
         <Text className="text-slate-500 text-sm text-center mb-8">You finished {routine.title}.</Text>
-        <Pressable onPress={() => router?.back?.()} className="bg-emerald-500 rounded-full py-3 px-8 active:bg-emerald-400">
+        <Pressable onPress={() => router?.back?.()} className="bg-emerald-500 rounded-full py-3 px-8 active:bg-emerald-400 btn3d btn3d-s">
           <Text className="text-white font-semibold">Done ✓</Text>
         </Pressable>
       </SafeAreaView>
@@ -127,7 +127,7 @@ export default function StretchRunner({ routineId }: { routineId: string }) {
           </View>
         </View>
 
-        <Pressable onPress={goToNext} className="bg-emerald-500 rounded-2xl py-4 items-center active:bg-emerald-400">
+        <Pressable onPress={goToNext} className="bg-emerald-500 rounded-2xl py-4 items-center active:bg-emerald-400 btn3d btn3d-s">
           <Text className="text-white font-semibold text-base">
             {currentIndex + 1 >= steps.length ? 'Finish' : 'Next →'}
           </Text>

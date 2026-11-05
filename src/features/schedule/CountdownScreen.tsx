@@ -88,7 +88,7 @@ export default function CountdownScreen() {
           <Text className="text-slate-500 text-sm mb-6">Birthdays, payday, trips — however far off they are.</Text>
 
           {!showAddForm ? (
-            <Pressable onPress={() => setShowAddForm(true)} className="bg-indigo-600 rounded-2xl py-3 items-center mb-6 active:bg-indigo-500">
+            <Pressable onPress={() => setShowAddForm(true)} className="bg-indigo-600 rounded-2xl py-3 items-center mb-6 active:bg-indigo-500 btn3d btn3d-p">
               <Text className="text-white text-sm font-semibold">+ Add an event</Text>
             </Pressable>
           ) : (
@@ -124,7 +124,7 @@ export default function CountdownScreen() {
                 <Text className="text-slate-600 dark:text-slate-300 text-sm">Repeats every year (birthdays, holidays, anniversaries)</Text>
               </Pressable>
               <View className="flex-row gap-2">
-                <Pressable onPress={handleAdd} disabled={!label.trim() || !dateInput.trim() || dateHasInvalidFormat} className={label.trim() && dateInput.trim() && !dateHasInvalidFormat ? 'flex-1 bg-emerald-500 rounded-xl py-2.5 items-center active:bg-emerald-400' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2.5 items-center'}>
+                <Pressable onPress={handleAdd} disabled={!label.trim() || !dateInput.trim() || dateHasInvalidFormat} className={label.trim() && dateInput.trim() && !dateHasInvalidFormat ? 'flex-1 bg-emerald-500 rounded-xl py-2.5 items-center active:bg-emerald-400 btn3d btn3d-s' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2.5 items-center'}>
                   <Text className="text-white text-sm font-semibold">Add</Text>
                 </Pressable>
                 <Pressable onPress={() => setShowAddForm(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center">

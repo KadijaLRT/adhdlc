@@ -99,7 +99,7 @@ export default function HomeScreen() {
         </Pressable>
 
         {!isEvening && (!planStarted ? (
-          <Pressable onPress={handleStartMyDay} className="bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500">
+          <Pressable onPress={handleStartMyDay} className="bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500 btn3d btn3d-p">
             <Text className="text-white font-semibold text-base">Start My Day</Text>
           </Pressable>
         ) : (
@@ -108,7 +108,7 @@ export default function HomeScreen() {
             {todaysPlan.length === 0 ? (
               <View>
                 <Text className="text-slate-500 text-sm mb-3">Nothing on your list yet — add a task and it'll show up here.</Text>
-                <Pressable onPress={() => router?.push?.('/tasks')} className="bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500">
+                <Pressable onPress={() => router?.push?.('/tasks')} className="bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500 btn3d btn3d-p">
                   <Text className="text-white text-sm font-semibold">+ Add a task</Text>
                 </Pressable>
               </View>

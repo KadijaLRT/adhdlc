@@ -60,7 +60,7 @@ export default function RSDProtocol({ onClose }: { onClose?: () => void }) {
       {isTimerStep && (
         <View className="items-center mb-4">
           {!timerRunning && secondsLeft === 90 ? (
-            <Pressable onPress={() => setTimerRunning(true)} className="bg-indigo-600 rounded-full py-3 px-8 active:bg-indigo-500">
+            <Pressable onPress={() => setTimerRunning(true)} className="bg-indigo-600 rounded-full py-3 px-8 active:bg-indigo-500 btn3d btn3d-p">
               <Text className="text-white text-sm font-semibold">Start 90 seconds</Text>
             </Pressable>
           ) : (
@@ -69,7 +69,7 @@ export default function RSDProtocol({ onClose }: { onClose?: () => void }) {
         </View>
       )}
 
-      <Pressable onPress={handleNext} disabled={isWaitingOnTimer} className={isWaitingOnTimer ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center' : 'bg-emerald-500 rounded-xl py-3 items-center active:bg-emerald-400'}>
+      <Pressable onPress={handleNext} disabled={isWaitingOnTimer} className={isWaitingOnTimer ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center' : 'bg-emerald-500 rounded-xl py-3 items-center active:bg-emerald-400 btn3d btn3d-s'}>
         <Text className={isWaitingOnTimer ? 'text-slate-500 text-sm font-semibold' : 'text-white text-sm font-semibold'}>
           {isWaitingOnTimer ? `Wait for it (${secondsLeft}s)` : stepIndex >= RSD_STEPS.length - 1 ? 'Done' : 'Next step'}
         </Text>

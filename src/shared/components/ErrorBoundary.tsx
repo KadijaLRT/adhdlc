@@ -35,7 +35,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
               onPress={this.handleReset}
               accessibilityRole="button"
               accessibilityLabel="Try again"
-              className="bg-indigo-600 rounded-full py-4 px-8 active:bg-indigo-500"
+              className="bg-indigo-600 rounded-full py-4 px-8 active:bg-indigo-500 btn3d btn3d-p"
             >
               <Text className="text-white text-lg font-semibold">Try again</Text>
             </Pressable>

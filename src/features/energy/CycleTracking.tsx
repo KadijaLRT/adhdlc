@@ -5,6 +5,7 @@ import { getPeriodStartDates, getAverageCycleLength, getPredictedNextPeriod, get
 import CycleCalendar from './CycleCalendar';
 import AppleHealthImportCard from '@/features/settings/AppleHealthImportCard';
 import { formatDate } from '@/shared/formatDate';
+import { useThemeHex } from '@/theme/useThemeHex';
 
 type Phase = CycleLogEntry['phase'];
 const PHASE_OPTIONS: { phase: Phase; label: string }[] = [
@@ -14,6 +15,7 @@ const PHASE_OPTIONS: { phase: Phase; label: string }[] = [
 const LEVEL_EMOJI: Record<'low' | 'medium' | 'high', string> = { low: '🔋', medium: '🔋🔋', high: '🔋🔋🔋' };
 
 export default function CycleTracking() {
+  const themeHex = useThemeHex();
   const cycleTrackingEnabled = useAppStore(selectCycleTrackingEnabled);
   const setCycleTrackingEnabled = useAppStore((s) => s.setCycleTrackingEnabled);
   const cycleLogs = useAppStore(selectCycleLogs);
@@ -43,7 +45,7 @@ export default function CycleTracking() {
         <View className="flex-row items-center justify-between mb-1">
           <Text className="text-slate-900 text-base font-semibold dark:text-slate-100">Cycle Tracking</Text>
           <Switch value={cycleTrackingEnabled} onValueChange={setCycleTrackingEnabled}
-            trackColor={{ false: '#334155', true: '#4f46e5' }} thumbColor="#e2e8f0" />
+            trackColor={{ false: '#334155', true: themeHex.primary600 }} thumbColor="#e2e8f0" />
         </View>
         <Text className="text-slate-500 text-xs mb-4">Optional. Off by default. Only you can see this.</Text>
         {cycleTrackingEnabled && (

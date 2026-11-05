@@ -104,7 +104,7 @@ export default function SixTwelveTwentyFiveScreen() {
           return (
             <Pressable
               onPress={() => handlePickGroup(incomingGroup as SixTwelveTwentyFiveGroup)}
-              className="bg-indigo-600 rounded-2xl p-4 mb-4 active:bg-indigo-500"
+              className="bg-indigo-600 rounded-2xl p-4 mb-4 active:bg-indigo-500 btn3d btn3d-p"
             >
               <Text className="text-indigo-100 text-xs mb-1">Today's day targets this muscle group</Text>
               <Text className="text-white font-semibold text-base mb-1">Continue with {groupMeta.icon} {groupMeta.label} →</Text>

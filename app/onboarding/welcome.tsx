@@ -42,7 +42,7 @@ export default function WelcomeScreen() {
             The more you share, the more personalized everything gets. But you can skip anything.
           </Text>
           <Pressable onPress={handleContinue} accessibilityRole="button" accessibilityLabel="Continue"
-            className="bg-indigo-600 rounded-full py-4 active:bg-indigo-500">
+            className="bg-indigo-600 rounded-full py-4 active:bg-indigo-500 btn3d btn3d-p">
             <Text className="text-white text-lg text-center font-semibold">Let's begin</Text>
           </Pressable>
         </View>

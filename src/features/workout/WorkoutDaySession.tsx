@@ -806,7 +806,7 @@ export default function WorkoutDaySession({
 
           <Pressable
             onPress={() => setShowFinishConfirm(true)}
-            className={allDone ? 'bg-emerald-500 rounded-2xl py-4 items-center active:bg-emerald-400' : 'bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500'}
+            className={allDone ? 'bg-emerald-500 rounded-2xl py-4 items-center active:bg-emerald-400 btn3d btn3d-s' : 'bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500 btn3d btn3d-p'}
           >
             <Text className="text-white font-semibold text-base">{allDone ? 'Finish workout ✓' : 'Finish workout'}</Text>
           </Pressable>
@@ -827,7 +827,7 @@ export default function WorkoutDaySession({
               <Pressable onPress={() => setShowFinishConfirm(false)} className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-xl py-3 items-center">
                 <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Keep going</Text>
               </Pressable>
-              <Pressable onPress={handleFinish} className="flex-1 bg-emerald-500 rounded-xl py-3 items-center">
+              <Pressable onPress={handleFinish} className="flex-1 bg-emerald-500 rounded-xl py-3 items-center btn3d btn3d-s">
                 <Text className="text-white text-sm font-semibold">Done ✓</Text>
               </Pressable>
             </View>

@@ -178,7 +178,7 @@ function ExerciseCard({
         <Pressable onPress={onLogCompletion} className="flex-1 border-2 border-emerald-500 rounded-full py-2 items-center active:bg-emerald-500/10">
           <Text className="text-emerald-700 dark:text-emerald-400 text-xs font-semibold">✓ Log a completion</Text>
         </Pressable>
-        <Pressable onPress={() => router?.push?.(`/workout/session/${exerciseId}`)} className="flex-1 bg-indigo-600 rounded-full py-2 items-center active:bg-indigo-500">
+        <Pressable onPress={() => router?.push?.(`/workout/session/${exerciseId}`)} className="flex-1 bg-indigo-600 rounded-full py-2 items-center active:bg-indigo-500 btn3d btn3d-p">
           <Text className="text-white text-xs font-semibold">Start guided session</Text>
         </Pressable>
       </View>

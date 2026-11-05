@@ -144,7 +144,7 @@ export default function ProgressHub() {
                   <Pressable
                     onPress={() => purchaseUnlockable(item.id, item.cost)}
                     disabled={(coins || 0) < item.cost}
-                    className={(coins || 0) < item.cost ? 'bg-stone-100 dark:bg-slate-800 rounded-full py-2 px-4' : 'bg-indigo-600 rounded-full py-2 px-4 active:bg-indigo-500'}
+                    className={(coins || 0) < item.cost ? 'bg-stone-100 dark:bg-slate-800 rounded-full py-2 px-4' : 'bg-indigo-600 rounded-full py-2 px-4 active:bg-indigo-500 btn3d btn3d-p'}
                   >
                     <Text className={(coins || 0) < item.cost ? 'text-slate-600 text-xs' : 'text-white text-xs font-semibold'}>{item.cost} coins</Text>
                   </Pressable>

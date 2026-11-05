@@ -107,7 +107,7 @@ export default function AppleHealthImportCard() {
         In the Health app: profile icon (top right) → Export All Health Data. Upload the .zip it gives you directly — no need to extract it first. This reads the file on your device only; nothing is uploaded anywhere.
       </Text>
 
-      <Pressable onPress={handleImport} disabled={importing} className="bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500">
+      <Pressable onPress={handleImport} disabled={importing} className="bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500 btn3d btn3d-p">
         {importing ? (
           <View className="flex-row items-center gap-2">
             <ActivityIndicator color="#fff" size="small" />

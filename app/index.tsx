@@ -3,12 +3,14 @@ import { View, ActivityIndicator } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useAppStore, selectIsHydrated, selectProfile, type EnergyLevel } from '@/store/index';
 import { restoreProfileFromCloud } from '@/core/supabase/client';
+import { useThemeHex } from '@/theme/useThemeHex';
 
 function toEnergyLevel(value: unknown): EnergyLevel {
   return value === 'low' || value === 'high' ? value : 'medium';
 }
 
 export default function Index() {
+  const themeHex = useThemeHex();
   const isHydrated = useAppStore(selectIsHydrated);
   const profile = useAppStore(selectProfile);
   const setProfile = useAppStore((s) => s.setProfile);
@@ -47,7 +49,7 @@ export default function Index() {
   if (!isHydrated || !cloudCheckDone) {
     return (
       <View className="flex-1 bg-stone-50 items-center justify-center dark:bg-slate-950">
-        <ActivityIndicator color="#818cf8" />
+        <ActivityIndicator color={themeHex.primary400} />
       </View>
     );
   }

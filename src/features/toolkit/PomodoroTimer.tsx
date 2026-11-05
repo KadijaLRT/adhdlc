@@ -84,7 +84,7 @@ export default function PomodoroTimer() {
         </Text>
       </View>
 
-      <Pressable onPress={() => setRunning((r) => !r)} className={running ? 'bg-amber-500 rounded-xl py-3 items-center active:bg-amber-400' : 'bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500'}>
+      <Pressable onPress={() => setRunning((r) => !r)} className={running ? 'bg-amber-500 rounded-xl py-3 items-center active:bg-amber-400 btn3d btn3d-a' : 'bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500 btn3d btn3d-p'}>
         <Text className="text-white text-sm font-semibold">{running ? 'Pause' : 'Start'}</Text>
       </Pressable>
     </View>

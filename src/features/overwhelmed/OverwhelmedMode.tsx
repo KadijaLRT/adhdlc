@@ -62,7 +62,7 @@ export default function OverwhelmedMode() {
             <Text className="text-slate-900 text-xl text-center mb-10 dark:text-slate-100">
               Just breathe for a moment.{'\n'}Nothing else matters right now.
             </Text>
-            <Pressable onPress={() => setPhase('main')} className="bg-indigo-600 rounded-full py-4 px-10 active:bg-indigo-500">
+            <Pressable onPress={() => setPhase('main')} className="bg-indigo-600 rounded-full py-4 px-10 active:bg-indigo-500 btn3d btn3d-p">
               <Text className="text-white font-semibold">I'm ready</Text>
             </Pressable>
           </>

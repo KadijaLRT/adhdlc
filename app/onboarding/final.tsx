@@ -300,7 +300,7 @@ export default function FinalScreen() {
             })}
           </View>
 
-          <Pressable onPress={handleFinish} disabled={finishing} className="bg-emerald-500 rounded-full py-4 items-center active:bg-emerald-400">
+          <Pressable onPress={handleFinish} disabled={finishing} className="bg-emerald-500 rounded-full py-4 items-center active:bg-emerald-400 btn3d btn3d-s">
             <Text className="text-white text-lg font-semibold">{finishing ? 'Setting things up...' : '✨ Start Using App →'}</Text>
           </Pressable>
         </View>

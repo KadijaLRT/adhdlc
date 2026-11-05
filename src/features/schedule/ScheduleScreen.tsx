@@ -265,7 +265,7 @@ export default function ScheduleScreen() {
         ) : (
           <>
             {nextUp && (
-              <Pressable onPress={() => router?.push?.('/schedule/right-now')} className="bg-indigo-600 rounded-2xl p-5 mb-4 active:bg-indigo-500">
+              <Pressable onPress={() => router?.push?.('/schedule/right-now')} className="bg-indigo-600 rounded-2xl p-5 mb-4 active:bg-indigo-500 btn3d btn3d-p">
                 <Text className="text-indigo-100 text-xs uppercase tracking-wider mb-1">{overdueItem ? 'Overdue' : 'Next up'}{nextUp.time ? ` · ${nextUp.time}` : ''}</Text>
                 <Text className="text-white text-lg font-semibold">{nextUp.label}</Text>
               </Pressable>
@@ -317,7 +317,7 @@ export default function ScheduleScreen() {
                   onSubmitEditing={handleAdd}
                   className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
                 />
-                <Pressable onPress={handleAdd} className="bg-indigo-600 rounded-xl px-4 justify-center">
+                <Pressable onPress={handleAdd} className="bg-indigo-600 rounded-xl px-4 justify-center btn3d btn3d-p">
                   <Text className="text-white font-semibold">Add</Text>
                 </Pressable>
               </View>

@@ -258,7 +258,7 @@ export default function TasksScreen() {
           onSubmitEditing={handleAdd}
           className="flex-1 bg-white text-slate-900 rounded-xl px-4 py-3 dark:text-slate-100 dark:bg-slate-900"
         />
-        <Pressable onPress={handleAdd} className="bg-indigo-600 rounded-xl px-5 justify-center active:bg-indigo-500">
+        <Pressable onPress={handleAdd} className="bg-indigo-600 rounded-xl px-5 justify-center active:bg-indigo-500 btn3d btn3d-p">
           <Text className="text-white font-semibold">Add</Text>
         </Pressable>
       </View>

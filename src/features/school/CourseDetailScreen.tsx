@@ -190,7 +190,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3"
             />
             <View className="flex-row gap-2">
-              <Pressable onPress={handleSaveCourseEdit} disabled={!nameInput.trim()} className={nameInput.trim() ? 'flex-1 bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2.5 items-center'}>
+              <Pressable onPress={handleSaveCourseEdit} disabled={!nameInput.trim()} className={nameInput.trim() ? 'flex-1 bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500 btn3d btn3d-p' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2.5 items-center'}>
                 <Text className="text-white text-sm font-semibold">Save</Text>
               </Pressable>
               <Pressable onPress={() => setEditingCourse(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center">
@@ -274,7 +274,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
             />
           </View>
-          <Pressable onPress={handleSaveGoalAndCredits} className="bg-indigo-600 rounded-xl py-2.5 items-center mb-4">
+          <Pressable onPress={handleSaveGoalAndCredits} className="bg-indigo-600 rounded-xl py-2.5 items-center mb-4 btn3d btn3d-p">
             <Text className="text-white text-sm font-semibold">{gradeSaved ? 'Saved ✓' : 'Save goal & credits'}</Text>
           </Pressable>
 
@@ -358,7 +358,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
                 className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
               />
               <View className="flex-row gap-2">
-                <Pressable onPress={handleAddCategory} className="flex-1 bg-indigo-600 rounded-xl py-2.5 items-center">
+                <Pressable onPress={handleAddCategory} className="flex-1 bg-indigo-600 rounded-xl py-2.5 items-center btn3d btn3d-p">
                   <Text className="text-white text-sm font-semibold">Save category</Text>
                 </Pressable>
                 <Pressable
@@ -414,7 +414,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
           <View className="mb-2">
             <DateInput value={newDueDate} onChange={setNewDueDate} dark={false} />
           </View>
-          <Pressable onPress={handleAdd} className="bg-indigo-600 rounded-xl py-3 items-center">
+          <Pressable onPress={handleAdd} className="bg-indigo-600 rounded-xl py-3 items-center btn3d btn3d-p">
             <Text className="text-white font-semibold">Add</Text>
           </Pressable>
         </CollapsibleSection>

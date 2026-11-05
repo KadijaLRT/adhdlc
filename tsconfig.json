@@ -30,6 +30,9 @@
       "@/shared/*": [
         "./src/shared/*"
       ],
+      "@/theme/*": [
+        "./src/theme/*"
+      ],
       "@/app/*": [
         "./app/*"
       ]

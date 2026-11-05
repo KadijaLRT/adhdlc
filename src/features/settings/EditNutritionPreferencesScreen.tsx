@@ -68,7 +68,7 @@ export default function EditNutritionPreferencesScreen() {
             className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-3 mb-8"
           />
 
-          <Pressable onPress={handleSave} className="bg-indigo-600 rounded-full py-4 items-center active:bg-indigo-500 mb-3">
+          <Pressable onPress={handleSave} className="bg-indigo-600 rounded-full py-4 items-center active:bg-indigo-500 mb-3 btn3d btn3d-p">
             <Text className="text-white text-lg font-semibold">{saved ? 'Saved ✓' : 'Save changes'}</Text>
           </Pressable>
           <Pressable onPress={() => router?.back?.()} className="py-2">

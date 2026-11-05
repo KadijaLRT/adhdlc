@@ -1,6 +1,13 @@
 /** @type {import('tailwindcss').Config} */
 const { safeArea } = require('nativewind/dist/tailwind/safe-area');
 
+const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950];
+function paletteFromVars(name) {
+  const out = {};
+  for (const shade of SHADES) out[shade] = `rgb(var(--${name}-${shade}) / <alpha-value>)`;
+  return out;
+}
+
 module.exports = {
   darkMode: 'class',
   content: ['./app/**/*.{js,jsx,ts,tsx}', './src/**/*.{js,jsx,ts,tsx}'],
@@ -10,9 +17,12 @@ module.exports = {
       colors: {
         base: { 50: '#f8fafc', 900: '#0f172a', 950: '#020617' },
         slate: { 800: '#1e293b', 850: '#172033', 900: '#0f172a', 950: '#020617' },
-        indigo: { 300: '#a5b4fc', 400: '#818cf8', 500: '#6366f1', 600: '#4f46e5' },
-        emerald: { 300: '#6ee7b7', 400: '#34d399', 500: '#10b981' },
-        amber: { 300: '#fcd34d', 400: '#fbbf24', 500: '#f59e0b' },
+        // Primary, secondary and accent palettes read CSS variables so the
+        // colorway setting can re-skin the whole app (see src/theme/colorways.ts).
+        // "<alpha-value>" keeps opacity suffixes like bg-indigo-600/20 working.
+        indigo: paletteFromVars('indigo'),
+        emerald: paletteFromVars('emerald'),
+        amber: paletteFromVars('amber'),
       },
     },
   },

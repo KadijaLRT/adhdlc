@@ -69,7 +69,7 @@ export default function BarcodeScannerModal({
         <Text className="text-white text-base text-center mb-4">
           Camera access is needed to scan a barcode. Nothing is recorded or stored — it only reads the barcode itself.
         </Text>
-        <Pressable onPress={requestPermission} className="bg-indigo-600 rounded-full py-3 px-6 mb-3 active:bg-indigo-500">
+        <Pressable onPress={requestPermission} className="bg-indigo-600 rounded-full py-3 px-6 mb-3 active:bg-indigo-500 btn3d btn3d-p">
           <Text className="text-white font-semibold">Allow camera access</Text>
         </Pressable>
         <Pressable onPress={onClose} className="py-2">
@@ -92,7 +92,7 @@ export default function BarcodeScannerModal({
         <Text className="text-white text-base text-center mb-4">
           Couldn't access the camera on this device. You can add the item manually instead.
         </Text>
-        <Pressable onPress={onClose} className="bg-indigo-600 rounded-full py-3 px-6 active:bg-indigo-500">
+        <Pressable onPress={onClose} className="bg-indigo-600 rounded-full py-3 px-6 active:bg-indigo-500 btn3d btn3d-p">
           <Text className="text-white font-semibold">Back</Text>
         </Pressable>
       </View>

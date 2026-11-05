@@ -418,7 +418,7 @@ export default function NutritionDiaryScreen() {
                 {suggestedTargets.calories} cal · {suggestedTargets.protein}p / {suggestedTargets.carbs}c / {suggestedTargets.fat}f — a starting point, not a prescription. Adjust it anytime.
               </Text>
               <View className="flex-row gap-2">
-                <Pressable onPress={handleUseSuggestedTargets} className="flex-1 bg-emerald-500 rounded-xl py-2 items-center active:bg-emerald-400">
+                <Pressable onPress={handleUseSuggestedTargets} className="flex-1 bg-emerald-500 rounded-xl py-2 items-center active:bg-emerald-400 btn3d btn3d-s">
                   <Text className="text-white text-xs font-semibold">Use these targets</Text>
                 </Pressable>
                 <Pressable onPress={() => setSuggestionDismissed(true)} className="py-2 px-3">
@@ -435,7 +435,7 @@ export default function NutritionDiaryScreen() {
                 Log your current weight in Body Progress and Aviva can suggest a calorie and macro target that matches your weight goal and activity level.
               </Text>
               <View className="flex-row gap-2">
-                <Pressable onPress={() => router?.push?.('/body/progress')} className="flex-1 bg-indigo-600 rounded-xl py-2 items-center active:bg-indigo-500">
+                <Pressable onPress={() => router?.push?.('/body/progress')} className="flex-1 bg-indigo-600 rounded-xl py-2 items-center active:bg-indigo-500 btn3d btn3d-p">
                   <Text className="text-white text-xs font-semibold">Log my weight</Text>
                 </Pressable>
                 <Pressable onPress={() => setSuggestionDismissed(true)} className="py-2 px-3">
@@ -456,7 +456,7 @@ export default function NutritionDiaryScreen() {
                 <View className="flex-1"><TextInput value={targetFatInput} onChangeText={setTargetFatInput} placeholder="Fat g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
               </View>
               <Text className="text-slate-500 text-[11px] mb-3">These are numbers you choose for yourself — set whatever you want to track toward, or leave blank to just log without targets.</Text>
-              <Pressable onPress={handleSaveTargets} className="bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500">
+              <Pressable onPress={handleSaveTargets} className="bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500 btn3d btn3d-p">
                 <Text className="text-white text-sm font-semibold">Save targets</Text>
               </Pressable>
             </View>
@@ -517,7 +517,7 @@ export default function NutritionDiaryScreen() {
                       <View className="flex-1"><TextInput value={editFat} onChangeText={setEditFat} placeholder="Fat g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
                     </View>
                     <View className="flex-row gap-2">
-                      <Pressable onPress={handleSaveEdit} disabled={!editName.trim()} className={editName.trim() ? 'flex-1 bg-indigo-600 rounded-xl py-2 items-center active:bg-indigo-500' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2 items-center'}>
+                      <Pressable onPress={handleSaveEdit} disabled={!editName.trim()} className={editName.trim() ? 'flex-1 bg-indigo-600 rounded-xl py-2 items-center active:bg-indigo-500 btn3d btn3d-p' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2 items-center'}>
                         <Text className="text-white text-sm font-semibold">Save</Text>
                       </Pressable>
                       <Pressable onPress={() => setEditingEntryId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2 items-center">
@@ -572,7 +572,7 @@ export default function NutritionDiaryScreen() {
                             setPickedFood(item);
                             setAddTab('search');
                           })}
-                          className="bg-indigo-600 rounded-xl px-3 justify-center active:bg-indigo-500"
+                          className="bg-indigo-600 rounded-xl px-3 justify-center active:bg-indigo-500 btn3d btn3d-p"
                         >
                           <Text className="text-white text-sm">📷</Text>
                         </Pressable>
@@ -651,7 +651,7 @@ export default function NutritionDiaryScreen() {
                             <View className="flex-1"><TextInput value={qfFat} onChangeText={setQfFat} placeholder="Fat g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
                           </View>
                           <View className="flex-row gap-2">
-                            <Pressable onPress={handleSaveQuickFood} disabled={!qfName.trim()} className={qfName.trim() ? 'flex-1 bg-emerald-500 rounded-xl py-2 items-center active:bg-emerald-400' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2 items-center'}>
+                            <Pressable onPress={handleSaveQuickFood} disabled={!qfName.trim()} className={qfName.trim() ? 'flex-1 bg-emerald-500 rounded-xl py-2 items-center active:bg-emerald-400 btn3d btn3d-s' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2 items-center'}>
                               <Text className="text-white text-sm font-semibold">Add to {meal.label.toLowerCase()}</Text>
                             </Pressable>
                             <Pressable onPress={() => { setShowQuickFood(false); setQfName(''); setQfCal(''); setQfPro(''); setQfCarb(''); setQfFat(''); }} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2 items-center">
@@ -672,7 +672,7 @@ export default function NutritionDiaryScreen() {
                               className="w-16 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-2 py-1 text-center"
                             />
                           </View>
-                          <Pressable onPress={handleLogPickedFood} className="bg-emerald-500 rounded-xl py-2 items-center active:bg-emerald-400">
+                          <Pressable onPress={handleLogPickedFood} className="bg-emerald-500 rounded-xl py-2 items-center active:bg-emerald-400 btn3d btn3d-s">
                             <Text className="text-white text-sm font-semibold">Add to {meal.label.toLowerCase()}</Text>
                           </Pressable>
                         </View>
@@ -716,7 +716,7 @@ export default function NutritionDiaryScreen() {
                               className="w-16 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-2 py-1 text-center"
                             />
                           </View>
-                          <Pressable onPress={handleLogPickedRecipe} className="bg-emerald-500 rounded-xl py-2 items-center active:bg-emerald-400">
+                          <Pressable onPress={handleLogPickedRecipe} className="bg-emerald-500 rounded-xl py-2 items-center active:bg-emerald-400 btn3d btn3d-s">
                             <Text className="text-white text-sm font-semibold">Add to {meal.label.toLowerCase()}</Text>
                           </Pressable>
                         </View>
@@ -745,7 +745,7 @@ export default function NutritionDiaryScreen() {
                               className="w-16 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-lg px-2 py-1 text-center"
                             />
                           </View>
-                          <Pressable onPress={handleLogPickedMeal} className="bg-emerald-500 rounded-xl py-2 items-center active:bg-emerald-400">
+                          <Pressable onPress={handleLogPickedMeal} className="bg-emerald-500 rounded-xl py-2 items-center active:bg-emerald-400 btn3d btn3d-s">
                             <Text className="text-white text-sm font-semibold">Add to {meal.label.toLowerCase()}</Text>
                           </Pressable>
                           <Pressable onPress={() => setPickedMeal(null)} className="py-2">
@@ -783,7 +783,7 @@ export default function NutritionDiaryScreen() {
                                     <View className="flex-1"><TextInput value={editMealFat} onChangeText={setEditMealFat} placeholder="Fat g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
                                   </View>
                                   <View className="flex-row gap-2">
-                                    <Pressable onPress={handleSaveEditMeal} disabled={!editMealName.trim()} className={editMealName.trim() ? 'flex-1 bg-indigo-600 rounded-xl py-2 items-center active:bg-indigo-500' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2 items-center'}>
+                                    <Pressable onPress={handleSaveEditMeal} disabled={!editMealName.trim()} className={editMealName.trim() ? 'flex-1 bg-indigo-600 rounded-xl py-2 items-center active:bg-indigo-500 btn3d btn3d-p' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2 items-center'}>
                                       <Text className="text-white text-sm font-semibold">Save</Text>
                                     </Pressable>
                                     <Pressable onPress={() => setEditingMealId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2 items-center">

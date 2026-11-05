@@ -136,7 +136,7 @@ export default function CustomMealBuilder({ onSave, onCancel, onOpenScanner }: P
               placeholderTextColor="#64748b"
               className="flex-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2"
             />
-            <Pressable onPress={() => onOpenScanner(addIngredientFromDatabase)} className="bg-indigo-600 rounded-xl px-3 justify-center active:bg-indigo-500">
+            <Pressable onPress={() => onOpenScanner(addIngredientFromDatabase)} className="bg-indigo-600 rounded-xl px-3 justify-center active:bg-indigo-500 btn3d btn3d-p">
               <Text className="text-white text-sm">📷</Text>
             </Pressable>
           </View>
@@ -172,7 +172,7 @@ export default function CustomMealBuilder({ onSave, onCancel, onOpenScanner }: P
             <View className="flex-1"><TextInput value={manualFat} onChangeText={setManualFat} placeholder="Fat g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
           </View>
           <View className="flex-row gap-2">
-            <Pressable onPress={addManualIngredient} disabled={!manualName.trim()} className={manualName.trim() ? 'flex-1 bg-indigo-600 rounded-xl py-2 items-center active:bg-indigo-500' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2 items-center'}>
+            <Pressable onPress={addManualIngredient} disabled={!manualName.trim()} className={manualName.trim() ? 'flex-1 bg-indigo-600 rounded-xl py-2 items-center active:bg-indigo-500 btn3d btn3d-p' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2 items-center'}>
               <Text className="text-white text-sm font-semibold">Add ingredient</Text>
             </Pressable>
             <Pressable onPress={() => setManualMode(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2 items-center">
@@ -186,7 +186,7 @@ export default function CustomMealBuilder({ onSave, onCancel, onOpenScanner }: P
         <Pressable
           onPress={handleSave}
           disabled={!mealName.trim() || ingredients.length === 0}
-          className={mealName.trim() && ingredients.length > 0 ? 'flex-1 bg-emerald-500 rounded-xl py-2.5 items-center active:bg-emerald-400' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2.5 items-center'}
+          className={mealName.trim() && ingredients.length > 0 ? 'flex-1 bg-emerald-500 rounded-xl py-2.5 items-center active:bg-emerald-400 btn3d btn3d-s' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2.5 items-center'}
         >
           <Text className="text-white text-sm font-semibold">Save meal & add to diary</Text>
         </Pressable>

@@ -51,7 +51,7 @@ export default function RecoveryPlanCard({ compact = false }: { compact?: boolea
             ))}
             <Pressable
               onPress={() => router?.push?.({ pathname: '/fitness/stretch-run', params: { routineId: routine.id } })}
-              className="bg-indigo-600 rounded-xl py-2 items-center active:bg-indigo-500 mt-2"
+              className="bg-indigo-600 rounded-xl py-2 items-center active:bg-indigo-500 mt-2 btn3d btn3d-p"
             >
               <Text className="text-white text-xs font-semibold">▶ Start guided timer</Text>
             </Pressable>
@@ -162,7 +162,7 @@ export default function RecoveryPlanCard({ compact = false }: { compact?: boolea
           </Pressable>
           <Pressable
             onPress={() => logRecoveryUpdate(today, { hydrationCups: (todaysLog?.hydrationCups || 0) + 1 })}
-            className="flex-1 bg-indigo-600 rounded-full items-center justify-center active:bg-indigo-500"
+            className="flex-1 bg-indigo-600 rounded-full items-center justify-center active:bg-indigo-500 btn3d btn3d-p"
           >
             <Text className="text-white text-sm font-semibold">+ Add a cup</Text>
           </Pressable>
@@ -183,7 +183,7 @@ export default function RecoveryPlanCard({ compact = false }: { compact?: boolea
           <Pressable
             onPress={() => logRecoveryUpdate(today, { sleepHours: Math.max(0, Number(sleepInput) || 0) })}
             disabled={!sleepInput.trim()}
-            className={sleepInput.trim() ? 'bg-indigo-600 rounded-xl px-5 justify-center active:bg-indigo-500' : 'bg-slate-300 dark:bg-slate-700 rounded-xl px-5 justify-center'}
+            className={sleepInput.trim() ? 'bg-indigo-600 rounded-xl px-5 justify-center active:bg-indigo-500 btn3d btn3d-p' : 'bg-slate-300 dark:bg-slate-700 rounded-xl px-5 justify-center'}
           >
             <Text className="text-white text-sm font-semibold">Log</Text>
           </Pressable>

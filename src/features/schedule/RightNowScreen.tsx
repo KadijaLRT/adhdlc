@@ -60,7 +60,7 @@ export default function RightNowScreen() {
       <View className="flex-1 items-center justify-center px-8">
         <Text className="text-slate-500 text-sm uppercase tracking-wider mb-3">Right now</Text>
         <Text className="text-slate-50 text-3xl font-semibold text-center mb-10">{current.label}</Text>
-        <Pressable onPress={handleComplete} className="bg-emerald-500 rounded-full py-4 px-12 mb-4 active:bg-emerald-400">
+        <Pressable onPress={handleComplete} className="bg-emerald-500 rounded-full py-4 px-12 mb-4 active:bg-emerald-400 btn3d btn3d-s">
           <Text className="text-white font-semibold text-lg">Done</Text>
         </Pressable>
         <Pressable onPress={() => router?.back?.()} className="py-2">

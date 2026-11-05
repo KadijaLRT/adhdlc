@@ -60,7 +60,7 @@ export default function FocusPickerScreen() {
             })}
           </View>
 
-          <Pressable onPress={handleStart} className="bg-emerald-500 rounded-full py-4 active:bg-emerald-400 mb-6">
+          <Pressable onPress={handleStart} className="bg-emerald-500 rounded-full py-4 active:bg-emerald-400 mb-6 btn3d btn3d-s">
             <Text className="text-white text-center font-semibold text-lg">Ready to focus?</Text>
           </Pressable>
 

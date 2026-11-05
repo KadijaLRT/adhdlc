@@ -90,7 +90,7 @@ export default function BiggestHurdleCard() {
             onSubmitEditing={handleSubmit}
             className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
           />
-          <Pressable onPress={handleSubmit} disabled={loading} className="bg-indigo-600 rounded-xl px-4 justify-center">
+          <Pressable onPress={handleSubmit} disabled={loading} className="bg-indigo-600 rounded-xl px-4 justify-center btn3d btn3d-p">
             {loading ? <ActivityIndicator color="#fff" size="small" /> : <Text className="text-white text-sm font-semibold">Go</Text>}
           </Pressable>
         </View>

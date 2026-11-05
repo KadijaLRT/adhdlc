@@ -51,7 +51,7 @@ export default function LaunchCountdown() {
             placeholderTextColor="#64748b"
             className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3"
           />
-          <Pressable onPress={handleStart} disabled={!task.trim()} className={task.trim() ? 'bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500' : 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center'}>
+          <Pressable onPress={handleStart} disabled={!task.trim()} className={task.trim() ? 'bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500 btn3d btn3d-p' : 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center'}>
             <Text className="text-white text-sm font-semibold">Start countdown</Text>
           </Pressable>
         </>

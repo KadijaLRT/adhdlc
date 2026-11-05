@@ -349,7 +349,7 @@ export default function WorkoutSession({
               )}
             </View>
 
-            <Pressable onPress={handleCompleteSet} className="bg-indigo-600 rounded-full py-4 active:bg-indigo-500">
+            <Pressable onPress={handleCompleteSet} className="bg-indigo-600 rounded-full py-4 active:bg-indigo-500 btn3d btn3d-p">
               <Text className="text-white text-center font-semibold text-lg">Complete set</Text>
             </Pressable>
           </View>
@@ -386,12 +386,12 @@ export default function WorkoutSession({
                   if (!next) return;
                   goToNextExercise(next, rest, totalSets);
                 }}
-                className="bg-indigo-600 rounded-full py-4 px-10 active:bg-indigo-500"
+                className="bg-indigo-600 rounded-full py-4 px-10 active:bg-indigo-500 btn3d btn3d-p"
               >
                 <Text className="text-white font-semibold">Next exercise ({localQueue.length} left)</Text>
               </Pressable>
             ) : (
-              <Pressable onPress={() => setShowFinishConfirm(true)} className="bg-emerald-500 rounded-full py-4 px-10 active:bg-emerald-400">
+              <Pressable onPress={() => setShowFinishConfirm(true)} className="bg-emerald-500 rounded-full py-4 px-10 active:bg-emerald-400 btn3d btn3d-s">
                 <Text className="text-white font-semibold">{programId ? "Finish today's session" : 'Done'}</Text>
               </Pressable>
             )}
@@ -433,7 +433,7 @@ export default function WorkoutSession({
               <Pressable onPress={() => setShowFinishConfirm(false)} className="flex-1 bg-slate-100 dark:bg-slate-800 rounded-xl py-3 items-center">
                 <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Keep going</Text>
               </Pressable>
-              <Pressable onPress={() => router?.replace?.('/(tabs)/workout')} className="flex-1 bg-emerald-500 rounded-xl py-3 items-center">
+              <Pressable onPress={() => router?.replace?.('/(tabs)/workout')} className="flex-1 bg-emerald-500 rounded-xl py-3 items-center btn3d btn3d-s">
                 <Text className="text-white text-sm font-semibold">Done ✓</Text>
               </Pressable>
             </View>

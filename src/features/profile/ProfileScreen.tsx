@@ -86,6 +86,10 @@ export default function ProfileScreen() {
             <Text className="text-slate-800 dark:text-slate-200 text-sm">🔔 Notifications</Text>
             <Text className="text-slate-600 text-xs">→</Text>
           </Pressable>
+          <Pressable onPress={() => router?.push?.('/settings/appearance')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+            <Text className="text-slate-800 dark:text-slate-200 text-sm">🎨 Colors and buttons</Text>
+            <Text className="text-slate-600 text-xs">→</Text>
+          </Pressable>
           <Pressable onPress={() => router?.push?.('/settings/accessibility')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
             <Text className="text-slate-800 dark:text-slate-200 text-sm">♿ Accessibility</Text>
             <Text className="text-slate-600 text-xs">→</Text>

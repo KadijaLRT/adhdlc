@@ -195,7 +195,7 @@ export default function EditFitnessPreferencesScreen() {
             <Text className="text-slate-500 text-xs">{(fitnessPreferences?.restrictions || []).length > 0 ? `${(fitnessPreferences?.restrictions || []).length} set` : 'Set up'}</Text>
           </Pressable>
 
-          <Pressable onPress={handleSave} className="bg-indigo-600 rounded-full py-4 items-center active:bg-indigo-500 mb-3">
+          <Pressable onPress={handleSave} className="bg-indigo-600 rounded-full py-4 items-center active:bg-indigo-500 mb-3 btn3d btn3d-p">
             <Text className="text-white text-lg font-semibold">{saved ? 'Saved ✓' : 'Save changes'}</Text>
           </Pressable>
           <Pressable onPress={() => router?.back?.()} className="py-2">

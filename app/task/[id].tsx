@@ -18,8 +18,10 @@ import { resolveBrainTypeTraits } from '@/content/brainTypes';
 import { MOTIVATOR_OPTIONS } from '@/content/toolkitContent';
 import { Heading } from '@/shared/components/Heading';
 import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
+import { useThemeHex } from '@/theme/useThemeHex';
 
 export default function TaskDetailScreen() {
+  const themeHex = useThemeHex();
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const tasks = useAppStore(selectTasks);
@@ -174,7 +176,7 @@ export default function TaskDetailScreen() {
 
           <Pressable
             onPress={() => toggleTaskComplete(task.id)}
-            className={task?.isComplete ? 'bg-emerald-500 rounded-full py-4 mb-6' : 'bg-indigo-600 rounded-full py-4 mb-6 active:bg-indigo-500'}
+            className={task?.isComplete ? 'bg-emerald-500 rounded-full py-4 mb-6 btn3d btn3d-s' : 'bg-indigo-600 rounded-full py-4 mb-6 active:bg-indigo-500 btn3d btn3d-p'}
           >
             <Text className={task?.isComplete ? 'text-white text-center font-semibold' : 'text-white text-center font-semibold'}>
               {task?.isComplete ? 'Marked done ✓' : 'Done'}
@@ -187,7 +189,7 @@ export default function TaskDetailScreen() {
               disabled={breakingDown}
               className="border-2 border-indigo-500 rounded-full py-4 mb-6 items-center"
             >
-              {breakingDown ? <ActivityIndicator color="#818cf8" /> : <Text className="text-indigo-700 font-semibold dark:text-indigo-300">Break this down for me</Text>}
+              {breakingDown ? <ActivityIndicator color={themeHex.primary400} /> : <Text className="text-indigo-700 font-semibold dark:text-indigo-300">Break this down for me</Text>}
             </Pressable>
           ) : (
             <View className="gap-2 mb-6">

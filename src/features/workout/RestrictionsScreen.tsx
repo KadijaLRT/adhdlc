@@ -9,11 +9,13 @@ import RestrictionPicker from './RestrictionPicker';
 import { useRestrictionPrefs } from './useRestrictionPrefs';
 import { useEquipmentContext } from './useEquipmentContext';
 import { previewRestriction } from './restrictionSession';
+import { useThemeHex } from '@/theme/useThemeHex';
 
 // Where someone tells the app about injuries and weak spots. Choosing one
 // does two things, both explained here: gentle targeted strengthening is added
 // to workouts, and moves that often bother that area stop being picked for them.
 export default function RestrictionsScreen() {
+  const themeHex = useThemeHex();
   const router = useRouter();
   const { restrictions, correctiveModes, toggleRestriction, toggleMode } = useRestrictionPrefs();
   const equipmentContext = useEquipmentContext();
@@ -117,7 +119,7 @@ export default function RestrictionsScreen() {
                   <Switch
                     value={correctiveModes.includes(m.id)}
                     onValueChange={() => handleMode(m.id)}
-                    trackColor={{ false: '#334155', true: '#4f46e5' }}
+                    trackColor={{ false: '#334155', true: themeHex.primary600 }}
                     thumbColor="#e2e8f0"
                   />
                 </View>
@@ -137,7 +139,7 @@ export default function RestrictionsScreen() {
               {correctiveModes.includes('routine') && (
                 <Pressable
                   onPress={() => router?.push?.('/fitness/rehab')}
-                  className="bg-indigo-600 rounded-full py-4 items-center active:bg-indigo-500 mt-3"
+                  className="bg-indigo-600 rounded-full py-4 items-center active:bg-indigo-500 mt-3 btn3d btn3d-p"
                 >
                   <Text className="text-white font-semibold">Try the targeted routine</Text>
                 </Pressable>

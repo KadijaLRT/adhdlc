@@ -211,7 +211,7 @@ export default function BodyCheckinScreen({
               🛡️ Workout adjusted for {flaggedParts.length} area{flaggedParts.length > 1 ? 's' : ''}
             </Text>
           )}
-          <Pressable onPress={handleContinue} className="bg-emerald-500 rounded-full py-4 items-center active:bg-emerald-400">
+          <Pressable onPress={handleContinue} className="bg-emerald-500 rounded-full py-4 items-center active:bg-emerald-400 btn3d btn3d-s">
             <Text className="text-white font-semibold">Continue to workout →</Text>
           </Pressable>
         </View>

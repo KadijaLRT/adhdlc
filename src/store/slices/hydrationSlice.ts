@@ -10,6 +10,7 @@ import type { ProfileSlice } from './profileSlice';
 import type { RoutineSlice } from './routineSlice';
 import type { RpgSlice } from './rpgSlice';
 import type { SettingsSlice } from './settingsSlice';
+import { isButtonLook, isColorwayId } from '@/theme/colorways';
 import type { ReflectionSlice } from './reflectionSlice';
 import type { ScheduleSlice } from './scheduleSlice';
 import type { SchoolSlice } from './schoolSlice';
@@ -93,6 +94,8 @@ export const createHydrationSlice: StateCreator<FullState, [], [], HydrationSlic
         dateFormat: settingsState?.dateFormat ?? state.dateFormat,
         unitSystem: settingsState?.unitSystem ?? state.unitSystem,
         notificationsEnabled: settingsState?.notificationsEnabled ?? state.notificationsEnabled,
+        colorway: isColorwayId(settingsState?.colorway) ? settingsState!.colorway : state.colorway,
+        buttonLook: isButtonLook(settingsState?.buttonLook) ? settingsState!.buttonLook : state.buttonLook,
         reflections: reflectionState?.reflections ?? state.reflections,
         scheduleItems: scheduleState?.scheduleItems ?? state.scheduleItems,
         runningBehindMinutes: scheduleState?.runningBehindMinutes ?? state.runningBehindMinutes,

@@ -9,6 +9,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAppStore, selectDyslexiaFont, selectColorScheme, selectIsHydrated, selectStorageWorking } from '@/store/index';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
+import { ThemeProvider } from '@/theme/ThemeProvider';
 import AvivaFloatingButton from '@/features/aviva/AvivaFloatingButton';
 import NotificationsSync from '@/features/notifications/NotificationsSync';
 import { completeNativeSessionFromUrl, subscribeToAuthChanges, syncProfileIfSignedIn } from '@/core/supabase/client';
@@ -100,7 +101,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <View className="flex-1">
+          <ThemeProvider>
             {isHydrated && !storageWorking && (
               <View className="bg-amber-500 px-4 py-2 pt-safe">
                 <Text className="text-slate-950 text-xs text-center font-medium">
@@ -111,7 +112,7 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerShown: false }} />
             {!hideFloatingButton && <AvivaFloatingButton />}
             <NotificationsSync />
-          </View>
+          </ThemeProvider>
         </QueryClientProvider>
       </ErrorBoundary>
     </SafeAreaProvider>

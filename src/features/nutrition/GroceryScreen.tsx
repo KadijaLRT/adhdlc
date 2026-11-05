@@ -156,7 +156,7 @@ export default function GroceryScreen() {
                 onSubmitEditing={handleAddPantryItem}
                 className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
               />
-              <Pressable onPress={handleAddPantryItem} className="bg-indigo-600 rounded-xl px-4 justify-center">
+              <Pressable onPress={handleAddPantryItem} className="bg-indigo-600 rounded-xl px-4 justify-center btn3d btn3d-p">
                 <Text className="text-white text-sm font-semibold">Add</Text>
               </Pressable>
             </View>
@@ -209,7 +209,7 @@ export default function GroceryScreen() {
             <Pressable
               onPress={handleGeneratePlan}
               disabled={planLoading}
-              className={planLoading ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center' : 'bg-emerald-500 rounded-xl py-3 items-center active:bg-emerald-400'}
+              className={planLoading ? 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center' : 'bg-emerald-500 rounded-xl py-3 items-center active:bg-emerald-400 btn3d btn3d-s'}
             >
               {planLoading ? (
                 <View className="flex-row items-center gap-2">

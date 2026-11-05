@@ -61,7 +61,7 @@ export default function CalibrationScreen() {
             })}
           </View>
 
-          <Pressable onPress={handleContinue} className="bg-emerald-500 rounded-full py-4 active:bg-emerald-400 mt-2">
+          <Pressable onPress={handleContinue} className="bg-emerald-500 rounded-full py-4 active:bg-emerald-400 mt-2 btn3d btn3d-s">
             <Text className="text-white text-lg text-center font-semibold">Continue →</Text>
           </Pressable>
         </View>

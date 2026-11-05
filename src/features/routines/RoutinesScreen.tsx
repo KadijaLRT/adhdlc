@@ -124,7 +124,7 @@ export default function RoutinesScreen() {
                   onSubmitEditing={handleAddCustom}
                   className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-4 py-3 dark:text-slate-100 dark:bg-slate-800"
                 />
-                <Pressable onPress={handleAddCustom} className="bg-indigo-600 rounded-xl px-5 justify-center active:bg-indigo-500">
+                <Pressable onPress={handleAddCustom} className="bg-indigo-600 rounded-xl px-5 justify-center active:bg-indigo-500 btn3d btn3d-p">
                   <Text className="text-white font-semibold">Add</Text>
                 </Pressable>
               </View>
@@ -170,7 +170,7 @@ export default function RoutinesScreen() {
                 </Text>
 
                 {hasSteps && !doneToday && (
-                  <Pressable onPress={() => router?.push?.({ pathname: '/routines/run', params: { routineId: routine.id } })} className="bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500 mb-3">
+                  <Pressable onPress={() => router?.push?.({ pathname: '/routines/run', params: { routineId: routine.id } })} className="bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500 mb-3 btn3d btn3d-p">
                     <Text className="text-white text-sm font-semibold">▶ Start Routine</Text>
                   </Pressable>
                 )}
@@ -200,7 +200,7 @@ export default function RoutinesScreen() {
                     <Pressable
                       onPress={() => handleComplete(routine.title, routine.id)}
                       disabled={doneToday}
-                      className={doneToday ? 'flex-1 bg-emerald-500/20 rounded-full py-3 items-center' : 'flex-1 bg-emerald-500 rounded-full py-3 items-center active:bg-emerald-400'}
+                      className={doneToday ? 'flex-1 bg-emerald-500/20 rounded-full py-3 items-center' : 'flex-1 bg-emerald-500 rounded-full py-3 items-center active:bg-emerald-400 btn3d btn3d-s'}
                     >
                       <Text className={doneToday ? 'text-emerald-700 dark:text-emerald-400 font-semibold' : 'text-white font-semibold'}>
                         {doneToday ? 'Done today ✓' : 'Mark done today'}

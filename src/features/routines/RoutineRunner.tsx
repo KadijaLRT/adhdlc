@@ -92,7 +92,7 @@ export default function RoutineRunner({ routineId }: { routineId: string }) {
         <Text className="text-4xl mb-4">{routine.emoji}</Text>
         <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold mb-2 text-center">Nice work.</Text>
         <Text className="text-slate-500 text-sm text-center mb-8">You just finished {routine.title}.</Text>
-        <Pressable onPress={() => router?.replace?.('/routines')} className="bg-emerald-500 rounded-full py-3 px-8 active:bg-emerald-400">
+        <Pressable onPress={() => router?.replace?.('/routines')} className="bg-emerald-500 rounded-full py-3 px-8 active:bg-emerald-400 btn3d btn3d-s">
           <Text className="text-white font-semibold">Done ✓</Text>
         </Pressable>
       </SafeAreaView>
@@ -131,7 +131,7 @@ export default function RoutineRunner({ routineId }: { routineId: string }) {
           <View className="mb-8" />
         )}
 
-        <Pressable onPress={goToNextStep} className="bg-emerald-500 rounded-2xl py-4 items-center active:bg-emerald-400 mb-8">
+        <Pressable onPress={goToNextStep} className="bg-emerald-500 rounded-2xl py-4 items-center active:bg-emerald-400 mb-8 btn3d btn3d-s">
           <Text className="text-white font-semibold text-base">
             {currentIndex + 1 >= steps.length ? 'Finish routine' : isTimed ? 'Done, next step →' : 'Mark done, next step →'}
           </Text>

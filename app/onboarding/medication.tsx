@@ -56,7 +56,7 @@ export default function MedicationScreen() {
                 placeholderTextColor="#64748b"
                 className="bg-slate-900 text-slate-100 rounded-xl px-4 py-3 mb-8"
               />
-              <Pressable onPress={() => goToNextModuleScreen(router)} className="bg-emerald-500 rounded-full py-4 active:bg-emerald-400">
+              <Pressable onPress={() => goToNextModuleScreen(router)} className="bg-emerald-500 rounded-full py-4 active:bg-emerald-400 btn3d btn3d-s">
                 <Text className="text-white text-lg text-center font-semibold">Continue →</Text>
               </Pressable>
             </>

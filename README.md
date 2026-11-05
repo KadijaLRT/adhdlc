@@ -162,3 +162,10 @@ serves each route's real static file directly (e.g. `/tasks` →
 `/school/assignment/:assignmentId`) get an explicit rewrite to their
 pattern file, since those don't have one static file per possible ID.
 The root `/` route is no longer hijacking every other path.
+
+## Appearance (Colors and buttons)
+
+Profile > Colors and buttons lets you pick one of 9 colorways (Default, Violet and coral, Teal and amber, Sky and rose, Neon cyber, Warm and earthy, Pastel and soft, Dark and moody, Bright and playful) and one of 3 button looks (Chunky, Soft glossy, Subtle raised). Choices persist offline with the other settings.
+
+- Palettes are CSS variables (`src/theme/colorways.ts`, applied by `src/theme/ThemeProvider.tsx`), so existing `indigo`/`emerald`/`amber` classes recolor automatically.
+- The 3D button looks are web only (`src/theme/webButtonStyles.ts`, opt in with the `btn3d` class). Native apps get the colors.

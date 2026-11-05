@@ -93,7 +93,7 @@ export default function CoachScreen() {
           className="bg-white text-slate-900 rounded-xl p-4 min-h-[80px] mb-4 dark:text-slate-100 dark:bg-slate-900"
         />
 
-        <Pressable onPress={handleAsk} disabled={loading} className="bg-indigo-600 rounded-full py-4 mb-6 active:bg-indigo-500">
+        <Pressable onPress={handleAsk} disabled={loading} className="bg-indigo-600 rounded-full py-4 mb-6 active:bg-indigo-500 btn3d btn3d-p">
           {loading ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-center font-semibold">Ask</Text>}
         </Pressable>
 

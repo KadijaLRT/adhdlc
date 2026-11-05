@@ -68,7 +68,7 @@ export default function CardioActivityCard({ compact = false }: { compact?: bool
         </View>
         <Text className="text-slate-500 text-xs mb-3">Hiking, biking, swimming, running, walking — anything besides the gym.</Text>
         {!logging && (
-          <Pressable onPress={() => setLogging(true)} className="bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500">
+          <Pressable onPress={() => setLogging(true)} className="bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500 btn3d btn3d-p">
             <Text className="text-white text-sm font-semibold">+ Log an activity</Text>
           </Pressable>
         )}
@@ -157,7 +157,7 @@ export default function CardioActivityCard({ compact = false }: { compact?: bool
           <Pressable
             onPress={handleSave}
             disabled={!duration.trim()}
-            className={duration.trim() ? 'flex-1 bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2.5 items-center'}
+            className={duration.trim() ? 'flex-1 bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500 btn3d btn3d-p' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2.5 items-center'}
           >
             <Text className="text-white text-sm font-semibold">Save</Text>
           </Pressable>
@@ -205,7 +205,7 @@ export default function CardioActivityCard({ compact = false }: { compact?: bool
       )}
 
       {!logging ? (
-        <Pressable onPress={() => setLogging(true)} className="bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500">
+        <Pressable onPress={() => setLogging(true)} className="bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500 btn3d btn3d-p">
           <Text className="text-white text-sm font-semibold">+ Log an activity</Text>
         </Pressable>
       ) : renderForm()}

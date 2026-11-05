@@ -85,7 +85,7 @@ export default function BrainDumpSheet({ visible, onClose }: { visible: boolean;
             </View>
           )}
           {!result && (
-            <Pressable onPress={handleSubmit} disabled={loading} className="bg-indigo-600 rounded-full py-4 mb-2 active:bg-indigo-500">
+            <Pressable onPress={handleSubmit} disabled={loading} className="bg-indigo-600 rounded-full py-4 mb-2 active:bg-indigo-500 btn3d btn3d-p">
               {loading ? <ActivityIndicator color="#fff" /> : <Text className="text-white text-center font-semibold">Sort this out</Text>}
             </Pressable>
           )}
@@ -98,7 +98,7 @@ export default function BrainDumpSheet({ visible, onClose }: { visible: boolean;
                   <Text className="text-slate-500 text-xs mt-1">{item.category} · {item.suggestedTiming}</Text>
                 </View>
               ))}
-              <Pressable onPress={handleAddAll} className="bg-emerald-500 rounded-full py-3 mt-2">
+              <Pressable onPress={handleAddAll} className="bg-emerald-500 rounded-full py-3 mt-2 btn3d btn3d-s">
                 <Text className="text-white text-center font-semibold">Add all to my tasks</Text>
               </Pressable>
             </ScrollView>

@@ -1,5 +1,6 @@
 import { View, Text } from 'react-native';
 import { useAppStore, selectTasks, selectEnergyLevel, selectStressLogs } from '@/store/index';
+import { useThemeHex } from '@/theme/useThemeHex';
 
 function energyToScore(level: string | undefined): number {
   if (level === 'high') return 100;
@@ -86,6 +87,7 @@ function Ring({ label, percent, color }: { label: string; percent: number; color
 }
 
 export default function ExecutiveFunctionRings() {
+  const themeHex = useThemeHex();
   const tasks = useAppStore(selectTasks);
   const energyLevel = useAppStore(selectEnergyLevel);
   const stressLogs = useAppStore(selectStressLogs);
@@ -109,9 +111,9 @@ export default function ExecutiveFunctionRings() {
 
   return (
     <View className="bg-white rounded-2xl p-5 w-full flex-row justify-around dark:bg-slate-900">
-      <Ring label="Focus" percent={focusScore} color="#818cf8" />
-      <Ring label="Energy" percent={energyScore} color="#34d399" />
-      <Ring label="Calm" percent={stressScore} color="#fbbf24" />
+      <Ring label="Focus" percent={focusScore} color={themeHex.primary400} />
+      <Ring label="Energy" percent={energyScore} color={themeHex.secondary400} />
+      <Ring label="Calm" percent={stressScore} color={themeHex.accent400} />
     </View>
   );
 }

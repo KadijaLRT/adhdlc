@@ -115,7 +115,7 @@ export default function FocusSession({ taskId, taskTitle, durationMinutes }: Foc
               </Pressable>
             )}
 
-            <Pressable onPress={handleLogSession} className="bg-indigo-600 rounded-full py-4 px-10 mb-3 active:bg-indigo-500">
+            <Pressable onPress={handleLogSession} className="bg-indigo-600 rounded-full py-4 px-10 mb-3 active:bg-indigo-500 btn3d btn3d-p">
               <Text className="text-white font-semibold">Log this session</Text>
             </Pressable>
             <Pressable onPress={handleSkipLogging} className="py-3">

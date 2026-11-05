@@ -175,7 +175,7 @@ function DayCard({
           <Text className="text-indigo-700 dark:text-indigo-300 text-xs font-medium">↩ Workout in progress — pick up right where you left off.</Text>
         </View>
       )}
-      <Pressable onPress={onStart} className="bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500">
+      <Pressable onPress={onStart} className="bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500 btn3d btn3d-p">
         <Text className="text-white font-semibold">{isResumable ? `▶ Resume Day ${day.dayLetter}` : `▶ Start Day ${day.dayLetter}`}</Text>
       </Pressable>
 
@@ -459,7 +459,7 @@ export default function WorkoutsHome() {
           </View>
         )}
 
-        <Pressable onPress={handleStartSomewhere} className="bg-indigo-600 rounded-2xl py-4 mb-3 items-center active:bg-indigo-500">
+        <Pressable onPress={handleStartSomewhere} className="bg-indigo-600 rounded-2xl py-4 mb-3 items-center active:bg-indigo-500 btn3d btn3d-p">
           <Text className="text-white font-semibold text-base">Don't overthink it — Start Somewhere</Text>
         </Pressable>
 

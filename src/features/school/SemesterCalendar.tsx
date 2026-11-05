@@ -2,6 +2,7 @@ import { View, Text, ScrollView } from 'react-native';
 import { useAppStore, selectCourses, selectAssignments, selectDateFormat } from '@/store/index';
 import { Heading } from '@/shared/components/Heading';
 import { formatDate, parseLocalDate } from '@/shared/formatDate';
+import { useThemeHex } from '@/theme/useThemeHex';
 
 /**
  * Groups every assignment by month and due date, color-coded by course,
@@ -10,6 +11,7 @@ import { formatDate, parseLocalDate } from '@/shared/formatDate';
  * and when" information with far less code and no new dependency risk.
  */
 export default function SemesterCalendar() {
+  const themeHex = useThemeHex();
   const courses = useAppStore(selectCourses);
   const assignments = useAppStore(selectAssignments);
   const dateFormat = useAppStore(selectDateFormat);
@@ -25,9 +27,9 @@ export default function SemesterCalendar() {
   }
 
   const courseColor = (courseId: string): string => {
-    const colors = ['#818cf8', '#34d399', '#fbbf24', '#38bdf8', '#f472b6', '#a78bfa'];
+    const colors = [themeHex.primary400, themeHex.secondary400, themeHex.accent400, '#38bdf8', '#f472b6', '#a78bfa'];
     const index = (courses || []).findIndex((c) => c.id === courseId);
-    return colors[index % colors.length] || '#818cf8';
+    return colors[index % colors.length] || themeHex.primary400;
   };
 
   return (
