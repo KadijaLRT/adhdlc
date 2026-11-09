@@ -28,7 +28,7 @@ export default function ReflectionHistoryScreen() {
           ) : (
             <View className="gap-3">
               {sorted.map((entry) => (
-                <View key={entry.date} className="bg-white dark:bg-slate-900 rounded-2xl p-4">
+                <View key={entry.date} className="bg-white dark:bg-slate-900 rounded-2xl p-4 surf3d">
                   <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1">{formatDate(entry.date, dateFormat)}</Text>
                   <Text className="text-slate-800 dark:text-slate-200 text-sm leading-5">{entry.note}</Text>
                 </View>

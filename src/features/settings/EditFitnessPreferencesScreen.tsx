@@ -148,7 +148,7 @@ export default function EditFitnessPreferencesScreen() {
           <Text className="text-slate-900 dark:text-slate-100 text-base font-medium mb-2">Body type</Text>
           <View className="gap-2 mb-2">
             {BODY_TYPES.map((t) => (
-              <Pressable key={t.id} onPress={() => { setBodyType(t.id); setSaved(false); }} className={bodyType === t.id ? 'bg-emerald-400/10 border-2 border-emerald-400 rounded-xl p-3' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl p-3'}>
+              <Pressable key={t.id} onPress={() => { setBodyType(t.id); setSaved(false); }} className={bodyType === t.id ? 'bg-emerald-400/10 border-2 border-emerald-400 rounded-xl p-3' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl p-3 surf3d surf3d-tap'}>
                 <Text className={bodyType === t.id ? 'text-emerald-700 dark:text-emerald-300 font-medium' : 'text-slate-900 dark:text-slate-100 font-medium'}>{t.label}</Text>
                 <Text className="text-slate-500 text-xs">{t.blurb}</Text>
               </Pressable>
@@ -159,7 +159,7 @@ export default function EditFitnessPreferencesScreen() {
           <Text className="text-slate-900 dark:text-slate-100 text-base font-medium mb-2">Daily activity level</Text>
           <View className="gap-2 mb-6">
             {ACTIVITY_LEVELS.map((a) => (
-              <Pressable key={a.id} onPress={() => { setActivityLevel(a.id); setSaved(false); }} className={activityLevel === a.id ? 'bg-emerald-400/10 border-2 border-emerald-400 rounded-xl p-3' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl p-3'}>
+              <Pressable key={a.id} onPress={() => { setActivityLevel(a.id); setSaved(false); }} className={activityLevel === a.id ? 'bg-emerald-400/10 border-2 border-emerald-400 rounded-xl p-3' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl p-3 surf3d surf3d-tap'}>
                 <Text className={activityLevel === a.id ? 'text-emerald-700 dark:text-emerald-300 font-medium' : 'text-slate-900 dark:text-slate-100 font-medium'}>{a.label}</Text>
                 <Text className="text-slate-500 text-xs">{a.blurb}</Text>
               </Pressable>
@@ -174,7 +174,7 @@ export default function EditFitnessPreferencesScreen() {
           <Text className="text-slate-900 dark:text-slate-100 text-base font-medium mb-2">How long should a session be?</Text>
           <View className="gap-2 mb-6">
             {SESSION_TIME_BUDGETS.map((b) => (
-              <Pressable key={b.id} onPress={() => { setSessionTimeBudget(b.id); setSaved(false); }} className={sessionTimeBudget === b.id ? 'bg-emerald-400/10 border-2 border-emerald-400 rounded-xl p-3' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl p-3'}>
+              <Pressable key={b.id} onPress={() => { setSessionTimeBudget(b.id); setSaved(false); }} className={sessionTimeBudget === b.id ? 'bg-emerald-400/10 border-2 border-emerald-400 rounded-xl p-3' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl p-3 surf3d surf3d-tap'}>
                 <Text className={sessionTimeBudget === b.id ? 'text-emerald-700 dark:text-emerald-300 font-medium' : 'text-slate-900 dark:text-slate-100 font-medium'}>{b.label}</Text>
                 <Text className="text-slate-500 text-xs">{b.blurb}</Text>
               </Pressable>
@@ -187,7 +187,7 @@ export default function EditFitnessPreferencesScreen() {
             {FOCUS_AREAS.map((f) => <Pill key={f} label={bodyGroupLabel(f)} active={focusAreas.includes(f)} onPress={() => toggleIn(focusAreas, setFocusAreas, f)} />)}
           </View>
 
-          <Pressable onPress={() => router?.push?.('/settings/restrictions')} className="bg-white dark:bg-slate-900 rounded-xl p-4 mb-6 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/settings/restrictions')} className="bg-white dark:bg-slate-900 rounded-xl p-4 mb-6 flex-row items-center justify-between surf3d surf3d-tap">
             <View className="flex-1 pr-3">
               <Text className="text-slate-900 dark:text-slate-100 text-sm font-medium">Injuries and weak spots</Text>
               <Text className="text-slate-500 text-xs">Runner's knee, weak hips, pelvic floor and more. Adds strengthening and steers around aggravating moves.</Text>

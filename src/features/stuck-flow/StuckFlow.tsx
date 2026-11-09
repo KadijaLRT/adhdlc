@@ -54,7 +54,7 @@ export default function StuckFlow() {
           <Heading>I&apos;m feeling stuck</Heading>
           <Text className="text-slate-500 text-base mt-1">No pressure. Just one small thing.</Text>
         </View>
-        <View className="bg-white rounded-2xl p-8 mb-8 items-center dark:bg-slate-900">
+        <View className="bg-white rounded-2xl p-8 mb-8 items-center dark:bg-slate-900 surf3d">
           <Text className="text-indigo-700 text-xs uppercase tracking-wider mb-3 dark:text-indigo-300">Try this micro step</Text>
           <Text className="text-slate-50 text-xl text-center font-medium">{currentPrompt?.text || 'Take a sip of water.'}</Text>
         </View>

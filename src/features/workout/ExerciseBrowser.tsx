@@ -122,7 +122,7 @@ function ExerciseCard({
   // guided session" below it.
 
   return (
-    <View className="bg-white rounded-2xl p-4 dark:bg-slate-900">
+    <View className="bg-white rounded-2xl p-4 dark:bg-slate-900 surf3d">
       <View className="flex-row items-center justify-between mb-1">
         <Text className="text-slate-900 font-medium flex-1 dark:text-slate-100">{exercise?.icon} {exercise?.name}</Text>
         {completedCount > 0 && <Text className="text-emerald-700 text-xs dark:text-emerald-400">done {completedCount}×</Text>}
@@ -136,7 +136,7 @@ function ExerciseCard({
       </Pressable>
 
       {showWhy && (
-        <View className="bg-stone-50 dark:bg-slate-800 rounded-xl p-3 mb-3">
+        <View className="bg-stone-50 dark:bg-slate-800 rounded-xl p-3 mb-3 surf3d surf3d-in">
           {scheme && (
             <View className="mb-2 pb-2 border-b border-stone-200 dark:border-slate-700">
               <Text className="text-slate-700 dark:text-slate-300 text-xs font-semibold mb-1">

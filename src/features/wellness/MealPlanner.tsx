@@ -13,7 +13,7 @@ export default function MealPlanner() {
         <View className="gap-3">
           <Subheading>Today&apos;s suggestions</Subheading>
           {(meals || []).map((meal) => (
-            <View key={meal.id} className="bg-white rounded-2xl p-4 dark:bg-slate-900">
+            <View key={meal.id} className="bg-white rounded-2xl p-4 dark:bg-slate-900 surf3d">
               <Text className="text-slate-900 font-medium mb-1 dark:text-slate-100">{meal.title}</Text>
               <Text className="text-slate-500 text-xs">{meal.prepMinutes} min · {(meal.ingredients || []).join(', ')}</Text>
             </View>

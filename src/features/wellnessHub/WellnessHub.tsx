@@ -43,7 +43,7 @@ export default function WellnessHub() {
               <Pressable
                 key={option.level}
                 onPress={() => logEnergyForToday(option.level)}
-                className={isActive ? 'flex-1 bg-indigo-600/20 border-2 border-indigo-400 rounded-2xl py-4 items-center' : 'flex-1 bg-white dark:bg-slate-900 border-2 border-transparent rounded-2xl py-4 items-center'}
+                className={isActive ? 'flex-1 bg-indigo-600/20 border-2 border-indigo-400 rounded-2xl py-4 items-center' : 'flex-1 bg-white dark:bg-slate-900 border-2 border-transparent rounded-2xl py-4 items-center surf3d surf3d-tap'}
               >
                 <Text className="text-2xl mb-1">{option.emoji}</Text>
                 <Text className={isActive ? 'text-indigo-700 text-xs' : 'text-slate-700 dark:text-slate-300 text-xs'}>{option.label}</Text>
@@ -53,17 +53,17 @@ export default function WellnessHub() {
         </View>
 
         <View className="gap-3">
-          <Pressable onPress={() => router?.push?.('/coach')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/coach')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-900 dark:text-slate-100 text-sm">💬 Chat with Aviva</Text>
             <Text className="text-slate-500 text-xs">→</Text>
           </Pressable>
           {showCycleTracking && (
-            <Pressable onPress={() => router?.push?.('/settings/cycle-tracking')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+            <Pressable onPress={() => router?.push?.('/settings/cycle-tracking')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
               <Text className="text-slate-900 dark:text-slate-100 text-sm">🌙 Cycle tracking</Text>
               <Text className="text-slate-500 text-xs">→</Text>
             </Pressable>
           )}
-          <Pressable onPress={() => router?.push?.('/wellness/learn')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/wellness/learn')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-900 dark:text-slate-100 text-sm">📚 Learn</Text>
             <Text className="text-slate-500 text-xs">→</Text>
           </Pressable>

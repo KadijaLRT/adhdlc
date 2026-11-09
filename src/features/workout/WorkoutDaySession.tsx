@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, Pressable, TextInput, ScrollView, AppState } from 'react-native';
+import { View, Text, Pressable, TextInput, ScrollView, AppState, Animated } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { useAppStore, selectAdhdFocusModeEnabled, selectSetLogs, selectRecentWarmupHistory, selectFitnessPreferences, selectGyms, selectActiveGymId } from '@/store/index';
@@ -14,6 +14,7 @@ import { toLocalDateString } from '@/shared/formatDate';
 import { getWarmupForGroups, warmupCategoryForGroups } from '@/content/warmupContent';
 import { buildCareRoutine } from '@/content/restrictionCare';
 import { restrictionLabels } from './restrictionSession';
+import { useDragReorder, DragHandle } from '@/shared/components/useDragReorder';
 import InlineStepTimer from '@/shared/components/InlineStepTimer';
 import InlineSetTimer from '@/shared/components/InlineSetTimer';
 import { Heading } from '@/shared/components/Heading';
@@ -398,6 +399,10 @@ export default function WorkoutDaySession({
     });
   };
 
+  // Drag-to-reorder from the grip handle. The same reorder is also reachable
+  // from the handle via keyboard arrows and screen-reader actions.
+  const drag = useDragReorder(sessionExerciseIds, setSessionExerciseIds, 12);
+
   const exerciseSearchResults = useMemo(
     () => searchExercises(exerciseSearch, sessionExerciseIds, equipmentContext),
     [exerciseSearch, sessionExerciseIds, equipmentContext]
@@ -553,7 +558,7 @@ export default function WorkoutDaySession({
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
+      <ScrollView contentContainerStyle={{ padding: 20 }} scrollEnabled={!drag.dragging}>
         <View className="w-full max-w-md self-center">
           {recordBanner && (
             <View className="bg-amber-400/10 border border-amber-400 rounded-xl p-3 mb-4">
@@ -565,7 +570,7 @@ export default function WorkoutDaySession({
             <Text className="text-slate-700 text-xs dark:text-slate-300">🔥 {showWarmup ? 'Hide Warm-Up' : 'Warm-Up'}</Text>
           </Pressable>
           {showWarmup && (
-            <View className="bg-stone-50 dark:bg-slate-800 rounded-xl p-3 mb-3">
+            <View className="bg-stone-50 dark:bg-slate-800 rounded-xl p-3 mb-3 surf3d surf3d-in">
               <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-2">{warmup.title} — for today's {sessionMuscleGroups.join(' & ')} session</Text>
               <InlineStepTimer steps={warmup.steps} />
             </View>
@@ -590,7 +595,8 @@ export default function WorkoutDaySession({
             const isReducedThisExercise = !!(energyLightened || (reducedGroups?.length && reducedGroups.includes(exercise.group)));
 
             return (
-              <View key={exerciseId} className="bg-white dark:bg-slate-900 rounded-2xl mb-3 overflow-hidden">
+              <Animated.View key={exerciseId} {...drag.itemProps(exerciseId)}>
+              <View className="bg-white dark:bg-slate-900 rounded-2xl mb-3 overflow-hidden surf3d">
                 <Pressable onPress={() => setExpandedId(isExpanded ? null : exerciseId)} className="p-4 flex-row items-center justify-between">
                   <View className="flex-row items-center gap-2 flex-1 pr-2">
                     <Pressable
@@ -623,26 +629,7 @@ export default function WorkoutDaySession({
                       })()}
                     </View>
                   </View>
-                  <Pressable
-                    onPress={() => handleMoveExercise(exerciseId, 'up')}
-                    disabled={exerciseIndex === 0}
-                    hitSlop={6}
-                    className="px-1"
-                    accessibilityLabel={`Move ${exercise.name} up`}
-                    accessibilityRole="button"
-                  >
-                    <Text className={exerciseIndex === 0 ? 'text-slate-200 dark:text-slate-700 text-xs' : 'text-slate-400 text-xs'}>▲</Text>
-                  </Pressable>
-                  <Pressable
-                    onPress={() => handleMoveExercise(exerciseId, 'down')}
-                    disabled={exerciseIndex === sessionExerciseIds.length - 1}
-                    hitSlop={6}
-                    className="px-1"
-                    accessibilityLabel={`Move ${exercise.name} down`}
-                    accessibilityRole="button"
-                  >
-                    <Text className={exerciseIndex === sessionExerciseIds.length - 1 ? 'text-slate-200 dark:text-slate-700 text-xs' : 'text-slate-400 text-xs'}>▼</Text>
-                  </Pressable>
+                  <DragHandle controller={drag.controller} id={exerciseId} label={exercise.name} />
                   <Pressable onPress={() => { setSwappingId(exerciseId); setShowAddExercise(false); setExerciseSearch(''); }} className="px-2">
                     <Text className="text-slate-400 text-xs">🔄</Text>
                   </Pressable>
@@ -661,7 +648,7 @@ export default function WorkoutDaySession({
                       placeholder="Search by name or muscle…"
                       placeholderTextColor="#64748b"
                       autoFocus
-                      className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-2"
+                      className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-2 inset3d"
                     />
                     <GroupedExerciseList items={exerciseSearchResults} onPick={(id) => handleSwapExercise(exerciseId, id)} emptyText="No matches for your equipment." />
                     <Pressable onPress={() => { setSwappingId(null); setExerciseSearch(''); }} className="py-2 mt-1">
@@ -678,7 +665,7 @@ export default function WorkoutDaySession({
                         {rowsByExercise[exerciseId]?.filter((r) => r.done).length || 0} logged set{(rowsByExercise[exerciseId]?.filter((r) => r.done).length || 0) === 1 ? '' : 's'} for this exercise today will be removed too.
                       </Text>
                       <View className="flex-row gap-2">
-                        <Pressable onPress={() => setConfirmingRemoveId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center">
+                        <Pressable onPress={() => setConfirmingRemoveId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center surf3d surf3d-in surf3d-tap">
                           <Text className="text-slate-600 dark:text-slate-300 text-xs font-semibold">Cancel</Text>
                         </Pressable>
                         <Pressable onPress={() => handleRemoveExercise(exerciseId)} className="flex-1 bg-red-500 rounded-lg py-2 items-center active:bg-red-400">
@@ -715,14 +702,14 @@ export default function WorkoutDaySession({
                               placeholderTextColor="#64748b"
                               keyboardType="decimal-pad"
                               editable={!row.done}
-                              className={row.done ? 'w-full bg-stone-100 dark:bg-slate-800 text-slate-400 text-center rounded-lg py-2' : 'w-full bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-center rounded-lg py-2'}
+                              className={row.done ? 'w-full bg-stone-100 dark:bg-slate-800 text-slate-400 text-center rounded-lg py-2 inset3d' : 'w-full bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-center rounded-lg py-2 inset3d'}
                             />
                           </View>
                         )}
                         <View className="flex-1">
                           {timeTargetSeconds !== null ? (
                             row.done ? (
-                              <View className="w-full bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center">
+                              <View className="w-full bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center surf3d surf3d-in">
                                 <Text className="text-slate-400 text-sm">{row.reps || `${timeTargetSeconds}s`}</Text>
                               </View>
                             ) : (
@@ -737,7 +724,7 @@ export default function WorkoutDaySession({
                               onChangeText={(v) => updateRow(exerciseId, index, { reps: v })}
                               keyboardType="numeric"
                               editable={!row.done}
-                              className={row.done ? 'w-full bg-stone-100 dark:bg-slate-800 text-slate-400 text-center rounded-lg py-2' : 'w-full bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-center rounded-lg py-2'}
+                              className={row.done ? 'w-full bg-stone-100 dark:bg-slate-800 text-slate-400 text-center rounded-lg py-2 inset3d' : 'w-full bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 text-center rounded-lg py-2 inset3d'}
                             />
                           )}
                         </View>
@@ -765,11 +752,12 @@ export default function WorkoutDaySession({
                   </View>
                 )}
               </View>
+              </Animated.View>
             );
           })}
 
           {showAddExercise ? (
-            <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4">
+            <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 surf3d">
               <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-3">Add an exercise</Text>
               <TextInput
                 value={exerciseSearch}
@@ -777,7 +765,7 @@ export default function WorkoutDaySession({
                 placeholder="Search by name or muscle…"
                 placeholderTextColor="#64748b"
                 autoFocus
-                className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-2"
+                className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-2 inset3d"
               />
               {/* A plain View with only a max-height class doesn't clip
                   or scroll overflow content on its own — once results
@@ -815,7 +803,7 @@ export default function WorkoutDaySession({
 
       {showFinishConfirm && (
         <View className="absolute inset-0 bg-black/70 items-center justify-center px-6">
-          <View className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm">
+          <View className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm surf3d surf3d-float">
             <Text className="text-slate-900 dark:text-slate-100 text-lg font-bold mb-2">
               {allDone ? 'You showed up. That counts.' : 'Finish early?'}
             </Text>

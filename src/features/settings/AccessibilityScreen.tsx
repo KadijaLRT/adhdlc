@@ -55,7 +55,7 @@ export default function AccessibilityScreen() {
         <Heading className="mb-1 mt-2">Accessibility</Heading>
         <Text className="text-slate-500 text-sm mb-6">Make the app fit how you read and see best.</Text>
 
-        <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-4 mb-4">
+        <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-4 mb-4 surf3d">
           <Text className="text-indigo-600 text-xs font-bold uppercase tracking-wider mb-3">🎨 Appearance</Text>
           <View className="flex-row gap-2">
             {(['light', 'dark', 'system'] as ColorSchemePreference[]).map((option) => {
@@ -64,7 +64,7 @@ export default function AccessibilityScreen() {
                 <Pressable
                   key={option}
                   onPress={() => setColorSchemePref(option)}
-                  className={isActive ? 'flex-1 bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 rounded-xl py-3 items-center' : 'flex-1 bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl py-3 items-center'}
+                  className={isActive ? 'flex-1 bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 rounded-xl py-3 items-center' : 'flex-1 bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl py-3 items-center surf3d surf3d-in surf3d-tap'}
                 >
                   <Text className={isActive ? 'text-emerald-700 dark:text-emerald-300 text-sm font-semibold capitalize' : 'text-slate-700 dark:text-slate-300 text-sm capitalize'}>{option}</Text>
                 </Pressable>
@@ -76,7 +76,7 @@ export default function AccessibilityScreen() {
           </Text>
         </View>
 
-        <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-4 mb-4">
+        <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-4 mb-4 surf3d">
           <Text className="text-indigo-600 text-xs font-bold uppercase tracking-wider mb-3">📅 Date & Units</Text>
 
           <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-2">Date format</Text>
@@ -87,7 +87,7 @@ export default function AccessibilityScreen() {
                 <Pressable
                   key={option.id}
                   onPress={() => setDateFormat(option.id)}
-                  className={isActive ? 'flex-row items-center justify-between bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 rounded-xl py-3 px-4' : 'flex-row items-center justify-between bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl py-3 px-4'}
+                  className={isActive ? 'flex-row items-center justify-between bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 rounded-xl py-3 px-4' : 'flex-row items-center justify-between bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl py-3 px-4 surf3d surf3d-in surf3d-tap'}
                 >
                   <Text className={isActive ? 'text-emerald-700 dark:text-emerald-300 text-sm font-semibold' : 'text-slate-700 dark:text-slate-300 text-sm'}>{option.id}</Text>
                   <Text className="text-slate-500 text-xs">{option.example}</Text>
@@ -104,7 +104,7 @@ export default function AccessibilityScreen() {
                 <Pressable
                   key={option}
                   onPress={() => setUnitSystem(option)}
-                  className={isActive ? 'flex-1 bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 rounded-xl py-3 items-center' : 'flex-1 bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl py-3 items-center'}
+                  className={isActive ? 'flex-1 bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 rounded-xl py-3 items-center' : 'flex-1 bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl py-3 items-center surf3d surf3d-in surf3d-tap'}
                 >
                   <Text className={isActive ? 'text-emerald-700 dark:text-emerald-300 text-sm font-semibold capitalize' : 'text-slate-700 dark:text-slate-300 text-sm capitalize'}>
                     {option === 'imperial' ? 'Imperial (lbs)' : 'Metric (kg)'}
@@ -115,7 +115,7 @@ export default function AccessibilityScreen() {
           </View>
         </View>
 
-        <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-4 mb-4">
+        <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-4 mb-4 surf3d">
           <View className="flex-row items-center gap-2 mb-1">
             <Text className="text-indigo-600 text-xs font-bold uppercase tracking-wider">🗓️ Calendar Export</Text>
           </View>
@@ -129,7 +129,7 @@ export default function AccessibilityScreen() {
           {exportError && <Text className="text-red-500 text-xs mt-2">{exportError}</Text>}
         </View>
 
-        <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-4">
+        <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-4 surf3d">
           <Text className="text-indigo-600 text-xs font-bold uppercase tracking-wider mb-4">♿ Accessibility</Text>
 
           <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold mb-3">Text Size</Text>
@@ -141,7 +141,7 @@ export default function AccessibilityScreen() {
                 <Pressable
                   key={option.id}
                   onPress={() => setTextSize(option.id)}
-                  className={isActive ? 'flex-1 bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 rounded-xl py-4 items-center' : 'flex-1 bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl py-4 items-center'}
+                  className={isActive ? 'flex-1 bg-emerald-100 dark:bg-emerald-500/20 border-2 border-emerald-500 rounded-xl py-4 items-center' : 'flex-1 bg-stone-50 dark:bg-slate-800 border border-stone-200 dark:border-slate-700 rounded-xl py-4 items-center surf3d surf3d-in surf3d-tap'}
                 >
                   <Text style={{ fontSize: 16 * option.scale }} className={isActive ? 'text-emerald-700 dark:text-emerald-300 font-bold' : 'text-slate-800 dark:text-slate-200 font-bold'}>{option.label}</Text>
                 </Pressable>

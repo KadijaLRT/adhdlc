@@ -1,8 +1,8 @@
 import { useEffect, useMemo, type ReactNode } from 'react';
 import { Platform, View } from 'react-native';
 import { vars } from 'nativewind';
-import { useAppStore, selectColorway, selectButtonLook } from '@/store/index';
-import { themeVars } from './colorways';
+import { useAppStore, selectColorway, selectButtonLook, selectSurfaceLook } from '@/store/index';
+import { effectiveSurfaceLook, themeVars } from './colorways';
 import { WEB_BUTTON_CSS } from './webButtonStyles';
 
 const STYLE_ELEMENT_ID = 'app-btn3d-styles';
@@ -31,6 +31,7 @@ function ensureWebStyles(): void {
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const colorway = useAppStore(selectColorway);
   const buttonLook = useAppStore(selectButtonLook);
+  const surfaceLook = useAppStore(selectSurfaceLook);
 
   const variables = useMemo(() => themeVars(colorway), [colorway]);
   const style = useMemo(() => vars(variables), [variables]);
@@ -54,6 +55,15 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
       console.warn('Could not apply button look', err);
     }
   }, [buttonLook]);
+
+  useEffect(() => {
+    if (Platform.OS !== 'web' || typeof document === 'undefined') return;
+    try {
+      document.documentElement.setAttribute('data-surf-look', effectiveSurfaceLook(surfaceLook, buttonLook));
+    } catch (err) {
+      console.warn('Could not apply surface look', err);
+    }
+  }, [surfaceLook, buttonLook]);
 
   return (
     <View className="flex-1" style={style}>

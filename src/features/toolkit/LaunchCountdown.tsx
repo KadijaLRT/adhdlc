@@ -38,7 +38,7 @@ export default function LaunchCountdown() {
   };
 
   return (
-    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4">
+    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 surf3d">
       <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-1">🚀 5-4-3-2-1 Launch</Text>
       <Text className="text-slate-500 text-xs mb-3">Name the task. Count down. Just begin — for 1 to 5 minutes only.</Text>
 
@@ -49,7 +49,7 @@ export default function LaunchCountdown() {
             onChangeText={setTask}
             placeholder="What are you launching into?"
             placeholderTextColor="#64748b"
-            className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3"
+            className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3 inset3d"
           />
           <Pressable onPress={handleStart} disabled={!task.trim()} className={task.trim() ? 'bg-indigo-600 rounded-xl py-3 items-center active:bg-indigo-500 btn3d btn3d-p' : 'bg-slate-300 dark:bg-slate-700 rounded-xl py-3 items-center'}>
             <Text className="text-white text-sm font-semibold">Start countdown</Text>

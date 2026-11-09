@@ -102,7 +102,7 @@ export default function RecipeDetailScreen({ recipeId }: { recipeId: string }) {
           ) : showMealPicker ? (
             <View className="flex-row gap-2 mb-6">
               {MEAL_TYPES.map((meal) => (
-                <Pressable key={meal.id} onPress={() => handleLogToMeal(meal.id)} className="flex-1 bg-white dark:bg-slate-900 rounded-xl py-3 items-center">
+                <Pressable key={meal.id} onPress={() => handleLogToMeal(meal.id)} className="flex-1 bg-white dark:bg-slate-900 rounded-xl py-3 items-center surf3d surf3d-tap">
                   <Text className="text-base">{meal.icon}</Text>
                   <Text className="text-slate-500 text-[10px] mt-0.5">{meal.label}</Text>
                 </Pressable>
@@ -118,7 +118,7 @@ export default function RecipeDetailScreen({ recipeId }: { recipeId: string }) {
           )}
 
           <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold mb-2">Ingredients</Text>
-          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6">
+          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6 surf3d">
             {(recipe.ing || []).map((item, i) => (
               <Text key={i} className="text-slate-700 dark:text-slate-300 text-sm mb-1.5">• {item}</Text>
             ))}
@@ -126,7 +126,7 @@ export default function RecipeDetailScreen({ recipeId }: { recipeId: string }) {
 
           <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold mb-2">Directions</Text>
           {directions && directions.length > 0 ? (
-            <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6">
+            <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6 surf3d">
               <Text className="text-indigo-600 dark:text-indigo-400 text-[10px] font-bold uppercase tracking-wide mb-3">
                 ✨ AI-generated from this recipe&apos;s ingredients — not a tested, verified recipe
               </Text>
@@ -141,7 +141,7 @@ export default function RecipeDetailScreen({ recipeId }: { recipeId: string }) {
               </Pressable>
             </View>
           ) : (
-            <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6">
+            <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6 surf3d">
               <Text className="text-slate-500 text-xs mb-3">
                 This recipe doesn&apos;t have directions yet. Generate a realistic set of steps from its ingredients — clearly AI-written, not a tested recipe.
               </Text>

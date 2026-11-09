@@ -28,7 +28,7 @@ export default function ReflectionCard() {
   };
 
   return (
-    <View className="bg-white rounded-2xl p-5 dark:bg-slate-900">
+    <View className="bg-white rounded-2xl p-5 dark:bg-slate-900 surf3d">
       <View className="flex-row items-center justify-between mb-1">
         <Text className="text-indigo-700 text-xs uppercase tracking-wider dark:text-indigo-300">Evening check-in</Text>
         {reflections.length > 0 && (
@@ -51,7 +51,7 @@ export default function ReflectionCard() {
         placeholder="One line is plenty..."
         placeholderTextColor="#64748b"
         multiline
-        className="bg-stone-100 text-slate-900 rounded-xl p-3 min-h-[70px] mb-3 dark:text-slate-100 dark:bg-slate-800"
+        className="bg-stone-100 text-slate-900 rounded-xl p-3 min-h-[70px] mb-3 dark:text-slate-100 dark:bg-slate-800 inset3d"
       />
 
       <Pressable

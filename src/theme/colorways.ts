@@ -18,7 +18,9 @@
 
 export type ColorwayId =
   | 'default' | 'violet' | 'teal' | 'sky' | 'neon' | 'earthy' | 'pastel' | 'moody' | 'bright';
-export type ButtonLook = 'chunky' | 'glossy' | 'subtle';
+export type ButtonLook = 'chunky' | 'glossy' | 'subtle' | 'combined';
+/** Cards, inputs and bars: follow the button look, pick their own, or stay flat. */
+export type SurfaceLook = 'match' | 'flat' | ButtonLook;
 export type PaletteRole = 'p' | 's' | 'a';
 
 export const SHADES = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950] as const;
@@ -52,6 +54,13 @@ export const BUTTON_LOOKS: { id: ButtonLook; label: string; hint: string }[] = [
   { id: 'chunky', label: 'Chunky', hint: 'A solid edge that presses down' },
   { id: 'glossy', label: 'Soft glossy', hint: 'Shiny face with a soft glow' },
   { id: 'subtle', label: 'Subtle raised', hint: 'A light bevel and small shadow' },
+  { id: 'combined', label: 'Combined', hint: 'Edge, shine and bevel all together' },
+];
+
+export const SURFACE_LOOKS: { id: SurfaceLook; label: string; hint: string }[] = [
+  { id: 'match', label: 'Match buttons', hint: 'Cards and inputs follow your button feel' },
+  ...BUTTON_LOOKS,
+  { id: 'flat', label: 'Flat', hint: 'No raised cards or inputs' },
 ];
 
 // ---------- color math ----------
@@ -220,9 +229,11 @@ export const COLORWAYS: Colorway[] = [
 
 export const DEFAULT_COLORWAY: ColorwayId = 'default';
 export const DEFAULT_BUTTON_LOOK: ButtonLook = 'chunky';
+export const DEFAULT_SURFACE_LOOK: SurfaceLook = 'match';
 
 const COLORWAY_IDS = new Set<string>(COLORWAYS.map((c) => c.id));
 const LOOK_IDS = new Set<string>(BUTTON_LOOKS.map((l) => l.id));
+const SURFACE_IDS = new Set<string>(SURFACE_LOOKS.map((l) => l.id));
 
 /** Anything unknown (old saved data, a typo) falls back to the default instead of breaking the app. */
 export function resolveColorway(id: string | null | undefined): Colorway {
@@ -233,6 +244,14 @@ export function isColorwayId(id: unknown): id is ColorwayId {
 }
 export function isButtonLook(id: unknown): id is ButtonLook {
   return typeof id === 'string' && LOOK_IDS.has(id);
+}
+
+export function isSurfaceLook(id: unknown): id is SurfaceLook {
+  return typeof id === 'string' && SURFACE_IDS.has(id);
+}
+/** The look cards and inputs actually use. */
+export function effectiveSurfaceLook(surface: SurfaceLook, button: ButtonLook): ButtonLook | 'flat' {
+  return surface === 'match' ? button : surface;
 }
 
 /** The scale for one palette in one colorway. */

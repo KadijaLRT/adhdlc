@@ -44,7 +44,7 @@ export default function GymEquipmentPicker({
           <View key={group.id} className="mb-2">
             <Pressable
               onPress={() => setOpenGroupId(isOpen ? null : group.id)}
-              className="flex-row items-center justify-between bg-stone-100 dark:bg-slate-800 rounded-xl px-3 py-3"
+              className="flex-row items-center justify-between bg-stone-100 dark:bg-slate-800 rounded-xl px-3 py-3 surf3d surf3d-in surf3d-tap"
             >
               <Text className="text-slate-700 text-xs font-medium dark:text-slate-200">{group.label}</Text>
               <Text className="text-slate-500 text-xs">{count} of {group.items.length} {isOpen ? '▴' : '▾'}</Text>

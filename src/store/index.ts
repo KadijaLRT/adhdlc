@@ -125,6 +125,7 @@ export const selectDyslexiaFont = (s: AppState) => s.dyslexiaFont ?? false;
 export const selectColorScheme = (s: AppState) => s.colorScheme || 'light';
 export const selectColorway = (s: AppState) => s.colorway || 'default';
 export const selectButtonLook = (s: AppState) => s.buttonLook || 'chunky';
+export const selectSurfaceLook = (s: AppState) => s.surfaceLook || 'match';
 export const selectDateFormat = (s: AppState) => s.dateFormat || 'MM-DD-YYYY';
 export const selectUnitSystem = (s: AppState) => s.unitSystem || 'imperial';
 export const selectActiveProgramId = (s: AppState) => s.activeProgramId;

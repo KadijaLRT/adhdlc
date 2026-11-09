@@ -21,7 +21,7 @@ export function CollapsibleSection({
   const [open, setOpen] = useState(defaultOpen);
 
   return (
-    <View className="bg-white rounded-2xl mb-4 dark:bg-slate-900 overflow-hidden">
+    <View className="bg-white rounded-2xl mb-4 dark:bg-slate-900 overflow-hidden surf3d">
       <Pressable onPress={() => setOpen((v) => !v)} className="flex-row items-center justify-between p-4">
         <View className="flex-1 flex-row items-center gap-2">
           <Text className="text-slate-700 text-sm font-medium dark:text-slate-300">{title}</Text>

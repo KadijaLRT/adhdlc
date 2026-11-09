@@ -24,7 +24,7 @@ export default function GymPresetPicker({
         onChangeText={setQuery}
         placeholder="Search gyms..."
         placeholderTextColor="#64748b"
-        className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 mb-2 dark:text-slate-100 dark:bg-slate-800"
+        className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 mb-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
       />
       <ScrollView style={{ maxHeight: 220 }} nestedScrollEnabled keyboardShouldPersistTaps="handled">
         {GYM_PRESET_CATEGORIES.map((cat) => {
@@ -52,7 +52,7 @@ export default function GymPresetPicker({
         })}
         <Pressable
           onPress={onPickOther}
-          className={selectedId === 'other' ? 'bg-purple-100 dark:bg-purple-500/20 border-2 border-purple-500 rounded-xl py-3 px-3' : 'bg-stone-100 dark:bg-slate-800 border-2 border-transparent rounded-xl py-3 px-3'}
+          className={selectedId === 'other' ? 'bg-purple-100 dark:bg-purple-500/20 border-2 border-purple-500 rounded-xl py-3 px-3' : 'bg-stone-100 dark:bg-slate-800 border-2 border-transparent rounded-xl py-3 px-3 surf3d surf3d-in surf3d-tap'}
         >
           <Text className="text-slate-700 text-xs dark:text-slate-300">Other or local gym (pick the equipment yourself)</Text>
         </Pressable>

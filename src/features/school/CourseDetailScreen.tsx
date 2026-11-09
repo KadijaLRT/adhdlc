@@ -172,7 +172,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
     <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
       <View className="w-full max-w-md self-center">
         {editingCourse ? (
-          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6 mt-2">
+          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6 mt-2 surf3d">
             <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-2">Emoji</Text>
             <View className="flex-row gap-2 mb-3">
               {COURSE_EMOJIS.map((emoji) => (
@@ -187,13 +187,13 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               onChangeText={setNameInput}
               placeholder="Course name"
               placeholderTextColor="#64748b"
-              className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3"
+              className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3 inset3d"
             />
             <View className="flex-row gap-2">
               <Pressable onPress={handleSaveCourseEdit} disabled={!nameInput.trim()} className={nameInput.trim() ? 'flex-1 bg-indigo-600 rounded-xl py-2.5 items-center active:bg-indigo-500 btn3d btn3d-p' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2.5 items-center'}>
                 <Text className="text-white text-sm font-semibold">Save</Text>
               </Pressable>
-              <Pressable onPress={() => setEditingCourse(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center">
+              <Pressable onPress={() => setEditingCourse(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center surf3d surf3d-in surf3d-tap">
                 <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Cancel</Text>
               </Pressable>
             </View>
@@ -263,7 +263,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               placeholder="Goal, e.g. 576 pts"
               placeholderTextColor="#64748b"
               keyboardType="decimal-pad"
-              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
             />
             <TextInput
               value={creditsInput}
@@ -271,7 +271,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               placeholder="Credit hours (for GPA)"
               placeholderTextColor="#64748b"
               keyboardType="decimal-pad"
-              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
             />
           </View>
           <Pressable onPress={handleSaveGoalAndCredits} className="bg-indigo-600 rounded-xl py-2.5 items-center mb-4 btn3d btn3d-p">
@@ -311,7 +311,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
                 const categoryAssignmentCount = courseAssignments.filter((a) => a.categoryId === cat.id && typeof a.pointsEarned === 'number').length;
                 return (
                   <View key={cat.id}>
-                    <View className="flex-row items-center justify-between bg-stone-100 dark:bg-slate-800 rounded-lg px-3 py-2">
+                    <View className="flex-row items-center justify-between bg-stone-100 dark:bg-slate-800 rounded-lg px-3 py-2 surf3d surf3d-in">
                       <Text className="text-slate-700 dark:text-slate-300 text-xs flex-1">{cat.name}</Text>
                       <Text className="text-slate-500 text-xs mr-3">{cat.totalPointsPossible} pts</Text>
                       <Pressable onPress={() => requestRemoveCategory(cat.id, categoryAssignmentCount)}>
@@ -347,7 +347,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
                 placeholder="e.g. Exams"
                 placeholderTextColor="#64748b"
                 autoFocus
-                className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+                className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
               />
               <TextInput
                 value={newCategoryPoints}
@@ -355,7 +355,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
                 placeholder="Total points, e.g. 60"
                 placeholderTextColor="#64748b"
                 keyboardType="decimal-pad"
-                className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+                className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
               />
               <View className="flex-row gap-2">
                 <Pressable onPress={handleAddCategory} className="flex-1 bg-indigo-600 rounded-xl py-2.5 items-center btn3d btn3d-p">
@@ -363,7 +363,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
                 </Pressable>
                 <Pressable
                   onPress={() => { setAddingCategory(false); setNewCategoryName(''); setNewCategoryPoints(''); }}
-                  className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center"
+                  className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center surf3d surf3d-in surf3d-tap"
                 >
                   <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Cancel</Text>
                 </Pressable>
@@ -409,7 +409,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
             onChangeText={setNewTitle}
             placeholder="Research paper, Chapter 6 reading..."
             placeholderTextColor="#64748b"
-            className="bg-stone-100 text-slate-900 rounded-xl px-4 py-3 mb-2 dark:text-slate-100 dark:bg-slate-800"
+            className="bg-stone-100 text-slate-900 rounded-xl px-4 py-3 mb-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
           />
           <View className="mb-2">
             <DateInput value={newDueDate} onChange={setNewDueDate} dark={false} />
@@ -427,7 +427,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
           <View className="gap-2">
             {courseAssignments.length === 0 && <Text className="text-slate-500 text-center mt-4">No assignments yet.</Text>}
             {courseAssignments.map((a) => (
-              <View key={a.id} className="bg-stone-50 dark:bg-slate-800 rounded-xl">
+              <View key={a.id} className="bg-stone-50 dark:bg-slate-800 rounded-xl surf3d surf3d-in">
                 {confirmingRemoveId === a.id ? (
                   <View className="p-4">
                     <Text className="text-red-500 text-xs font-medium mb-2">Remove "{a.title}"?</Text>
@@ -438,7 +438,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
                       >
                         <Text className="text-white text-xs font-semibold">Remove</Text>
                       </Pressable>
-                      <Pressable onPress={() => setConfirmingRemoveId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center">
+                      <Pressable onPress={() => setConfirmingRemoveId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center surf3d surf3d-in surf3d-tap">
                         <Text className="text-slate-600 dark:text-slate-300 text-xs font-semibold">Cancel</Text>
                       </Pressable>
                     </View>
@@ -468,7 +468,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
               <Pressable onPress={handleDeleteCourse} className="flex-1 bg-red-500 rounded-xl py-2.5 items-center active:bg-red-400">
                 <Text className="text-white text-sm font-semibold">Delete course</Text>
               </Pressable>
-              <Pressable onPress={() => setConfirmingDelete(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center">
+              <Pressable onPress={() => setConfirmingDelete(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center surf3d surf3d-in surf3d-tap">
                 <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Cancel</Text>
               </Pressable>
             </View>

@@ -83,7 +83,7 @@ export default function HomeScreen() {
         {isEvening ? (
           <ReflectionCard />
         ) : (
-          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4">
+          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 surf3d">
             <Text className="text-indigo-700 dark:text-indigo-300 text-xs uppercase tracking-wider mb-1">Coach</Text>
             <Text className="text-slate-800 dark:text-slate-200 text-sm">{insight}</Text>
           </View>
@@ -103,7 +103,7 @@ export default function HomeScreen() {
             <Text className="text-white font-semibold text-base">Start My Day</Text>
           </Pressable>
         ) : (
-          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4">
+          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 surf3d">
             <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-3">Today's plan</Text>
             {todaysPlan.length === 0 ? (
               <View>
@@ -115,7 +115,7 @@ export default function HomeScreen() {
             ) : (
               <View className="gap-2">
                 {todaysPlan.map((item, index) => (
-                  <Pressable key={item.id} onPress={() => handlePlanItemPress(item)} className="flex-row items-center gap-3 bg-stone-100 dark:bg-slate-800 rounded-xl p-3">
+                  <Pressable key={item.id} onPress={() => handlePlanItemPress(item)} className="flex-row items-center gap-3 bg-stone-100 dark:bg-slate-800 rounded-xl p-3 surf3d surf3d-in surf3d-tap">
                     <Text className="text-slate-500 text-xs w-4">{index + 1}</Text>
                     <Text className="text-slate-800 dark:text-slate-200 text-sm flex-1">{item.label}</Text>
                   </Pressable>

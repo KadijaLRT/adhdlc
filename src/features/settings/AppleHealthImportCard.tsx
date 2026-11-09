@@ -100,7 +100,7 @@ export default function AppleHealthImportCard() {
   };
 
   return (
-    <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-4 mb-4">
+    <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-4 mb-4 surf3d">
       <Text className="text-indigo-600 text-xs font-bold uppercase tracking-wider mb-2">🍎 Apple Health Import</Text>
       <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold mb-1">Import your weight and cycle history</Text>
       <Text className="text-slate-500 text-xs mb-4">

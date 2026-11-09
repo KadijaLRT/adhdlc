@@ -70,20 +70,20 @@ export default function OverwhelmedMode() {
 
         {phase === 'main' && (
           <View className="w-full max-w-sm gap-4">
-            <View className="bg-white rounded-2xl p-5 items-center dark:bg-slate-900">
+            <View className="bg-white rounded-2xl p-5 items-center dark:bg-slate-900 surf3d">
               <Text className="text-slate-500 text-xs uppercase tracking-wider mb-2">One tiny step</Text>
               <Text className="text-slate-900 text-lg text-center font-medium dark:text-slate-100">
                 {tinyStep || 'Just sit here for a moment. That counts too.'}
               </Text>
             </View>
 
-            <View className="bg-white rounded-2xl p-5 items-center dark:bg-slate-900">
+            <View className="bg-white rounded-2xl p-5 items-center dark:bg-slate-900 surf3d">
               <Text className="text-slate-500 text-xs uppercase tracking-wider mb-2">💧 Water</Text>
               <Text className="text-slate-700 text-sm text-center dark:text-slate-300">Take a sip, right now if you can.</Text>
             </View>
 
             {timerSeconds !== null && timerSeconds > 0 && (
-              <View className="bg-white rounded-2xl p-5 items-center dark:bg-slate-900">
+              <View className="bg-white rounded-2xl p-5 items-center dark:bg-slate-900 surf3d">
                 <Text className="text-slate-50 text-4xl font-bold">
                   {String(Math.floor(timerSeconds / 60)).padStart(2, '0')}:{String(timerSeconds % 60).padStart(2, '0')}
                 </Text>
@@ -96,7 +96,7 @@ export default function OverwhelmedMode() {
                   <Pressable
                     key={secs}
                     onPress={() => setTimerSeconds(secs)}
-                    className="flex-1 bg-white rounded-xl py-3 items-center dark:bg-slate-900"
+                    className="flex-1 bg-white rounded-xl py-3 items-center dark:bg-slate-900 surf3d surf3d-tap"
                   >
                     <Text className="text-slate-700 text-sm dark:text-slate-300">{secs / 60} min timer</Text>
                   </Pressable>

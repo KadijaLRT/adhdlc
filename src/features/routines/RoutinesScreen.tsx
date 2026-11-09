@@ -84,14 +84,14 @@ export default function RoutinesScreen() {
           </View>
         )}
 
-        <View className="bg-white rounded-2xl p-4 mb-6 dark:bg-slate-900">
+        <View className="bg-white rounded-2xl p-4 mb-6 dark:bg-slate-900 surf3d">
           <Text className="text-slate-700 text-sm font-medium mb-3 dark:text-slate-300">Quick start</Text>
           <View className="gap-2 mb-3">
             {ROUTINE_TEMPLATES.map((template) => (
               <Pressable
                 key={template.id}
                 onPress={() => handleAddTemplate(template)}
-                className="bg-stone-100 dark:bg-slate-800 rounded-xl p-3 flex-row items-center justify-between"
+                className="bg-stone-100 dark:bg-slate-800 rounded-xl p-3 flex-row items-center justify-between surf3d surf3d-in surf3d-tap"
               >
                 <View>
                   <Text className="text-slate-900 dark:text-slate-100 text-sm font-medium">{template.emoji} {template.title}</Text>
@@ -122,7 +122,7 @@ export default function RoutinesScreen() {
                   placeholder="Morning meds, evening wind-down..."
                   placeholderTextColor="#64748b"
                   onSubmitEditing={handleAddCustom}
-                  className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-4 py-3 dark:text-slate-100 dark:bg-slate-800"
+                  className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-4 py-3 dark:text-slate-100 dark:bg-slate-800 inset3d"
                 />
                 <Pressable onPress={handleAddCustom} className="bg-indigo-600 rounded-xl px-5 justify-center active:bg-indigo-500 btn3d btn3d-p">
                   <Text className="text-white font-semibold">Add</Text>
@@ -141,7 +141,7 @@ export default function RoutinesScreen() {
             const hasSteps = (routine.steps || []).length > 0;
 
             return (
-              <View key={routine.id} className="bg-white rounded-2xl p-4 dark:bg-slate-900">
+              <View key={routine.id} className="bg-white rounded-2xl p-4 dark:bg-slate-900 surf3d">
                 <View className="flex-row items-center justify-between mb-2">
                   <Text className="text-slate-900 font-medium dark:text-slate-100">{routine.emoji} {routine.title}</Text>
                   {confirmingRemoveId === routine.id ? (

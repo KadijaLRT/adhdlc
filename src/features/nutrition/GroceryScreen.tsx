@@ -135,7 +135,7 @@ export default function GroceryScreen() {
         </Text>
 
         {!shoppingMode && (
-          <Pressable onPress={() => setShowPantry(!showPantry)} className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
+          <Pressable onPress={() => setShowPantry(!showPantry)} className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900 surf3d surf3d-tap">
             <Text className="text-slate-900 text-sm font-medium mb-1 dark:text-slate-100">
               🥫 Pantry ({(pantryItems || []).length} item{(pantryItems || []).length === 1 ? '' : 's'})
             </Text>
@@ -146,7 +146,7 @@ export default function GroceryScreen() {
         )}
 
         {!shoppingMode && showPantry && (
-          <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
+          <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900 surf3d">
             <View className="flex-row gap-2 mb-3">
               <TextInput
                 value={newPantryItem}
@@ -154,7 +154,7 @@ export default function GroceryScreen() {
                 placeholder="e.g. olive oil"
                 placeholderTextColor="#64748b"
                 onSubmitEditing={handleAddPantryItem}
-                className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+                className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
               />
               <Pressable onPress={handleAddPantryItem} className="bg-indigo-600 rounded-xl px-4 justify-center btn3d btn3d-p">
                 <Text className="text-white text-sm font-semibold">Add</Text>
@@ -187,7 +187,7 @@ export default function GroceryScreen() {
               <Text className="text-slate-500 text-xs">Add a few more pantry items to see matches.</Text>
             )}
             {canMakeRecipes.map(({ recipe, score }) => (
-              <View key={recipe.id} className="bg-white dark:bg-slate-900 rounded-xl p-3 flex-row items-center justify-between">
+              <View key={recipe.id} className="bg-white dark:bg-slate-900 rounded-xl p-3 flex-row items-center justify-between surf3d">
                 <View className="flex-1 pr-2">
                   <Text className="text-slate-900 dark:text-slate-100 text-sm font-medium">{recipe.n}</Text>
                   <Text className="text-slate-500 text-xs capitalize">{recipe.c} · {recipe.t}</Text>
@@ -201,7 +201,7 @@ export default function GroceryScreen() {
         )}
 
         {!shoppingMode && (
-          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4">
+          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 surf3d">
             <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-1">✨ Weekly Meal Plan</Text>
             <Text className="text-slate-500 text-xs mb-3">
               A full 7-day breakfast/lunch/dinner plan tailored to your allergies and preferences. Tap ✓ to mark a meal made — its ingredients are already in your grocery list above.
@@ -225,7 +225,7 @@ export default function GroceryScreen() {
             {mealPlan && (
               <View className="mt-4">
                 {mealPlan.tips.length > 0 && (
-                  <View className="bg-stone-50 dark:bg-slate-800 rounded-xl p-3 mb-3">
+                  <View className="bg-stone-50 dark:bg-slate-800 rounded-xl p-3 mb-3 surf3d surf3d-in">
                     <Text className="text-amber-600 dark:text-amber-400 text-[10px] font-bold uppercase tracking-wider mb-2">💡 Nutrition Tips</Text>
                     {mealPlan.tips.map((tip, i) => (
                       <Text key={i} className="text-slate-600 dark:text-slate-300 text-xs mb-1">→ {tip}</Text>
@@ -281,7 +281,7 @@ export default function GroceryScreen() {
                   <Pressable
                     key={item.ingredient}
                     onPress={() => toggleCheckedIngredient(item.ingredient)}
-                    className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900"
+                    className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900 surf3d surf3d-tap"
                   >
                     <View className={isChecked ? 'w-6 h-6 rounded-md bg-emerald-500 items-center justify-center' : 'w-6 h-6 rounded-md border-2 border-stone-300'}>
                       {isChecked && <Text className="text-white text-xs">✓</Text>}
@@ -305,7 +305,7 @@ export default function GroceryScreen() {
                 <Text className="text-slate-500 text-xs font-medium mb-2">{category} ({items.length})</Text>
                 <View className="gap-2">
                   {items.map((item) => (
-                    <View key={item.ingredient} className="bg-white rounded-xl p-3 dark:bg-slate-900">
+                    <View key={item.ingredient} className="bg-white rounded-xl p-3 dark:bg-slate-900 surf3d">
                       <Text className="text-slate-900 text-sm capitalize mb-1 dark:text-slate-100">{item.ingredient}</Text>
                       <Text className="text-slate-500 text-xs">Used for: {item.usedFor.join(', ')}</Text>
                     </View>

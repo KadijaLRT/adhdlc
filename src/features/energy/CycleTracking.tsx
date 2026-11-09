@@ -41,7 +41,7 @@ export default function CycleTracking() {
 
   return (
     <ScrollView className="flex-1" contentContainerStyle={{ gap: 16, paddingBottom: 24 }} showsVerticalScrollIndicator={false}>
-      <View className="bg-white rounded-2xl p-5 w-full dark:bg-slate-900">
+      <View className="bg-white rounded-2xl p-5 w-full dark:bg-slate-900 surf3d">
         <View className="flex-row items-center justify-between mb-1">
           <Text className="text-slate-900 text-base font-semibold dark:text-slate-100">Cycle Tracking</Text>
           <Switch value={cycleTrackingEnabled} onValueChange={setCycleTrackingEnabled}
@@ -67,7 +67,7 @@ export default function CycleTracking() {
         <>
           <CycleCalendar cycleLogs={cycleLogs || []} onSelectDate={(date) => setSelectedDate(date)} />
           {selectedDate && (
-            <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 border-2 border-indigo-400">
+            <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 border-2 border-indigo-400 surf3d">
               <View className="flex-row items-center justify-between mb-3">
                 <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold">{formatDate(selectedDate, dateFormat)}</Text>
                 <Pressable onPress={() => setSelectedDate(null)}>
@@ -93,7 +93,7 @@ export default function CycleTracking() {
         </>
       )}
       {cycleTrackingEnabled && periodStarts.length > 0 && (
-        <View className="bg-white rounded-2xl p-5 w-full dark:bg-slate-900">
+        <View className="bg-white rounded-2xl p-5 w-full dark:bg-slate-900 surf3d">
           <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold mb-3">History & Estimate</Text>
           <View className="flex-row justify-between mb-2">
             <Text className="text-slate-500 text-sm">Periods logged</Text>
@@ -123,14 +123,14 @@ export default function CycleTracking() {
       )}
 
       {cycleTrackingEnabled && hasAnyCorrelationData && (
-        <View className="bg-white rounded-2xl p-5 w-full dark:bg-slate-900">
+        <View className="bg-white rounded-2xl p-5 w-full dark:bg-slate-900 surf3d">
           <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold mb-1">Energy & Stress by Phase</Text>
           <Text className="text-slate-500 text-xs mb-3">
             Comparing days you logged a phase against your energy and stress check-ins for those same days. There's no separate mood tracker in the app yet — this uses what's already there.
           </Text>
           <View className="gap-2">
             {correlations.filter((c) => c.daysLogged > 0).map((c) => (
-              <View key={c.phase} className="flex-row items-center justify-between bg-stone-50 dark:bg-slate-800 rounded-xl p-3">
+              <View key={c.phase} className="flex-row items-center justify-between bg-stone-50 dark:bg-slate-800 rounded-xl p-3 surf3d surf3d-in">
                 <View className="flex-1">
                   <Text className="text-slate-800 dark:text-slate-200 text-sm font-medium">{PHASE_OPTIONS.find((p) => p.phase === c.phase)?.label}</Text>
                   <Text className="text-slate-400 text-xs">{c.daysLogged} day{c.daysLogged === 1 ? '' : 's'} logged</Text>

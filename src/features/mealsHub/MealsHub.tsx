@@ -79,15 +79,15 @@ export default function MealsHub() {
         )}
 
         <View className="gap-3">
-          <Pressable onPress={() => router?.push?.('/nutrition/diary')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/nutrition/diary')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-900 dark:text-slate-100 text-sm">📊 Nutrition diary</Text>
             <Text className="text-slate-500 text-xs">{todaysCalories > 0 ? `${todaysCalories} cal today` : 'log today →'}</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/nutrition/recipes')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/nutrition/recipes')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-900 dark:text-slate-100 text-sm">🍎 Browse recipes</Text>
             <Text className="text-slate-500 text-xs">{savedRecipes.length} saved</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/nutrition/groceries')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/nutrition/groceries')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-900 dark:text-slate-100 text-sm">🛒 This week's groceries</Text>
             <Text className="text-slate-500 text-xs">{groceryCount} items</Text>
           </Pressable>

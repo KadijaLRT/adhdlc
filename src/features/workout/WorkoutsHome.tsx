@@ -42,7 +42,7 @@ function DayStrip({
       renderItem={({ item, index }) => {
         const isActive = index === activeIndex;
         return (
-          <View className={isActive ? 'bg-indigo-600/10 border-2 border-indigo-500 rounded-2xl p-3 items-center w-24' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-2xl p-3 items-center w-24'}>
+          <View className={isActive ? 'bg-indigo-600/10 border-2 border-indigo-500 rounded-2xl p-3 items-center w-24' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-2xl p-3 items-center w-24 surf3d'}>
             <Pressable onPress={() => onJumpTo(index)} className="items-center">
               <Text className={isActive ? 'text-indigo-700 dark:text-indigo-300 text-xs font-bold' : 'text-slate-500 text-xs font-bold'}>{item.weekdayLabel}</Text>
               <Text className={isActive ? 'text-indigo-700 dark:text-indigo-300 text-sm font-semibold mt-1' : 'text-slate-700 dark:text-slate-300 text-sm mt-1'}>
@@ -105,7 +105,7 @@ function DayCard({
     return (
       <View
         onLayout={(e) => onLayout(e.nativeEvent.layout.y)}
-        className="bg-white rounded-2xl p-6 mb-4 items-center dark:bg-slate-900"
+        className="bg-white rounded-2xl p-6 mb-4 items-center dark:bg-slate-900 surf3d"
       >
         <Text className="text-2xl mb-2">😌</Text>
         <Text className="text-slate-900 text-lg font-semibold mb-1 dark:text-slate-100">Rest day</Text>
@@ -120,7 +120,7 @@ function DayCard({
   return (
     <View
       onLayout={(e) => onLayout(e.nativeEvent.layout.y)}
-      className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900"
+      className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900 surf3d"
     >
       <View className="bg-indigo-600/10 self-start rounded-full px-3 py-1 mb-2">
         <Text className="text-indigo-700 text-xs font-bold dark:text-indigo-300">DAY {day.dayLetter}</Text>
@@ -464,13 +464,13 @@ export default function WorkoutsHome() {
         </Pressable>
 
         <View className="flex-row gap-2 mb-4">
-          <Pressable onPress={() => router?.push?.('/fitness/programs')} className="flex-1 bg-white rounded-xl py-3 items-center dark:bg-slate-900">
+          <Pressable onPress={() => router?.push?.('/fitness/programs')} className="flex-1 bg-white rounded-xl py-3 items-center dark:bg-slate-900 surf3d surf3d-tap">
             <Text className="text-slate-700 text-sm dark:text-slate-300">🏋️ Programs</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/fitness/recovery')} className="flex-1 bg-white rounded-xl py-3 items-center dark:bg-slate-900">
+          <Pressable onPress={() => router?.push?.('/fitness/recovery')} className="flex-1 bg-white rounded-xl py-3 items-center dark:bg-slate-900 surf3d surf3d-tap">
             <Text className="text-slate-700 text-sm dark:text-slate-300">🧘 Recovery</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/fitness/progress')} className="flex-1 bg-white rounded-xl py-3 items-center dark:bg-slate-900">
+          <Pressable onPress={() => router?.push?.('/fitness/progress')} className="flex-1 bg-white rounded-xl py-3 items-center dark:bg-slate-900 surf3d surf3d-tap">
             <Text className="text-slate-700 text-sm dark:text-slate-300">📈 Progress</Text>
           </Pressable>
         </View>
@@ -528,7 +528,7 @@ export default function WorkoutsHome() {
           </View>
         )}
 
-        <Pressable onPress={() => router?.push?.('/fitness/six-twelve-twentyfive')} className="bg-white dark:bg-slate-900 rounded-2xl py-3 items-center mb-2">
+        <Pressable onPress={() => router?.push?.('/fitness/six-twelve-twentyfive')} className="bg-white dark:bg-slate-900 rounded-2xl py-3 items-center mb-2 surf3d surf3d-tap">
           <Text className="text-slate-800 dark:text-slate-200 text-sm font-medium">🔥 Try the 6-12-25 Method</Text>
         </Pressable>
 

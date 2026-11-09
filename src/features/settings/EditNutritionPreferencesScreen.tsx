@@ -46,7 +46,7 @@ export default function EditNutritionPreferencesScreen() {
             placeholder="e.g. spinach, plantains, mac & cheese, shellfish, mangoes..."
             placeholderTextColor="#64748b"
             multiline
-            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl p-4 min-h-[90px] mb-6"
+            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl p-4 min-h-[90px] mb-6 inset3d"
           />
 
           <Text className="text-red-500 dark:text-red-400 text-sm font-medium mb-2">❌ Foods you hate or avoid</Text>
@@ -56,7 +56,7 @@ export default function EditNutritionPreferencesScreen() {
             placeholder="e.g. pork, bananas, pickles, raw onions..."
             placeholderTextColor="#64748b"
             multiline
-            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl p-4 min-h-[90px] mb-6"
+            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl p-4 min-h-[90px] mb-6 inset3d"
           />
 
           <Text className="text-amber-600 dark:text-amber-400 text-sm font-medium mb-2">⚠️ Allergies or restrictions</Text>
@@ -65,7 +65,7 @@ export default function EditNutritionPreferencesScreen() {
             onChangeText={(v) => { setAllergies(v); setSaved(false); }}
             placeholder="e.g. almonds (mild), shellfish, gluten-free, dairy-free"
             placeholderTextColor="#64748b"
-            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-3 mb-8"
+            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-4 py-3 mb-8 inset3d"
           />
 
           <Pressable onPress={handleSave} className="bg-indigo-600 rounded-full py-4 items-center active:bg-indigo-500 mb-3 btn3d btn3d-p">

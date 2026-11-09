@@ -121,7 +121,7 @@ export default function BodyCheckinScreen({
                 <Pressable
                   key={part.id}
                   onPress={() => togglePart(part.id)}
-                  className={isFlagged ? 'w-[48%] border-2 border-red-400 bg-red-400/10 rounded-xl p-3' : 'w-[48%] border-2 border-transparent bg-white dark:bg-slate-900 rounded-xl p-3'}
+                  className={isFlagged ? 'w-[48%] border-2 border-red-400 bg-red-400/10 rounded-xl p-3' : 'w-[48%] border-2 border-transparent bg-white dark:bg-slate-900 rounded-xl p-3 surf3d surf3d-tap'}
                 >
                   <View className="flex-row items-center gap-2">
                     <Text className="text-base">{part.icon}</Text>
@@ -150,7 +150,7 @@ export default function BodyCheckinScreen({
           </View>
           ))}
 
-          <Pressable onPress={() => setShowOngoing((o) => !o)} className="bg-white dark:bg-slate-900 rounded-xl p-3 mb-2 flex-row items-center justify-between">
+          <Pressable onPress={() => setShowOngoing((o) => !o)} className="bg-white dark:bg-slate-900 rounded-xl p-3 mb-2 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-700 dark:text-slate-300 text-sm">
               Ongoing issues{restrictions.length > 0 ? ` (${restrictions.length})` : ''}
             </Text>
@@ -178,7 +178,7 @@ export default function BodyCheckinScreen({
             placeholderTextColor="#64748b"
             multiline
             numberOfLines={3}
-            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-3 mb-4 text-sm"
+            className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-3 mb-4 text-sm inset3d"
             style={{ textAlignVertical: 'top' }}
           />
 

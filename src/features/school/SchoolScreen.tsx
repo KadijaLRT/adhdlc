@@ -116,14 +116,14 @@ export default function SchoolScreen() {
         <SchoolProgramSetupCard />
 
         {gpa !== null && (
-          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 flex-row items-center justify-between">
+          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 flex-row items-center justify-between surf3d">
             <Text className="text-slate-900 dark:text-slate-100 text-sm font-medium">📊 Current GPA</Text>
             <Text className="text-emerald-600 dark:text-emerald-400 text-lg font-bold">{gpa.toFixed(2)}</Text>
           </View>
         )}
 
         {!isYounger && (
-          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4">
+          <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 surf3d">
             <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-2">🎓 Degree Progress</Text>
             {totalCreditsRequired ? (
               <>
@@ -153,7 +153,7 @@ export default function SchoolScreen() {
                     placeholder="e.g. 120"
                     placeholderTextColor="#64748b"
                     keyboardType="decimal-pad"
-                    className="flex-1 bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2"
+                    className="flex-1 bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 inset3d"
                   />
                   <Pressable onPress={handleSaveCreditsGoal} className="bg-indigo-600 rounded-xl px-4 justify-center btn3d btn3d-p">
                     <Text className="text-white text-sm font-semibold">Set</Text>
@@ -174,13 +174,13 @@ export default function SchoolScreen() {
           </Pressable>
         )}
 
-        <Pressable onPress={() => router?.push?.('/school/semester')} className="bg-white rounded-2xl p-4 flex-row items-center justify-between mb-4 dark:bg-slate-900">
+        <Pressable onPress={() => router?.push?.('/school/semester')} className="bg-white rounded-2xl p-4 flex-row items-center justify-between mb-4 dark:bg-slate-900 surf3d surf3d-tap">
           <Text className="text-slate-900 text-sm dark:text-slate-100">🗓️ Semester view</Text>
           <Text className="text-slate-500 text-xs">→</Text>
         </Pressable>
 
         <Text className="text-slate-900 text-lg font-semibold mb-3 dark:text-slate-100">Courses</Text>
-        <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
+        <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900 surf3d">
           <View className="flex-row gap-2 mb-3">
             {(COURSE_EMOJIS || []).map((emoji) => (
               <Pressable key={emoji} onPress={() => setNewCourseEmoji(emoji)} className={newCourseEmoji === emoji ? 'bg-indigo-600/30 rounded-lg p-2' : 'p-2'}>
@@ -195,7 +195,7 @@ export default function SchoolScreen() {
               placeholder="Biology, Algebra II..."
               placeholderTextColor="#64748b"
               onSubmitEditing={handleAddCourse}
-              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-4 py-3 dark:text-slate-100 dark:bg-slate-800"
+              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-4 py-3 dark:text-slate-100 dark:bg-slate-800 inset3d"
             />
             <Pressable onPress={handleAddCourse} className="bg-indigo-600 rounded-xl px-5 justify-center btn3d btn3d-p">
               <Text className="text-white font-semibold">Add</Text>
@@ -212,7 +212,7 @@ export default function SchoolScreen() {
             const display = STATUS_DISPLAY[status];
             return (
               <View key={course.id}>
-                <View className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900">
+                <View className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900 surf3d">
                   <Pressable onPress={() => handleCycleStatus(course)}>
                     <View className={`w-5 h-5 rounded-full items-center justify-center ${display.circleClass}`}>
                       {display.icon && <Text className="text-white text-xs">{display.icon}</Text>}
@@ -237,7 +237,7 @@ export default function SchoolScreen() {
                       >
                         <Text className="text-white text-xs font-semibold">Mark failed</Text>
                       </Pressable>
-                      <Pressable onPress={() => setConfirmingFailId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center">
+                      <Pressable onPress={() => setConfirmingFailId(null)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center surf3d surf3d-in surf3d-tap">
                         <Text className="text-slate-600 dark:text-slate-300 text-xs font-semibold">Cancel</Text>
                       </Pressable>
                     </View>

@@ -40,7 +40,7 @@ export default function DueAssignmentsCard() {
             <Pressable
               key={a.id}
               onPress={() => router?.push?.(`/school/assignment/${a.id}`)}
-              className="bg-white dark:bg-slate-900 rounded-xl px-3 py-2 flex-row items-center justify-between"
+              className="bg-white dark:bg-slate-900 rounded-xl px-3 py-2 flex-row items-center justify-between surf3d surf3d-tap"
             >
               <View className="flex-1 mr-2">
                 <Text className="text-slate-900 dark:text-slate-100 text-sm" numberOfLines={1}>{a.title}</Text>

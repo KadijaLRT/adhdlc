@@ -46,7 +46,7 @@ function TaskRow({
 }) {
   const motivatorEmojis = (task.motivators || []).map((m) => MOTIVATOR_OPTIONS.find((o) => o.id === m)?.emoji).filter(Boolean);
   return (
-    <Pressable onPress={onPress} className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900">
+    <Pressable onPress={onPress} className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900 surf3d surf3d-tap">
       <Pressable
         onPress={onToggle}
         accessibilityRole="checkbox"
@@ -256,7 +256,7 @@ export default function TasksScreen() {
           placeholder="Add a task..."
           placeholderTextColor="#64748b"
           onSubmitEditing={handleAdd}
-          className="flex-1 bg-white text-slate-900 rounded-xl px-4 py-3 dark:text-slate-100 dark:bg-slate-900"
+          className="flex-1 bg-white text-slate-900 rounded-xl px-4 py-3 dark:text-slate-100 dark:bg-slate-900 inset3d"
         />
         <Pressable onPress={handleAdd} className="bg-indigo-600 rounded-xl px-5 justify-center active:bg-indigo-500 btn3d btn3d-p">
           <Text className="text-white font-semibold">Add</Text>
@@ -443,7 +443,7 @@ export default function TasksScreen() {
               ].map((quadrant) => {
                 const tasksInQuadrant = matrixQuadrants[quadrant.key];
                 return (
-                  <View key={quadrant.key} className="bg-white dark:bg-slate-900 rounded-2xl p-4">
+                  <View key={quadrant.key} className="bg-white dark:bg-slate-900 rounded-2xl p-4 surf3d">
                     <Text className={`text-xs font-bold uppercase tracking-wide mb-2 ${quadrant.color}`}>{quadrant.label} ({tasksInQuadrant.length})</Text>
                     {tasksInQuadrant.length === 0 ? (
                       <Text className="text-slate-400 text-xs">Nothing here</Text>

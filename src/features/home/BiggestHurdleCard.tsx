@@ -74,7 +74,7 @@ export default function BiggestHurdleCard() {
   };
 
   return (
-    <View className="bg-white rounded-2xl p-4 dark:bg-slate-900">
+    <View className="bg-white rounded-2xl p-4 dark:bg-slate-900 surf3d">
       <Text className="text-slate-900 text-sm font-medium mb-1 dark:text-slate-100">Stuck on something today?</Text>
       <Text className="text-slate-500 text-xs mb-3">Tell me and I'll break it into a small first step and add it to your tasks.</Text>
 
@@ -88,7 +88,7 @@ export default function BiggestHurdleCard() {
             placeholder="Getting started on anything..."
             placeholderTextColor="#64748b"
             onSubmitEditing={handleSubmit}
-            className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+            className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
           />
           <Pressable onPress={handleSubmit} disabled={loading} className="bg-indigo-600 rounded-xl px-4 justify-center btn3d btn3d-p">
             {loading ? <ActivityIndicator color="#fff" size="small" /> : <Text className="text-white text-sm font-semibold">Go</Text>}

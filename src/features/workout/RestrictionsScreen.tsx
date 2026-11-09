@@ -75,7 +75,7 @@ export default function RestrictionsScreen() {
                 const preview = previewRestriction(r, equipmentContext);
                 const open = openId === r.id;
                 return (
-                  <View key={r.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-3">
+                  <View key={r.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-3 surf3d">
                     <Pressable onPress={() => setOpenId(open ? null : r.id)} className="flex-row items-center justify-between">
                       <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold flex-1 pr-2">{r.label}</Text>
                       <Text className="text-slate-500 text-xs">{open ? 'Hide' : 'Details'}</Text>
@@ -111,7 +111,7 @@ export default function RestrictionsScreen() {
               <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold mt-3 mb-1">How to add the strengthening</Text>
               <Text className="text-slate-500 text-xs mb-3">Turn on any mix. Turn them all off to only steer away from aggravating moves.</Text>
               {CORRECTIVE_MODES.map((m) => (
-                <View key={m.id} className="bg-white dark:bg-slate-900 rounded-xl p-3 mb-2 flex-row items-center justify-between">
+                <View key={m.id} className="bg-white dark:bg-slate-900 rounded-xl p-3 mb-2 flex-row items-center justify-between surf3d">
                   <View className="flex-1 pr-3">
                     <Text className="text-slate-900 dark:text-slate-100 text-sm">{m.label}</Text>
                     <Text className="text-slate-500 text-xs">{m.hint}</Text>

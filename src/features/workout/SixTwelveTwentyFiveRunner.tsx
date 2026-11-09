@@ -156,7 +156,7 @@ export default function SixTwelveTwentyFiveRunner({
               Each round is all 3 exercises, back-to-back: 6 heavy → 12 moderate → 25 light.
             </Text>
 
-            <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6">
+            <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6 surf3d">
               {validSlots.map((slot) => {
                 const ex = WORKOUT_EXERCISES?.[slot.exerciseId];
                 return (
@@ -265,7 +265,7 @@ export default function SixTwelveTwentyFiveRunner({
                   keyboardType="decimal-pad"
                   placeholder="0"
                   placeholderTextColor="#64748b"
-                  className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-center text-xl rounded-xl py-3 border border-slate-200 dark:border-slate-800"
+                  className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-center text-xl rounded-xl py-3 border border-slate-200 dark:border-slate-800 inset3d"
                 />
               </View>
               <View className="flex-1">
@@ -274,7 +274,7 @@ export default function SixTwelveTwentyFiveRunner({
                   value={reps}
                   onChangeText={setReps}
                   keyboardType="numeric"
-                  className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-center text-xl rounded-xl py-3 border border-slate-200 dark:border-slate-800"
+                  className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-center text-xl rounded-xl py-3 border border-slate-200 dark:border-slate-800 inset3d"
                 />
               </View>
             </View>
@@ -313,7 +313,7 @@ export default function SixTwelveTwentyFiveRunner({
 
       {showFinishConfirm && (
         <View className="absolute inset-0 bg-black/70 items-center justify-center px-6">
-          <View className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm">
+          <View className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm surf3d surf3d-float">
             <Text className="text-slate-900 dark:text-slate-100 text-lg font-bold mb-2">Finish early?</Text>
             <Text className="text-slate-500 text-sm leading-5 mb-5">
               {completedSets} set{completedSets === 1 ? '' : 's'} logged so far — anything already logged still counts. Nothing is lost by stopping here.

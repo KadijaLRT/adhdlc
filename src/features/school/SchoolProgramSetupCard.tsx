@@ -83,7 +83,7 @@ export default function SchoolProgramSetupCard() {
 
   if (!expanded) {
     return (
-      <Pressable onPress={() => setExpanded(true)} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4">
+      <Pressable onPress={() => setExpanded(true)} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 surf3d surf3d-tap">
         <Text className="text-slate-900 dark:text-slate-100 text-sm font-medium">
           🎓 {universityName ? `${universityName} · ${programName}` : gradeLevel ? `${gradeLevel} grade` : 'School setup'}
         </Text>
@@ -93,7 +93,7 @@ export default function SchoolProgramSetupCard() {
   }
 
   return (
-    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4">
+    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 surf3d">
       <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-3">🎓 School setup</Text>
 
       {isYounger ? (
@@ -138,7 +138,7 @@ export default function SchoolProgramSetupCard() {
             onBlur={handleSaveProgram}
             placeholder="e.g. University of Michigan"
             placeholderTextColor="#64748b"
-            className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-4"
+            className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-4 inset3d"
           />
 
           <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-2">Program / Major</Text>
@@ -166,7 +166,7 @@ export default function SchoolProgramSetupCard() {
               onBlur={handleSaveProgram}
               placeholder="Type your program or major"
               placeholderTextColor="#64748b"
-              className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-4"
+              className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-4 inset3d"
             />
           )}
 

@@ -299,7 +299,7 @@ export default function WorkoutSession({
               <Text className="text-slate-500 text-xs text-center mb-6">{exercise.cues}</Text>
             )}
             {!adhdFocusModeEnabled && topFault && (
-              <View className="bg-stone-50 dark:bg-slate-800 rounded-xl px-3 py-2 mb-6 -mt-3">
+              <View className="bg-stone-50 dark:bg-slate-800 rounded-xl px-3 py-2 mb-6 -mt-3 surf3d surf3d-in">
                 <Text className="text-red-500 text-[11px] text-center">✗ {topFault.fault}</Text>
                 <Text className="text-emerald-600 dark:text-emerald-400 text-[11px] text-center">✓ {topFault.fix}</Text>
               </View>
@@ -315,7 +315,7 @@ export default function WorkoutSession({
                   keyboardType="decimal-pad"
                   placeholder="0"
                   placeholderTextColor="#64748b"
-                  className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-center text-xl rounded-xl py-3 border border-slate-200 dark:border-slate-800"
+                  className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-center text-xl rounded-xl py-3 border border-slate-200 dark:border-slate-800 inset3d"
                 />
               </View>
               <View className="flex-1">
@@ -329,7 +329,7 @@ export default function WorkoutSession({
                   // downstream. Weight legitimately needs decimals
                   // (22.5 lb plates); reps never do.
                   keyboardType="numeric"
-                  className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-center text-xl rounded-xl py-3 border border-slate-200 dark:border-slate-800"
+                  className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-center text-xl rounded-xl py-3 border border-slate-200 dark:border-slate-800 inset3d"
                 />
               </View>
             </View>
@@ -421,7 +421,7 @@ export default function WorkoutSession({
 
       {showFinishConfirm && (
         <View className="absolute inset-0 bg-black/70 items-center justify-center px-6">
-          <View className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm">
+          <View className="bg-white dark:bg-slate-900 rounded-3xl p-6 w-full max-w-sm surf3d surf3d-float">
             <Text className="text-slate-900 dark:text-slate-100 text-lg font-bold mb-2">
               {isFinalExercise ? 'You showed up. That counts.' : 'Leave this workout?'}
             </Text>

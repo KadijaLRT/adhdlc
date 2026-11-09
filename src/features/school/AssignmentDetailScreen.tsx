@@ -123,7 +123,7 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
           (courseGrading.ts) which the course screen uses to show the
           cumulative grade.
         */}
-        <View className="bg-white rounded-2xl p-4 mb-6 dark:bg-slate-900">
+        <View className="bg-white rounded-2xl p-4 mb-6 dark:bg-slate-900 surf3d">
           <Text className="text-slate-700 text-sm font-medium mb-2 dark:text-slate-300">Grade</Text>
           {assignment.pointsEarned !== undefined && (
             <Text className="text-slate-500 text-xs mb-2">
@@ -163,7 +163,7 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
               placeholder="Points earned"
               placeholderTextColor="#64748b"
               keyboardType="decimal-pad"
-              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
             />
             <TextInput
               value={pointsPossibleInput}
@@ -171,7 +171,7 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
               placeholder="Points possible"
               placeholderTextColor="#64748b"
               keyboardType="decimal-pad"
-              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
             />
           </View>
           <Pressable onPress={handleSaveGrade} className="bg-indigo-600 rounded-xl py-2.5 items-center btn3d btn3d-p">
@@ -195,7 +195,7 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
                 </Text>
                 <View className="gap-2">
                   {group.steps.map((step) => (
-                    <Pressable key={step.id} onPress={() => toggleAssignmentSubStep(assignment.id, step.id)} className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900">
+                    <Pressable key={step.id} onPress={() => toggleAssignmentSubStep(assignment.id, step.id)} className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900 surf3d surf3d-tap">
                       <View className={step.isComplete ? 'w-5 h-5 rounded-full bg-emerald-500 items-center justify-center' : 'w-5 h-5 rounded-full border-2 border-stone-300'}>
                         {step.isComplete && <Text className="text-white text-xs">✓</Text>}
                       </View>
@@ -215,7 +215,7 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
               <Pressable onPress={handleRemove} className="flex-1 bg-red-500 rounded-xl py-2.5 items-center active:bg-red-400">
                 <Text className="text-white text-sm font-semibold">Remove</Text>
               </Pressable>
-              <Pressable onPress={() => setConfirmingRemove(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center">
+              <Pressable onPress={() => setConfirmingRemove(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center surf3d surf3d-in surf3d-tap">
                 <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Cancel</Text>
               </Pressable>
             </View>

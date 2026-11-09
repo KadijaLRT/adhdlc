@@ -206,7 +206,7 @@ export default function ScheduleScreen() {
               return (
                 <Pressable
                   onPress={() => setSelectedDate(date)}
-                  className={isActive ? 'bg-indigo-600/10 border-2 border-indigo-500 rounded-2xl p-2.5 items-center w-16' : isThisToday ? 'bg-white dark:bg-slate-900 border-2 border-indigo-300 rounded-2xl p-2.5 items-center w-16' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-2xl p-2.5 items-center w-16'}
+                  className={isActive ? 'bg-indigo-600/10 border-2 border-indigo-500 rounded-2xl p-2.5 items-center w-16' : isThisToday ? 'bg-white dark:bg-slate-900 border-2 border-indigo-300 rounded-2xl p-2.5 items-center w-16 surf3d surf3d-tap' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-2xl p-2.5 items-center w-16 surf3d surf3d-tap'}
                 >
                   <Text className={isActive ? 'text-indigo-700 dark:text-indigo-300 text-xs font-bold' : 'text-slate-500 text-xs font-bold'}>{WEEKDAY_LABELS[index] || ''}</Text>
                   <Text className={isActive ? 'text-indigo-700 dark:text-indigo-300 text-sm font-semibold mt-1' : 'text-slate-700 dark:text-slate-300 text-sm mt-1'}>{parseLocalDate(date).getDate()}</Text>
@@ -238,7 +238,7 @@ export default function ScheduleScreen() {
                 <Pressable
                   key={date}
                   onPress={() => { setSelectedDate(date); setViewMode('day'); }}
-                  className={isThisToday ? 'bg-white dark:bg-slate-900 border-2 border-indigo-400 rounded-2xl p-4' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-2xl p-4'}
+                  className={isThisToday ? 'bg-white dark:bg-slate-900 border-2 border-indigo-400 rounded-2xl p-4 surf3d surf3d-tap' : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-2xl p-4 surf3d surf3d-tap'}
                 >
                   <View className="flex-row items-center justify-between mb-2">
                     <Text className={isThisToday ? 'text-indigo-700 dark:text-indigo-300 text-sm font-semibold' : 'text-slate-900 dark:text-slate-100 text-sm font-semibold'}>
@@ -282,7 +282,7 @@ export default function ScheduleScreen() {
                       <Pressable
                         key={mins}
                         onPress={() => { shiftRemainingSchedule(mins); setShowBehindOptions(false); }}
-                        className="flex-1 bg-white rounded-xl py-2 items-center dark:bg-slate-900"
+                        className="flex-1 bg-white rounded-xl py-2 items-center dark:bg-slate-900 surf3d surf3d-tap"
                       >
                         <Text className="text-slate-700 text-sm dark:text-slate-300">{mins} min</Text>
                       </Pressable>
@@ -297,7 +297,7 @@ export default function ScheduleScreen() {
               </>
             )}
 
-            <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
+            <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900 surf3d">
               <Text className="text-slate-700 text-sm font-medium mb-2 dark:text-slate-300">Add to {isToday ? 'today' : dayLabel(selectedDate).toLowerCase()}</Text>
               <View className="flex-row gap-2">
                 <TextInput
@@ -307,7 +307,7 @@ export default function ScheduleScreen() {
                   placeholderTextColor="#64748b"
                   keyboardType="numeric"
                   maxLength={5}
-                  className="w-20 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 text-center dark:text-slate-100 dark:bg-slate-800"
+                  className="w-20 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 text-center dark:text-slate-100 dark:bg-slate-800 inset3d"
                 />
                 <TextInput
                   value={newLabel}
@@ -315,7 +315,7 @@ export default function ScheduleScreen() {
                   placeholder="What's happening..."
                   placeholderTextColor="#64748b"
                   onSubmitEditing={handleAdd}
-                  className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+                  className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
                 />
                 <Pressable onPress={handleAdd} className="bg-indigo-600 rounded-xl px-4 justify-center btn3d btn3d-p">
                   <Text className="text-white font-semibold">Add</Text>
@@ -343,7 +343,7 @@ export default function ScheduleScreen() {
                       {!isCollapsed && (
                         <View className="gap-2">
                           {bucketItems.map((item) => (
-                            <Pressable key={item.id} onPress={() => toggleScheduleItemDone(item.id)} className="bg-white rounded-xl p-3 flex-row items-center gap-3 dark:bg-slate-900">
+                            <Pressable key={item.id} onPress={() => toggleScheduleItemDone(item.id)} className="bg-white rounded-xl p-3 flex-row items-center gap-3 dark:bg-slate-900 surf3d surf3d-tap">
                               <View className={item.isDone ? 'w-5 h-5 rounded-full bg-emerald-500 items-center justify-center' : 'w-5 h-5 rounded-full border-2 border-stone-300 dark:border-slate-700'}>
                                 {item.isDone && <Text className="text-white text-xs">✓</Text>}
                               </View>

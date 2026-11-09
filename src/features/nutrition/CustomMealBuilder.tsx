@@ -95,14 +95,14 @@ export default function CustomMealBuilder({ onSave, onCancel, onOpenScanner }: P
   };
 
   return (
-    <View className="bg-stone-50 dark:bg-slate-800 rounded-xl p-3">
+    <View className="bg-stone-50 dark:bg-slate-800 rounded-xl p-3 surf3d surf3d-in">
       <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-2">Meal name</Text>
       <TextInput
         value={mealName}
         onChangeText={setMealName}
         placeholder="e.g. My protein bowl"
         placeholderTextColor="#64748b"
-        className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3"
+        className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3 inset3d"
       />
 
       {ingredients.length > 0 && (
@@ -134,7 +134,7 @@ export default function CustomMealBuilder({ onSave, onCancel, onOpenScanner }: P
               onChangeText={setIngredientSearch}
               placeholder="Search an ingredient to add…"
               placeholderTextColor="#64748b"
-              className="flex-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2"
+              className="flex-1 bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 inset3d"
             />
             <Pressable onPress={() => onOpenScanner(addIngredientFromDatabase)} className="bg-indigo-600 rounded-xl px-3 justify-center active:bg-indigo-500 btn3d btn3d-p">
               <Text className="text-white text-sm">📷</Text>
@@ -162,20 +162,20 @@ export default function CustomMealBuilder({ onSave, onCancel, onOpenScanner }: P
         </>
       ) : (
         <View>
-          <TextInput value={manualName} onChangeText={setManualName} placeholder="Ingredient name" placeholderTextColor="#64748b" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-2" />
+          <TextInput value={manualName} onChangeText={setManualName} placeholder="Ingredient name" placeholderTextColor="#64748b" className="bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-2 inset3d" />
           <View className="flex-row gap-2 mb-2">
-            <View className="flex-1"><TextInput value={manualCal} onChangeText={setManualCal} placeholder="Calories" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
-            <View className="flex-1"><TextInput value={manualPro} onChangeText={setManualPro} placeholder="Protein g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
+            <View className="flex-1"><TextInput value={manualCal} onChangeText={setManualCal} placeholder="Calories" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 inset3d" /></View>
+            <View className="flex-1"><TextInput value={manualPro} onChangeText={setManualPro} placeholder="Protein g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 inset3d" /></View>
           </View>
           <View className="flex-row gap-2 mb-3">
-            <View className="flex-1"><TextInput value={manualCarb} onChangeText={setManualCarb} placeholder="Carbs g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
-            <View className="flex-1"><TextInput value={manualFat} onChangeText={setManualFat} placeholder="Fat g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2" /></View>
+            <View className="flex-1"><TextInput value={manualCarb} onChangeText={setManualCarb} placeholder="Carbs g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 inset3d" /></View>
+            <View className="flex-1"><TextInput value={manualFat} onChangeText={setManualFat} placeholder="Fat g" placeholderTextColor="#64748b" keyboardType="decimal-pad" className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 inset3d" /></View>
           </View>
           <View className="flex-row gap-2">
             <Pressable onPress={addManualIngredient} disabled={!manualName.trim()} className={manualName.trim() ? 'flex-1 bg-indigo-600 rounded-xl py-2 items-center active:bg-indigo-500 btn3d btn3d-p' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2 items-center'}>
               <Text className="text-white text-sm font-semibold">Add ingredient</Text>
             </Pressable>
-            <Pressable onPress={() => setManualMode(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2 items-center">
+            <Pressable onPress={() => setManualMode(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2 items-center surf3d surf3d-in surf3d-tap">
               <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Back to search</Text>
             </Pressable>
           </View>
@@ -190,7 +190,7 @@ export default function CustomMealBuilder({ onSave, onCancel, onOpenScanner }: P
         >
           <Text className="text-white text-sm font-semibold">Save meal & add to diary</Text>
         </Pressable>
-        <Pressable onPress={onCancel} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center">
+        <Pressable onPress={onCancel} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center surf3d surf3d-in surf3d-tap">
           <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Cancel</Text>
         </Pressable>
       </View>

@@ -59,7 +59,7 @@ export default function CycleCalendar({ cycleLogs, onSelectDate }: CycleCalendar
   const monthLabel = visibleMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
   return (
-    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4">
+    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 surf3d">
       <View className="flex-row items-center justify-between mb-3">
         <Pressable onPress={() => setVisibleMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1))} className="py-1 px-3">
           <Text className="text-slate-500 text-base">‹</Text>

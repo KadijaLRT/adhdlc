@@ -61,13 +61,13 @@ export default function CoachScreen() {
             accessibilityRole="button"
             accessibilityLabel="Choose a specialist"
             accessibilityState={{ expanded: menuOpen }}
-            className="bg-white dark:bg-slate-900 border-2 border-indigo-400/40 rounded-xl px-4 py-3 flex-row items-center justify-between"
+            className="bg-white dark:bg-slate-900 border-2 border-indigo-400/40 rounded-xl px-4 py-3 flex-row items-center justify-between surf3d surf3d-tap"
           >
             <Text className="text-slate-900 dark:text-slate-100 text-sm">{selectedLabel}</Text>
             <Text className="text-slate-500 text-xs">{menuOpen ? '▲' : '▼'}</Text>
           </Pressable>
           {menuOpen && (
-            <View className="bg-white dark:bg-slate-900 rounded-xl mt-2 overflow-hidden border border-slate-200 dark:border-slate-800">
+            <View className="bg-white dark:bg-slate-900 rounded-xl mt-2 overflow-hidden border border-slate-200 dark:border-slate-800 surf3d">
               {[{ id: null as string | null, label: 'Auto (I\'ll route it)' }, ...(AGENTS || []).map((a) => ({ id: a.id as string | null, label: a.label }))].map((opt) => {
                 const active = selectedAgentId === opt.id;
                 return (
@@ -90,7 +90,7 @@ export default function CoachScreen() {
           placeholder="What's on your mind?"
           placeholderTextColor="#64748b"
           multiline
-          className="bg-white text-slate-900 rounded-xl p-4 min-h-[80px] mb-4 dark:text-slate-100 dark:bg-slate-900"
+          className="bg-white text-slate-900 rounded-xl p-4 min-h-[80px] mb-4 dark:text-slate-100 dark:bg-slate-900 inset3d"
         />
 
         <Pressable onPress={handleAsk} disabled={loading} className="bg-indigo-600 rounded-full py-4 mb-6 active:bg-indigo-500 btn3d btn3d-p">
@@ -104,7 +104,7 @@ export default function CoachScreen() {
         )}
 
         {reply && (
-          <View className="bg-white rounded-2xl p-4 dark:bg-slate-900">
+          <View className="bg-white rounded-2xl p-4 dark:bg-slate-900 surf3d">
             <Text className="text-indigo-700 text-xs uppercase tracking-wider mb-2 dark:text-indigo-300">{reply.agentLabel}</Text>
             <Text className="text-slate-900 mb-3 dark:text-slate-100">{reply.message}</Text>
             <Text className="text-slate-500 text-xs">{reply.reasoning}</Text>

@@ -49,7 +49,7 @@ export default function SemesterCalendar() {
               {items.map((a) => {
                 const course = (courses || []).find((c) => c.id === a.courseId);
                 return (
-                  <View key={a.id} className="bg-white rounded-xl p-3 flex-row items-center gap-3 dark:bg-slate-900">
+                  <View key={a.id} className="bg-white rounded-xl p-3 flex-row items-center gap-3 dark:bg-slate-900 surf3d">
                     <View style={{ width: 4, height: '100%', minHeight: 32, backgroundColor: courseColor(a.courseId), borderRadius: 2 }} />
                     <View className="flex-1">
                       <Text className={a.isComplete ? 'text-slate-500 line-through text-sm' : 'text-slate-900 text-sm'}>{a.title}</Text>

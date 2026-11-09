@@ -1,7 +1,7 @@
 import type { StateCreator } from 'zustand';
 import { getRepository } from '@/core/storage';
 import { createWriteGuard } from '@/core/storage/writeGuard';
-import { DEFAULT_BUTTON_LOOK, DEFAULT_COLORWAY, isButtonLook, isColorwayId, type ButtonLook, type ColorwayId } from '@/theme/colorways';
+import { DEFAULT_BUTTON_LOOK, DEFAULT_COLORWAY, DEFAULT_SURFACE_LOOK, isButtonLook, isColorwayId, isSurfaceLook, type ButtonLook, type ColorwayId, type SurfaceLook } from '@/theme/colorways';
 
 export type TextSize = 'small' | 'medium' | 'large';
 export type ColorSchemePreference = 'light' | 'dark' | 'system';
@@ -19,6 +19,7 @@ export interface SettingsState {
   notificationsEnabled: boolean;
   colorway: ColorwayId;
   buttonLook: ButtonLook;
+  surfaceLook: SurfaceLook;
 }
 
 export interface SettingsSlice extends SettingsState {
@@ -32,6 +33,7 @@ export interface SettingsSlice extends SettingsState {
   setNotificationsEnabled: (enabled: boolean) => Promise<void>;
   setColorway: (id: ColorwayId) => Promise<void>;
   setButtonLook: (look: ButtonLook) => Promise<void>;
+  setSurfaceLook: (look: SurfaceLook) => Promise<void>;
 }
 
 const DEFAULT_STATE: SettingsState = {
@@ -45,6 +47,7 @@ const DEFAULT_STATE: SettingsState = {
   notificationsEnabled: false,
   colorway: DEFAULT_COLORWAY,
   buttonLook: DEFAULT_BUTTON_LOOK,
+  surfaceLook: DEFAULT_SURFACE_LOOK,
 };
 
 const persist = createWriteGuard(async (state: SettingsState) => {
@@ -64,6 +67,7 @@ function currentState(get: () => SettingsState): SettingsState {
     notificationsEnabled: get().notificationsEnabled ?? false,
     colorway: isColorwayId(get().colorway) ? get().colorway : DEFAULT_COLORWAY,
     buttonLook: isButtonLook(get().buttonLook) ? get().buttonLook : DEFAULT_BUTTON_LOOK,
+    surfaceLook: isSurfaceLook(get().surfaceLook) ? get().surfaceLook : DEFAULT_SURFACE_LOOK,
   };
 }
 
@@ -113,6 +117,12 @@ export const createSettingsSlice: StateCreator<SettingsSlice> = (set, get) => ({
   setColorway: async (colorway) => {
     if (!isColorwayId(colorway)) return;
     const nextState = { ...currentState(get), colorway };
+    set(nextState);
+    await persist(nextState);
+  },
+  setSurfaceLook: async (surfaceLook) => {
+    if (!isSurfaceLook(surfaceLook)) return;
+    const nextState = { ...currentState(get), surfaceLook };
     set(nextState);
     await persist(nextState);
   },

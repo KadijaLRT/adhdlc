@@ -161,7 +161,7 @@ export default function RecipeBrowser() {
           onChangeText={(v) => { setSearch(v); setGenError(null); }}
           placeholder="Search or describe a recipe…"
           placeholderTextColor="#64748b"
-          className="bg-white text-slate-900 rounded-xl px-4 py-3 mb-3 dark:text-slate-100 dark:bg-slate-900"
+          className="bg-white text-slate-900 rounded-xl px-4 py-3 mb-3 dark:text-slate-100 dark:bg-slate-900 inset3d"
         />
 
         {showGenerateButton && (
@@ -290,7 +290,7 @@ function RecipeCard({
   };
 
   return (
-    <View className="bg-white rounded-2xl p-4 dark:bg-slate-900">
+    <View className="bg-white rounded-2xl p-4 dark:bg-slate-900 surf3d">
       <View className="flex-row items-center justify-between mb-1">
         <Pressable onPress={() => router?.push?.(`/nutrition/recipe/${recipe.id}`)} className="flex-1 pr-2">
           <Text className="text-slate-900 font-medium dark:text-slate-100">
@@ -320,7 +320,7 @@ function RecipeCard({
       {showMealPicker && (
         <View className="flex-row gap-1.5">
           {DIARY_MEAL_TYPES.map((meal) => (
-            <Pressable key={meal.id} onPress={() => handleLogToMeal(meal.id)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center">
+            <Pressable key={meal.id} onPress={() => handleLogToMeal(meal.id)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-lg py-2 items-center surf3d surf3d-in surf3d-tap">
               <Text className="text-xs">{meal.icon}</Text>
             </Pressable>
           ))}

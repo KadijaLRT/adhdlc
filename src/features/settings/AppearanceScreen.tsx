@@ -1,11 +1,12 @@
-import { View, Text, Pressable, ScrollView, Platform } from 'react-native';
-import { useAppStore, selectColorway, selectButtonLook } from '@/store/index';
+import { View, Text, Pressable, ScrollView, Platform, TextInput } from 'react-native';
+import { useAppStore, selectColorway, selectButtonLook, selectSurfaceLook } from '@/store/index';
 import { Heading } from '@/shared/components/Heading';
-import { BUTTON_LOOKS, COLORWAYS, type ButtonLook, type ColorwayId } from '@/theme/colorways';
+import { BUTTON_LOOKS, COLORWAYS, SURFACE_LOOKS, effectiveSurfaceLook, type ButtonLook, type ColorwayId, type SurfaceLook } from '@/theme/colorways';
 
 // RN-web turns dataSet into data-* attributes, which the settings previews use
 // to show a specific look next to the others.
 const lookScope = (look: ButtonLook) => ({ dataSet: { look } }) as object;
+const surfScope = (look: ButtonLook | 'flat') => ({ dataSet: { surf: look } }) as object;
 
 function SamplePreview() {
   return (
@@ -30,6 +31,16 @@ function SamplePreview() {
         </View>
         <Text className="text-indigo-600 dark:text-indigo-400 text-xs font-medium">See all</Text>
       </View>
+      <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-2xl p-4 mt-4 surf3d">
+        <Text className="text-slate-800 dark:text-slate-200 text-sm font-medium mb-2">Sample card</Text>
+        <TextInput
+          editable={false}
+          placeholder="Sample input"
+          placeholderTextColor="#94a3b8"
+          accessibilityLabel="Sample input, preview only"
+          className="w-full bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 border border-stone-200 dark:border-slate-700 inset3d"
+        />
+      </View>
     </View>
   );
 }
@@ -37,6 +48,8 @@ function SamplePreview() {
 export default function AppearanceScreen() {
   const colorway = useAppStore(selectColorway);
   const buttonLook = useAppStore(selectButtonLook);
+  const surfaceLook = useAppStore(selectSurfaceLook);
+  const setSurfaceLook = useAppStore((s) => s.setSurfaceLook);
   const setColorway = useAppStore((s) => s.setColorway);
   const setButtonLook = useAppStore((s) => s.setButtonLook);
   const isWeb = Platform.OS === 'web';
@@ -111,6 +124,43 @@ export default function AppearanceScreen() {
                   <View className="bg-indigo-600 rounded-xl px-4 py-2 btn3d btn3d-p"><Text className="text-white text-xs font-semibold">Primary</Text></View>
                   <View className="bg-emerald-500 rounded-xl px-4 py-2 btn3d btn3d-s"><Text className="text-white text-xs font-semibold">Secondary</Text></View>
                   <View className="bg-amber-500 rounded-xl px-4 py-2 btn3d btn3d-a"><Text className="text-white text-xs font-semibold">Accent</Text></View>
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold mb-1">Cards, inputs and bars</Text>
+        <Text className="text-slate-500 text-xs mb-3">The raised feel for everything that is not a button.{!isWeb ? ' Saved now; shows in the web app.' : ''}</Text>
+        <View className="gap-2 mb-6" accessibilityRole="radiogroup">
+          {SURFACE_LOOKS.map((look) => {
+            const selected = surfaceLook === look.id;
+            const shown = effectiveSurfaceLook(look.id as SurfaceLook, buttonLook);
+            return (
+              <Pressable
+                key={look.id}
+                onPress={() => { void setSurfaceLook(look.id as SurfaceLook); }}
+                accessibilityRole="radio"
+                accessibilityState={{ checked: selected }}
+                accessibilityLabel={`${look.label}. ${look.hint}`}
+                className={selected
+                  ? 'bg-indigo-600/10 border-2 border-indigo-400 rounded-2xl p-4'
+                  : 'bg-white dark:bg-slate-900 border-2 border-transparent rounded-2xl p-4'}
+              >
+                <View className="flex-row items-center justify-between mb-3">
+                  <View className="flex-1 pr-3">
+                    <Text className="text-slate-800 dark:text-slate-200 text-sm font-medium">{look.label}</Text>
+                    <Text className="text-slate-500 text-xs">{look.hint}</Text>
+                  </View>
+                  <Text className={selected ? 'text-indigo-600 dark:text-indigo-300 text-lg' : 'text-transparent text-lg'}>✓</Text>
+                </View>
+                <View {...surfScope(shown)} pointerEvents="none" className="gap-3 pb-1">
+                  <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-xl px-3 py-2 surf3d">
+                    <Text className="text-slate-700 dark:text-slate-300 text-xs">Card</Text>
+                  </View>
+                  <View className="bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-700 rounded-xl px-3 py-2 inset3d">
+                    <Text className="text-slate-500 text-xs">Input</Text>
+                  </View>
                 </View>
               </Pressable>
             );

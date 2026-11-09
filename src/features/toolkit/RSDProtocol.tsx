@@ -52,7 +52,7 @@ export default function RSDProtocol({ onClose }: { onClose?: () => void }) {
   if (!step) return null;
 
   return (
-    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4">
+    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 surf3d">
       <Text className="text-slate-400 text-[10px] font-bold uppercase tracking-wide mb-1">Step {step.n} of {RSD_STEPS.length}</Text>
       <Text className="text-slate-900 dark:text-slate-100 text-lg font-semibold mb-2">{step.title}</Text>
       <Text className="text-slate-600 dark:text-slate-300 text-sm leading-5 mb-4">{step.desc}</Text>

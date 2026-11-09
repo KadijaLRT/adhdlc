@@ -80,7 +80,7 @@ export default function WorkoutDaySchedulePicker({ weekdayIndex }: { weekdayInde
           <View className="gap-3">
             <Pressable
               onPress={() => handleChoose(null)}
-              className={!currentLetter ? 'border-2 border-emerald-400 bg-emerald-400/10 rounded-2xl p-4 flex-row items-center justify-between' : 'bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between'}
+              className={!currentLetter ? 'border-2 border-emerald-400 bg-emerald-400/10 rounded-2xl p-4 flex-row items-center justify-between' : 'bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d surf3d-tap'}
             >
               <View className="flex-row items-center gap-3">
                 <Text className="text-2xl">😴</Text>
@@ -95,7 +95,7 @@ export default function WorkoutDaySchedulePicker({ weekdayIndex }: { weekdayInde
                 <Pressable
                   key={letter}
                   onPress={() => handleChoose(letter)}
-                  className={isSelected ? 'border-2 border-emerald-400 bg-emerald-400/10 rounded-2xl p-4' : 'bg-white dark:bg-slate-900 rounded-2xl p-4'}
+                  className={isSelected ? 'border-2 border-emerald-400 bg-emerald-400/10 rounded-2xl p-4' : 'bg-white dark:bg-slate-900 rounded-2xl p-4 surf3d surf3d-tap'}
                 >
                   <View className="flex-row items-center justify-between">
                     <View className="flex-row items-center gap-3 flex-1 pr-2">

@@ -54,7 +54,7 @@ export default function PomodoroTimer() {
   const seconds = secondsLeft % 60;
 
   return (
-    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4">
+    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 surf3d">
       <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-3">⏱️ Pomodoro Timer</Text>
 
       {justSwitched && (

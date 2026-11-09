@@ -72,7 +72,7 @@ export default function SixTwelveTwentyFiveScreen() {
           Three exercises, same muscle group, back-to-back: 6 reps heavy, 12 reps moderate, 25 reps light.
         </Text>
 
-        <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4">
+        <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-4 surf3d">
           <InfoRow emoji="🏆">Heavy compound movement, ~80–85% effort, 6 reps — builds mechanical tension.</InfoRow>
           <InfoRow emoji="⚖️">Reduce the load, 12 reps — the sweet spot between load and volume.</InfoRow>
           <InfoRow emoji="🔥">Lighter weight, 25 reps — accumulates fatigue, metabolites, and the burn.</InfoRow>
@@ -128,7 +128,7 @@ export default function SixTwelveTwentyFiveScreen() {
                 className={
                   disabled
                     ? 'w-[31%] bg-stone-100 dark:bg-slate-900 rounded-2xl p-3 items-center opacity-40'
-                    : 'w-[31%] bg-white dark:bg-slate-900 rounded-2xl p-3 items-center active:opacity-70'
+                    : 'w-[31%] bg-white dark:bg-slate-900 rounded-2xl p-3 items-center active:opacity-70 surf3d surf3d-tap'
                 }
               >
                 <Text className="text-xl mb-1">{g.icon}</Text>

@@ -109,7 +109,7 @@ export default function TaskDetailScreen() {
                 <Pressable
                   key={p}
                   onPress={() => updateTask(task.id, { priority: p })}
-                  className={isActive ? 'flex-1 bg-stone-100 dark:bg-slate-800 border-2 border-indigo-400 rounded-xl py-2 items-center' : 'flex-1 bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl py-2 items-center'}
+                  className={isActive ? 'flex-1 bg-stone-100 dark:bg-slate-800 border-2 border-indigo-400 rounded-xl py-2 items-center surf3d surf3d-in surf3d-tap' : 'flex-1 bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl py-2 items-center surf3d surf3d-tap'}
                 >
                   <Text className="text-slate-700 text-xs dark:text-slate-300">{dot} {p}</Text>
                 </Pressable>
@@ -134,7 +134,7 @@ export default function TaskDetailScreen() {
                 <Pressable
                   key={e}
                   onPress={() => updateTask(task.id, { energyRequired: e })}
-                  className={isActive ? 'flex-1 bg-stone-100 dark:bg-slate-800 border-2 border-indigo-400 rounded-xl py-2 items-center' : 'flex-1 bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl py-2 items-center'}
+                  className={isActive ? 'flex-1 bg-stone-100 dark:bg-slate-800 border-2 border-indigo-400 rounded-xl py-2 items-center surf3d surf3d-in surf3d-tap' : 'flex-1 bg-white dark:bg-slate-900 border-2 border-transparent rounded-xl py-2 items-center surf3d surf3d-tap'}
                 >
                   <Text className="text-slate-700 text-xs dark:text-slate-300 capitalize">🔋 {e}</Text>
                 </Pressable>
@@ -195,7 +195,7 @@ export default function TaskDetailScreen() {
             <View className="gap-2 mb-6">
               <Text className="text-slate-700 text-sm font-medium mb-1 dark:text-slate-300">Steps</Text>
               {(task.subSteps || []).map((step) => (
-                <Pressable key={step.id} onPress={() => toggleSubStep(task.id, step.id)} className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900">
+                <Pressable key={step.id} onPress={() => toggleSubStep(task.id, step.id)} className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900 surf3d surf3d-tap">
                   <View className={step?.isComplete ? 'w-5 h-5 rounded-full bg-emerald-500 items-center justify-center' : 'w-5 h-5 rounded-full border-2 border-stone-300'}>
                     {step?.isComplete && <Text className="text-white text-xs">✓</Text>}
                   </View>

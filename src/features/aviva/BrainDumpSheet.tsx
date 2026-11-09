@@ -78,7 +78,7 @@ export default function BrainDumpSheet({ visible, onClose }: { visible: boolean;
           <Text className="text-slate-900 text-xl font-semibold mb-1 dark:text-slate-100">Brain Dump</Text>
           <Text className="text-slate-500 text-sm mb-4">Type whatever&apos;s in your head. Aviva will sort it out.</Text>
           <TextInput value={text} onChangeText={setText} placeholder="everything is chaos..." placeholderTextColor="#64748b" multiline
-            className="bg-white text-slate-900 rounded-xl p-4 min-h-[100px] mb-4 dark:text-slate-100 dark:bg-slate-900" />
+            className="bg-white text-slate-900 rounded-xl p-4 min-h-[100px] mb-4 dark:text-slate-100 dark:bg-slate-900 inset3d" />
           {error && (
             <View className="bg-amber-50 border border-amber-400 rounded-xl p-3 mb-3 dark:bg-amber-500/10">
               <Text className="text-amber-700 dark:text-amber-300 text-sm">{error}</Text>
@@ -93,7 +93,7 @@ export default function BrainDumpSheet({ visible, onClose }: { visible: boolean;
             <ScrollView className="mb-4 max-h-64">
               <Text className="text-emerald-700 text-sm mb-3 dark:text-emerald-400">{result?.reasoning || ''}</Text>
               {(result?.items || []).map((item) => (
-                <View key={item.id} className="bg-white rounded-xl p-3 mb-2 dark:bg-slate-900">
+                <View key={item.id} className="bg-white rounded-xl p-3 mb-2 dark:bg-slate-900 surf3d">
                   <Text className="text-slate-900 dark:text-slate-100">{item.text}</Text>
                   <Text className="text-slate-500 text-xs mt-1">{item.category} · {item.suggestedTiming}</Text>
                 </View>

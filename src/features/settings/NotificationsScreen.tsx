@@ -46,7 +46,7 @@ export default function NotificationsScreen() {
 
   return (
     <View className="gap-4">
-      <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+      <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d">
         <View className="flex-1 pr-3">
           <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-1">🔔 Reminders</Text>
           <Text className="text-slate-500 text-xs leading-5">
@@ -64,7 +64,7 @@ export default function NotificationsScreen() {
         </View>
       )}
 
-      <View className="bg-stone-100 dark:bg-slate-800 rounded-2xl p-4">
+      <View className="bg-stone-100 dark:bg-slate-800 rounded-2xl p-4 surf3d surf3d-in">
         <Text className="text-slate-500 text-xs leading-5">
           {Platform.OS === 'web'
             ? "On web, these are local to this browser tab — they only fire while this app has been open recently, not if the tab or installed app has been fully closed for a while. On iOS/Android they fire even when the app is closed."

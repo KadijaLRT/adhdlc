@@ -92,7 +92,7 @@ export default function CountdownScreen() {
               <Text className="text-white text-sm font-semibold">+ Add an event</Text>
             </Pressable>
           ) : (
-            <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6">
+            <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6 surf3d">
               <View className="flex-row gap-2 mb-3">
                 {EMOJI_OPTIONS.map((option) => (
                   <Pressable key={option} onPress={() => setEmoji(option)} className={emoji === option ? 'bg-indigo-600/20 rounded-lg p-2' : 'p-2'}>
@@ -105,14 +105,14 @@ export default function CountdownScreen() {
                 onChangeText={setLabel}
                 placeholder="What's coming up?"
                 placeholderTextColor="#64748b"
-                className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3"
+                className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3 inset3d"
               />
               <TextInput
                 value={dateInput}
                 onChangeText={setDateInput}
                 placeholder="Date (e.g. 2026-09-06)"
                 placeholderTextColor="#64748b"
-                className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-1"
+                className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-1 inset3d"
               />
               {dateHasInvalidFormat && (
                 <Text className="text-red-500 text-xs mb-3">Use YYYY-MM-DD, like 2026-09-06.</Text>
@@ -127,7 +127,7 @@ export default function CountdownScreen() {
                 <Pressable onPress={handleAdd} disabled={!label.trim() || !dateInput.trim() || dateHasInvalidFormat} className={label.trim() && dateInput.trim() && !dateHasInvalidFormat ? 'flex-1 bg-emerald-500 rounded-xl py-2.5 items-center active:bg-emerald-400 btn3d btn3d-s' : 'flex-1 bg-slate-300 dark:bg-slate-700 rounded-xl py-2.5 items-center'}>
                   <Text className="text-white text-sm font-semibold">Add</Text>
                 </Pressable>
-                <Pressable onPress={() => setShowAddForm(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center">
+                <Pressable onPress={() => setShowAddForm(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center surf3d surf3d-in surf3d-tap">
                   <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Cancel</Text>
                 </Pressable>
               </View>
@@ -142,7 +142,7 @@ export default function CountdownScreen() {
               const days = daysBetween(today, event.effectiveDate);
               const isPast = days < 0 && !event.isRecurringYearly;
               return (
-                <View key={event.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+                <View key={event.id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d">
                   <View className="flex-row items-center gap-3 flex-1">
                     <Text className="text-2xl">{event.emoji}</Text>
                     <View className="flex-1">

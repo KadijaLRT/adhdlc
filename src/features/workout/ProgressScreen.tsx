@@ -14,7 +14,7 @@ import {
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <View className="bg-white rounded-2xl p-4 flex-1 dark:bg-slate-900">
+    <View className="bg-white rounded-2xl p-4 flex-1 dark:bg-slate-900 surf3d">
       <Text className="text-amber-700 text-2xl font-bold mb-1 dark:text-amber-400">{value}</Text>
       <Text className="text-slate-500 text-xs">{label}</Text>
     </View>
@@ -56,7 +56,7 @@ export default function ProgressScreen() {
         </View>
 
         <Subheading className="mb-3">Last 6 weeks</Subheading>
-        <View className="bg-white rounded-2xl p-4 mb-6 flex-row items-end gap-2 dark:bg-slate-900" style={{ height: 140 }}>
+        <View className="bg-white rounded-2xl p-4 mb-6 flex-row items-end gap-2 dark:bg-slate-900 surf3d" style={{ height: 140 }}>
           {(weeklyVolume || []).map((point) => (
             <View key={point.weekLabel} className="flex-1 items-center">
               <View
@@ -87,7 +87,7 @@ export default function ProgressScreen() {
             {topRecords.map((record) => {
               const exercise = WORKOUT_EXERCISES?.[record.exerciseId];
               return (
-                <View key={record.exerciseId} className="bg-white rounded-xl p-3 flex-row items-center justify-between dark:bg-slate-900">
+                <View key={record.exerciseId} className="bg-white rounded-xl p-3 flex-row items-center justify-between dark:bg-slate-900 surf3d">
                   <Text className="text-slate-800 text-sm dark:text-slate-200">{exercise?.name || record.exerciseId}</Text>
                   <Text className="text-emerald-700 text-sm font-medium dark:text-emerald-400">
                     {convertWeightForDisplay(record.bestWeight, unitSystem)} {wUnit} × {record.bestReps}

@@ -165,7 +165,7 @@ The root `/` route is no longer hijacking every other path.
 
 ## Appearance (Colors and buttons)
 
-Profile > Colors and buttons lets you pick one of 9 colorways (Default, Violet and coral, Teal and amber, Sky and rose, Neon cyber, Warm and earthy, Pastel and soft, Dark and moody, Bright and playful) and one of 3 button looks (Chunky, Soft glossy, Subtle raised). Choices persist offline with the other settings.
+Profile > Colors and buttons lets you pick one of 9 colorways (Default, Violet and coral, Teal and amber, Sky and rose, Neon cyber, Warm and earthy, Pastel and soft, Dark and moody, Bright and playful) and one of 4 button looks (Chunky, Soft glossy, Subtle raised, Combined). Cards, inputs, the header and the tab bar get the same raised treatment; by default they match the button look, or pick their own (or Flat). Choices persist offline with the other settings.
 
 - Palettes are CSS variables (`src/theme/colorways.ts`, applied by `src/theme/ThemeProvider.tsx`), so existing `indigo`/`emerald`/`amber` classes recolor automatically.
-- The 3D button looks are web only (`src/theme/webButtonStyles.ts`, opt in with the `btn3d` class). Native apps get the colors.
+- The 3D button looks are web only (`src/theme/webButtonStyles.ts`; opt in with `btn3d` for buttons, `surf3d` for cards and rows, `inset3d` for inputs, `bar3d` for bars). Native apps get the colors.

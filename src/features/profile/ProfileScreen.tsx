@@ -70,11 +70,11 @@ export default function ProfileScreen() {
 
         <Subheading className="mb-3">Personalize</Subheading>
         <View className="gap-2 mb-6">
-          <Pressable onPress={() => router?.push?.('/settings/edit-nutrition')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/settings/edit-nutrition')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-800 dark:text-slate-200 text-sm">🍎 Nutrition preferences</Text>
             <Text className="text-slate-600 text-xs">→</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/settings/edit-fitness')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/settings/edit-fitness')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-800 dark:text-slate-200 text-sm">💪 Fitness preferences</Text>
             <Text className="text-slate-600 text-xs">→</Text>
           </Pressable>
@@ -82,15 +82,15 @@ export default function ProfileScreen() {
 
         <Subheading className="mb-3">Settings</Subheading>
         <View className="gap-2 mb-6">
-          <Pressable onPress={() => router?.push?.('/settings/notifications')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/settings/notifications')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-800 dark:text-slate-200 text-sm">🔔 Notifications</Text>
             <Text className="text-slate-600 text-xs">→</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/settings/appearance')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/settings/appearance')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-800 dark:text-slate-200 text-sm">🎨 Colors and buttons</Text>
             <Text className="text-slate-600 text-xs">→</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/settings/accessibility')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/settings/accessibility')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-800 dark:text-slate-200 text-sm">♿ Accessibility</Text>
             <Text className="text-slate-600 text-xs">→</Text>
           </Pressable>
@@ -98,7 +98,7 @@ export default function ProfileScreen() {
 
         <Subheading className="mb-3">Your data</Subheading>
         <View className="gap-2 mb-6">
-          <Pressable onPress={handleExportData} className="bg-white dark:bg-slate-900 rounded-xl p-4">
+          <Pressable onPress={handleExportData} className="bg-white dark:bg-slate-900 rounded-xl p-4 surf3d surf3d-tap">
             <Text className="text-slate-800 dark:text-slate-200 text-sm mb-1">Export my data</Text>
             <Text className="text-slate-500 text-xs">Everything stays on your device. This shares a copy, nothing is uploaded automatically.</Text>
           </Pressable>
@@ -113,7 +113,7 @@ export default function ProfileScreen() {
               <Pressable onPress={handleResetOnboarding} className="flex-1 bg-red-500 rounded-xl py-2.5 items-center active:bg-red-400">
                 <Text className="text-white text-sm font-semibold">Start over</Text>
               </Pressable>
-              <Pressable onPress={() => setConfirmingReset(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center">
+              <Pressable onPress={() => setConfirmingReset(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center surf3d surf3d-in surf3d-tap">
                 <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Cancel</Text>
               </Pressable>
             </View>

@@ -21,7 +21,7 @@ export default function StressCheckinCard() {
   const todaysStress = (stressLogs || []).find((l) => l.date === today);
 
   return (
-    <View className="bg-white rounded-2xl p-5 w-full dark:bg-slate-900">
+    <View className="bg-white rounded-2xl p-5 w-full dark:bg-slate-900 surf3d">
       <Text className="text-slate-900 text-base font-semibold mb-1 dark:text-slate-100">How stressed are you feeling?</Text>
       <Text className="text-slate-500 text-xs mb-4">This feeds your Calm score above. You can change it anytime.</Text>
       <View className="flex-row gap-2">

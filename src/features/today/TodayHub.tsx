@@ -34,7 +34,7 @@ export default function TodayHub() {
         <Text className="text-slate-500 text-sm mb-6">One thing at a time.</Text>
 
         {momentumToday > 0 && (
-          <View className="bg-white dark:bg-slate-900 rounded-xl p-3 mb-4">
+          <View className="bg-white dark:bg-slate-900 rounded-xl p-3 mb-4 surf3d">
             <Text className="text-slate-500 text-xs">
               {momentumToday} small step{momentumToday === 1 ? '' : 's'} today — opening a task, starting a session, all of it counts.
             </Text>
@@ -47,29 +47,29 @@ export default function TodayHub() {
             <Text className="text-white text-lg font-semibold">{suggested.title}</Text>
           </Pressable>
         ) : (
-          <View className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4">
+          <View className="bg-white dark:bg-slate-900 rounded-2xl p-5 mb-4 surf3d">
             <Text className="text-slate-700 dark:text-slate-300 text-sm">Nothing urgent right now — a genuinely open moment.</Text>
           </View>
         )}
 
         <View className="gap-3">
-          <Pressable onPress={() => router?.push?.('/tasks')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/tasks')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-900 dark:text-slate-100 text-sm">✅ All tasks</Text>
             <Text className="text-slate-500 text-xs">{(tasks || []).filter((t) => !t.isComplete).length} open</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/focus-picker')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/focus-picker')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-900 dark:text-slate-100 text-sm">🎯 Start a focus session</Text>
             <Text className="text-slate-500 text-xs">→</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/routines')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/routines')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-900 dark:text-slate-100 text-sm">🔁 Routines</Text>
             <Text className="text-slate-500 text-xs">{pendingRoutineCount > 0 ? `${pendingRoutineCount} left today` : 'all done'}</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/schedule')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/schedule')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-900 dark:text-slate-100 text-sm">🕐 Schedule</Text>
             <Text className="text-slate-500 text-xs">→</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/school')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/school')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-900 dark:text-slate-100 text-sm">📖 School</Text>
             <Text className="text-slate-500 text-xs">→</Text>
           </Pressable>

@@ -110,7 +110,7 @@ export default function ExecutiveFunctionRings() {
   const stressScore = todaysStress ? stressToCalmScore(todaysStress.stressLevel) : 70;
 
   return (
-    <View className="bg-white rounded-2xl p-5 w-full flex-row justify-around dark:bg-slate-900">
+    <View className="bg-white rounded-2xl p-5 w-full flex-row justify-around dark:bg-slate-900 surf3d">
       <Ring label="Focus" percent={focusScore} color={themeHex.primary400} />
       <Ring label="Energy" percent={energyScore} color={themeHex.secondary400} />
       <Ring label="Calm" percent={stressScore} color={themeHex.accent400} />

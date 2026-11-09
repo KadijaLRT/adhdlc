@@ -16,7 +16,7 @@ export default function AchievementsGrid() {
           const next = getNextTier(definition, count);
           const latest = unlocked[unlocked.length - 1] || null;
           return (
-            <View key={definition.id} className="bg-white rounded-2xl p-5 w-full md:w-[48%] dark:bg-slate-900">
+            <View key={definition.id} className="bg-white rounded-2xl p-5 w-full md:w-[48%] dark:bg-slate-900 surf3d">
               <Text className="text-slate-900 text-base font-semibold mb-1 dark:text-slate-100">{definition.title}</Text>
               <Text className="text-slate-500 text-xs mb-3">{definition.description}</Text>
               <Text className="text-amber-700 text-2xl font-bold mb-1 dark:text-amber-400">{count}</Text>

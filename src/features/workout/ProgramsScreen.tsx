@@ -82,14 +82,14 @@ function GymSelectorCard() {
 
   if (adding) {
     return (
-      <View className="bg-white border-2 border-indigo-500 rounded-2xl p-4 mb-4 dark:bg-slate-900">
+      <View className="bg-white border-2 border-indigo-500 rounded-2xl p-4 mb-4 dark:bg-slate-900 surf3d">
         <GymPresetPicker selectedId={presetId} onPickPreset={handlePickPreset} onPickOther={handlePickOther} />
         <TextInput
           value={newGymName}
           onChangeText={setNewGymName}
           placeholder="Gym name (add the location if you like)..."
           placeholderTextColor="#64748b"
-          className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 mb-3 dark:text-slate-100 dark:bg-slate-800"
+          className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 mb-3 dark:text-slate-100 dark:bg-slate-800 inset3d"
         />
         {getGymPreset(presetId) && (
           <Text className="text-slate-500 text-xs mb-3">
@@ -114,7 +114,7 @@ function GymSelectorCard() {
 
   if (managingGym) {
     return (
-      <View className="bg-white border-2 border-indigo-500 rounded-2xl p-4 mb-4 dark:bg-slate-900">
+      <View className="bg-white border-2 border-indigo-500 rounded-2xl p-4 mb-4 dark:bg-slate-900 surf3d">
         <Text className="text-slate-900 font-semibold mb-3 dark:text-slate-100">{managingGym.name}</Text>
         <Text className="text-slate-700 text-xs font-medium mb-2 dark:text-slate-300">Equipment available here</Text>
         <GymEquipmentPicker value={managingGym.equipment} onChange={(next) => updateGymEquipment(managingGym.id, next)} />
@@ -144,7 +144,7 @@ function GymSelectorCard() {
             const isActive = item.id === activeGymId;
             return (
               <Pressable onPress={() => setActiveGym(item.id)} onLongPress={() => setManagingGymId(item.id)}
-                className={isActive ? 'bg-purple-100 dark:bg-purple-500/20 border-2 border-purple-500 rounded-2xl py-3 px-4' : 'bg-white dark:bg-slate-900 border-2 border-stone-200 dark:border-slate-700 rounded-2xl py-3 px-4'}>
+                className={isActive ? 'bg-purple-100 dark:bg-purple-500/20 border-2 border-purple-500 rounded-2xl py-3 px-4' : 'bg-white dark:bg-slate-900 border-2 border-stone-200 dark:border-slate-700 rounded-2xl py-3 px-4 surf3d surf3d-tap'}>
                 <Text className={isActive ? 'text-purple-700 dark:text-purple-300 font-semibold text-sm' : 'text-slate-700 dark:text-slate-300 text-sm'}>{item.name}</Text>
               </Pressable>
             );
@@ -257,7 +257,7 @@ export default function ProgramsScreen() {
         <GymSelectorCard />
 
         {activeProgram && (
-          <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
+          <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900 surf3d">
             <View className="flex-row items-center justify-between mb-1">
               <Subheading>{activeProgram.emoji} {activeProgram.title}</Subheading>
               {confirmingStop ? (
@@ -287,7 +287,7 @@ export default function ProgramsScreen() {
         )}
 
         {showGenerator ? (
-          <View className="bg-white border-2 border-indigo-500 rounded-2xl p-4 mb-4 dark:bg-slate-900">
+          <View className="bg-white border-2 border-indigo-500 rounded-2xl p-4 mb-4 dark:bg-slate-900 surf3d">
             <Text className="text-slate-900 font-semibold mb-1 dark:text-slate-100">Describe the program you want</Text>
             <Text className="text-slate-500 text-xs mb-3">Any length, any focus, any schedule — nothing here is limited to the built-in options.</Text>
             <TextInput
@@ -296,7 +296,7 @@ export default function ProgramsScreen() {
               placeholder="e.g. '6 days a week, upper/lower split, 7 exercises per session, 12 weeks'"
               placeholderTextColor="#64748b"
               multiline
-              className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 mb-3 dark:text-slate-100 dark:bg-slate-800"
+              className="bg-stone-100 text-slate-900 rounded-xl px-3 py-2 mb-3 dark:text-slate-100 dark:bg-slate-800 inset3d"
               style={{ minHeight: 70, textAlignVertical: 'top' }}
             />
             {generateError && <Text className="text-amber-600 dark:text-amber-400 text-xs mb-3">{generateError}</Text>}
@@ -330,7 +330,7 @@ export default function ProgramsScreen() {
         */}
         <Pressable
           onPress={() => router?.push?.('/fitness/six-twelve-twentyfive')}
-          className="bg-white border-2 border-orange-400 rounded-2xl p-4 mb-4 dark:bg-slate-900"
+          className="bg-white border-2 border-orange-400 rounded-2xl p-4 mb-4 dark:bg-slate-900 surf3d surf3d-tap"
         >
           <View className="flex-row items-center justify-between mb-1">
             <Text className="text-slate-900 font-semibold dark:text-slate-100">🔥 6-12-25 Method</Text>
@@ -344,7 +344,7 @@ export default function ProgramsScreen() {
           {allPrograms.filter((p) => p.id !== activeProgramId).map((item) => {
             const isCustom = !PROGRAMS.some((p) => p.id === item.id);
             return (
-            <View key={item.id} className={item.id === recommendedId ? 'bg-white rounded-2xl p-4 border-2 border-emerald-400 dark:bg-slate-900' : 'bg-white rounded-2xl p-4 dark:bg-slate-900'}>
+            <View key={item.id} className={item.id === recommendedId ? 'bg-white rounded-2xl p-4 border-2 border-emerald-400 dark:bg-slate-900 surf3d' : 'bg-white rounded-2xl p-4 dark:bg-slate-900 surf3d'}>
               <View className="flex-row items-center justify-between mb-1">
                 <Text className="text-slate-900 font-medium dark:text-slate-100 flex-1">{item.emoji} {item.title}</Text>
                 {item.id === recommendedId && (

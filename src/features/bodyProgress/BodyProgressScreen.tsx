@@ -133,7 +133,7 @@ export default function BodyProgressScreen() {
         <AppleHealthImportCard />
         <Text className="text-slate-500 text-sm mb-6">Trends matter more than any single day.</Text>
 
-        <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
+        <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900 surf3d">
           <Text className="text-slate-700 text-sm font-medium mb-3 dark:text-slate-300">Weight trend</Text>
           <View className="flex-row flex-wrap gap-3 mb-3">
             <View className="flex-1 min-w-[45%]">
@@ -182,7 +182,7 @@ export default function BodyProgressScreen() {
               placeholderTextColor="#64748b"
               keyboardType="decimal-pad"
               onSubmitEditing={handleLogWeight}
-              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
             />
             <Pressable onPress={handleLogWeight} className="bg-indigo-600 rounded-xl px-4 justify-center btn3d btn3d-p">
               <Text className="text-white text-sm font-semibold">Log</Text>
@@ -196,17 +196,17 @@ export default function BodyProgressScreen() {
               placeholderTextColor="#64748b"
               keyboardType="decimal-pad"
               onSubmitEditing={handleSaveGoal}
-              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
             />
           </View>
           <Text className="text-slate-500 text-xs mb-1">Goal date</Text>
           <DateInput value={goalDateInput} onChange={(v) => { setGoalDateInput(v); setEditingGoal(true); }} dark={false} />
-          <Pressable onPress={handleSaveGoal} className="bg-stone-100 rounded-xl px-4 py-2.5 items-center mt-2 dark:bg-slate-800">
+          <Pressable onPress={handleSaveGoal} className="bg-stone-100 rounded-xl px-4 py-2.5 items-center mt-2 dark:bg-slate-800 surf3d surf3d-in surf3d-tap">
             <Text className="text-slate-700 text-sm font-medium dark:text-slate-300">Set goal</Text>
           </Pressable>
         </View>
 
-        <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900">
+        <View className="bg-white rounded-2xl p-4 mb-4 dark:bg-slate-900 surf3d">
           <Text className="text-slate-700 text-sm font-medium mb-2 dark:text-slate-300">Body measurements</Text>
           <View className="flex-row flex-wrap gap-2 mb-3">
             {(MEASUREMENT_SITES || []).map((site) => {
@@ -232,7 +232,7 @@ export default function BodyProgressScreen() {
               placeholderTextColor="#64748b"
               keyboardType="decimal-pad"
               onSubmitEditing={handleLogMeasurement}
-              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800"
+              className="flex-1 bg-stone-100 text-slate-900 rounded-xl px-3 py-2 dark:text-slate-100 dark:bg-slate-800 inset3d"
             />
             <Pressable onPress={handleLogMeasurement} className="bg-indigo-600 rounded-xl px-4 justify-center btn3d btn3d-p">
               <Text className="text-white text-sm font-semibold">Log</Text>
@@ -254,7 +254,7 @@ export default function BodyProgressScreen() {
 
 function MilestoneRow({ label, achieved }: { label: string; achieved: boolean }) {
   return (
-    <View className="bg-white rounded-xl p-3 flex-row items-center gap-2 dark:bg-slate-900">
+    <View className="bg-white rounded-xl p-3 flex-row items-center gap-2 dark:bg-slate-900 surf3d">
       <Text>{achieved ? '🏆' : '⚪️'}</Text>
       <Text className="text-slate-800 text-sm dark:text-slate-200">{label}</Text>
     </View>

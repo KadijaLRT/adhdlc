@@ -11,7 +11,7 @@ import { Heading, Subheading } from '@/shared/components/Heading';
 
 function StatTile({ label, value }: { label: string; value: string }) {
   return (
-    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-1 min-w-[45%]">
+    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 flex-1 min-w-[45%] surf3d">
       <Text className="text-amber-700 text-xl font-bold mb-1">{value}</Text>
       <Text className="text-slate-500 text-xs">{label}</Text>
     </View>
@@ -71,7 +71,7 @@ export default function ProgressHub() {
         <Heading className="mb-1 mt-2">Progress</Heading>
         <Text className="text-slate-500 text-sm mb-4">Everything you've tracked, in one place.</Text>
 
-        <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6">
+        <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6 surf3d">
           <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold mb-1">Level {level} · {coins || 0} coins</Text>
           <View className="h-2 bg-stone-100 dark:bg-slate-800 rounded-full overflow-hidden mb-2">
             <View className="h-2 bg-amber-400 rounded-full" style={{ width: `${levelProgressPercent}%` }} />
@@ -82,7 +82,7 @@ export default function ProgressHub() {
         <Subheading className="mb-3">Skills</Subheading>
         <View className="flex-row flex-wrap gap-2 mb-6">
           {(SKILLS || []).map((skill) => (
-            <View key={skill.id} className="bg-white dark:bg-slate-900 rounded-xl p-3 w-[31%] items-center">
+            <View key={skill.id} className="bg-white dark:bg-slate-900 rounded-xl p-3 w-[31%] items-center surf3d">
               <Text className="text-xl mb-1">{skill.emoji}</Text>
               <Text className="text-slate-700 dark:text-slate-300 text-xs text-center">{skill.label}</Text>
               <Text className="text-amber-700 text-sm font-semibold mt-1">{skillXp?.[skill.id] || 0}</Text>
@@ -102,27 +102,27 @@ export default function ProgressHub() {
 
         <Subheading className="mb-3">Detailed progress</Subheading>
         <View className="gap-2 mb-6">
-          <Pressable onPress={() => router?.push?.('/achievements')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/achievements')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-800 dark:text-slate-200 text-sm">🏆 Achievements</Text>
             <Text className="text-slate-600 text-xs">→</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/fitness/progress')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/fitness/progress')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-800 dark:text-slate-200 text-sm">💪 Workout progress</Text>
             <Text className="text-slate-600 text-xs">→</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/body/progress')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/body/progress')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-800 dark:text-slate-200 text-sm">📏 Weight & measurements</Text>
             <Text className="text-slate-600 text-xs">→</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/nutrition/diary')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/nutrition/diary')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-800 dark:text-slate-200 text-sm">📊 Nutrition diary</Text>
             <Text className="text-slate-600 text-xs">→</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/school')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/school')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-800 dark:text-slate-200 text-sm">🎓 School & GPA</Text>
             <Text className="text-slate-600 text-xs">→</Text>
           </Pressable>
-          <Pressable onPress={() => router?.push?.('/settings/cycle-tracking')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+          <Pressable onPress={() => router?.push?.('/settings/cycle-tracking')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
             <Text className="text-slate-800 dark:text-slate-200 text-sm">🌙 Cycle tracking</Text>
             <Text className="text-slate-600 text-xs">→</Text>
           </Pressable>
@@ -133,7 +133,7 @@ export default function ProgressHub() {
           {(UNLOCKABLES || []).map((item) => {
             const owned = (ownedUnlockables || []).includes(item.id);
             return (
-              <View key={item.id} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between">
+              <View key={item.id} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between surf3d">
                 <View className="flex-row items-center gap-3">
                   <Text className="text-xl">{item.emoji}</Text>
                   <Text className="text-slate-900 dark:text-slate-100">{item.label}</Text>

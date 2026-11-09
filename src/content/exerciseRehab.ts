@@ -138,7 +138,7 @@ export const REHAB_CATALOG: RehabRow[] = [
   {
     id: 'side-step', name: 'Side Step', group: 'glutes', muscle: 'Outer hips', requires: NONE, kind: 'prehab',
     compound: false, uni: false, advanced: false,
-    sets: 2, reps: '10 each way', repsMin: 10, rest: 30,
+    sets: 2, reps: '10 steps', repsMin: 10, rest: 30,
     cues: 'Stand tall with a soft bend in your knees and your feet hip-width apart. Take small, controlled steps to one side, then back. Keep your toes forward and your knees from caving in.',
     points: ['Small, controlled steps', 'Knees track over toes', 'Stay tall'],
   },

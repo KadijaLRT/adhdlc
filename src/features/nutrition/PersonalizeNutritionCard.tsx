@@ -10,7 +10,7 @@ export default function PersonalizeNutritionCard() {
   const dismissNutritionCard = useAppStore((s) => s.dismissNutritionCard);
 
   return (
-    <View className="bg-white dark:bg-slate-900 rounded-2xl p-5 mx-4 mb-4">
+    <View className="bg-white dark:bg-slate-900 rounded-2xl p-5 mx-4 mb-4 surf3d">
       <Text className="text-slate-900 dark:text-slate-100 text-base font-semibold mb-1">Want recipes matched to you?</Text>
       <Text className="text-slate-500 text-xs mb-4">
         Same questions from setup — foods you love, avoid, and allergies. Change anytime.

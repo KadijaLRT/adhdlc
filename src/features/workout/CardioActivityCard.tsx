@@ -61,7 +61,7 @@ export default function CardioActivityCard({ compact = false }: { compact?: bool
 
   if (compact) {
     return (
-      <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 w-full">
+      <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 w-full surf3d">
         <View className="flex-row items-center justify-between mb-1">
           <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold">🥾 Other activity</Text>
           {todaysActivities.length > 0 && <Text className="text-slate-500 text-xs">{todaysActivities.length} logged today</Text>}
@@ -110,7 +110,7 @@ export default function CardioActivityCard({ compact = false }: { compact?: bool
             onChangeText={setOtherLabel}
             placeholder="What was it? (e.g. rock climbing)"
             placeholderTextColor="#64748b"
-            className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3"
+            className="bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 mb-3 inset3d"
           />
         )}
 
@@ -121,7 +121,7 @@ export default function CardioActivityCard({ compact = false }: { compact?: bool
             placeholder="Minutes"
             placeholderTextColor="#64748b"
             keyboardType="numeric"
-            className="flex-1 bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2"
+            className="flex-1 bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 inset3d"
           />
           <TextInput
             value={distance}
@@ -129,7 +129,7 @@ export default function CardioActivityCard({ compact = false }: { compact?: bool
             placeholder="Miles (optional)"
             placeholderTextColor="#64748b"
             keyboardType="decimal-pad"
-            className="flex-1 bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2"
+            className="flex-1 bg-stone-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 rounded-xl px-3 py-2 inset3d"
           />
         </View>
 
@@ -141,7 +141,7 @@ export default function CardioActivityCard({ compact = false }: { compact?: bool
               <Pressable
                 key={level}
                 onPress={() => setEffort(isActive ? null : level)}
-                className={isActive ? 'flex-1 bg-amber-400/20 border-2 border-amber-400 rounded-xl py-2 items-center' : 'flex-1 bg-stone-100 dark:bg-slate-800 border-2 border-transparent rounded-xl py-2 items-center'}
+                className={isActive ? 'flex-1 bg-amber-400/20 border-2 border-amber-400 rounded-xl py-2 items-center' : 'flex-1 bg-stone-100 dark:bg-slate-800 border-2 border-transparent rounded-xl py-2 items-center surf3d surf3d-in surf3d-tap'}
               >
                 <Text className={isActive ? 'text-amber-700 dark:text-amber-400 text-xs font-semibold' : 'text-slate-600 dark:text-slate-300 text-xs'}>{level}</Text>
               </Pressable>
@@ -151,7 +151,7 @@ export default function CardioActivityCard({ compact = false }: { compact?: bool
         {effort && <Text className="text-slate-500 text-xs -mt-3 mb-3">{EFFORT_LABELS[effort]}</Text>}
 
         <View className="flex-row gap-2">
-          <Pressable onPress={resetForm} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center">
+          <Pressable onPress={resetForm} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center surf3d surf3d-in surf3d-tap">
             <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Cancel</Text>
           </Pressable>
           <Pressable
@@ -167,7 +167,7 @@ export default function CardioActivityCard({ compact = false }: { compact?: bool
   }
 
   return (
-    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4">
+    <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 surf3d">
       <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-1">🥾 Log another activity</Text>
       <Text className="text-slate-500 text-xs mb-3">Hiking, biking, swimming, running, walking, or anything else — still counts as showing up.</Text>
 
@@ -188,7 +188,7 @@ export default function CardioActivityCard({ compact = false }: { compact?: bool
                   </View>
                 </View>
               ) : (
-                <View className="bg-stone-100 dark:bg-slate-800 rounded-xl p-2.5 flex-row items-center justify-between">
+                <View className="bg-stone-100 dark:bg-slate-800 rounded-xl p-2.5 flex-row items-center justify-between surf3d surf3d-in">
                   <Text className="text-slate-700 dark:text-slate-300 text-xs flex-1">
                     {activityMeta(a)?.emoji} {a.type === 'other' && a.label ? a.label : activityMeta(a)?.label} · {a.durationMinutes} min
                     {a.distanceMiles ? ` · ${a.distanceMiles} mi` : ''}

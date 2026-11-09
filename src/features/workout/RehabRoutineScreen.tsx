@@ -74,7 +74,7 @@ export default function RehabRoutineScreen() {
                   const ex = WORKOUT_EXERCISES[id];
                   if (!ex) return null;
                   return (
-                    <View key={id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-2">
+                    <View key={id} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-2 surf3d">
                       <Text className="text-slate-900 dark:text-slate-100 text-sm font-medium">{ex.icon} {ex.name}</Text>
                       <Text className="text-slate-500 text-xs mt-0.5">{ex.sets} sets of {ex.reps}</Text>
                     </View>
@@ -90,13 +90,13 @@ export default function RehabRoutineScreen() {
               <View className="mb-2">
                 <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-2">Warm up and stretch</Text>
                 {careWarmup && (
-                  <Pressable onPress={() => openCare('warmup')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-2 active:opacity-80">
+                  <Pressable onPress={() => openCare('warmup')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-2 active:opacity-80 surf3d surf3d-tap">
                     <Text className="text-slate-900 dark:text-slate-100 text-sm font-medium">🔥 Targeted warm-up</Text>
                     <Text className="text-slate-500 text-xs mt-0.5">About {careWarmup.durationMinutes} min, easy moves to get the area ready</Text>
                   </Pressable>
                 )}
                 {careStretch && (
-                  <Pressable onPress={() => openCare('stretch')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-2 active:opacity-80">
+                  <Pressable onPress={() => openCare('stretch')} className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-2 active:opacity-80 surf3d surf3d-tap">
                     <Text className="text-slate-900 dark:text-slate-100 text-sm font-medium">🧘 Targeted stretches</Text>
                     <Text className="text-slate-500 text-xs mt-0.5">About {careStretch.durationMinutes} min, a mild pull and never a pain</Text>
                   </Pressable>
