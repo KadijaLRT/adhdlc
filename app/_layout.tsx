@@ -12,6 +12,7 @@ import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import AvivaFloatingButton from '@/features/aviva/AvivaFloatingButton';
 import NotificationsSync from '@/features/notifications/NotificationsSync';
+import ProPaywallModal from '@/features/pro/ProPaywallModal';
 import { completeNativeSessionFromUrl, subscribeToAuthChanges, syncProfileIfSignedIn } from '@/core/supabase/client';
 
 export default function RootLayout() {
@@ -112,6 +113,7 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerShown: false }} />
             {!hideFloatingButton && <AvivaFloatingButton />}
             <NotificationsSync />
+            <ProPaywallModal />
           </ThemeProvider>
         </QueryClientProvider>
       </ErrorBoundary>

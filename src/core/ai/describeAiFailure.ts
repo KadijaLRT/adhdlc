@@ -22,6 +22,8 @@ export function describeAiFailure(reason: GroqProxyError['reason'] | null): stri
       return "Couldn't reach the AI service — check your connection and try again.";
     case 'upstream_error':
       return "The AI service is temporarily unavailable — try again in a moment.";
+    case 'pro_required':
+      return "You've used today's free AI help. Upgrade to Pro for unlimited Aviva, or come back tomorrow for more free requests.";
     case 'invalid_request':
       return "That couldn't be processed — try a shorter section, or a different file.";
     default:

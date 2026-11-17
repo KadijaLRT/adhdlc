@@ -1,10 +1,12 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, Pressable, ScrollView, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Heading, Subheading } from '@/shared/components/Heading';
 import {
   useAppStore, selectProfile, selectScheduleItems,
 } from '@/store/index';
+import { useProStore } from '@/features/pro/proStore';
+import { deleteCloudAccount, hasCloudSession } from '@/core/supabase/client';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -16,6 +18,25 @@ export default function ProfileScreen() {
   const setCycleTrackingEnabled = useAppStore((s) => s.setCycleTrackingEnabled);
   const removeScheduleItem = useAppStore((s) => s.removeScheduleItem);
   const [confirmingReset, setConfirmingReset] = useState(false);
+  const isPro = useProStore((s) => s.isPro);
+  const [hasCloudAccount, setHasCloudAccount] = useState(false);
+  const [confirmingDeleteAccount, setConfirmingDeleteAccount] = useState(false);
+  const [deleteAccountMessage, setDeleteAccountMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    hasCloudSession().then(setHasCloudAccount).catch(() => {});
+  }, []);
+
+  const handleDeleteCloudAccount = async () => {
+    const { error } = await deleteCloudAccount();
+    setConfirmingDeleteAccount(false);
+    if (error) {
+      setDeleteAccountMessage(error);
+      return;
+    }
+    setHasCloudAccount(false);
+    setDeleteAccountMessage('Your cloud backup account and its data were deleted. Everything on this device is still here.');
+  };
 
   const handleResetOnboarding = async () => {
     await clearProfile();
@@ -68,6 +89,14 @@ export default function ProfileScreen() {
           {profile?.biggestHurdle ? `Working on: ${profile.biggestHurdle}` : 'Your preferences, settings, and data.'}
         </Text>
 
+        <Pressable onPress={() => router?.push?.('/pro')} className="bg-indigo-600 rounded-xl p-4 mb-6 flex-row items-center justify-between active:bg-indigo-500 btn3d btn3d-p">
+          <View className="flex-1 pr-2">
+            <Text className="text-white text-sm font-semibold">{isPro ? '✨ Aviva Pro is on' : '✨ Get Aviva Pro'}</Text>
+            <Text className="text-indigo-100 text-xs mt-0.5">{isPro ? 'Unlimited AI help. Tap to manage.' : 'Unlimited AI help from Aviva.'}</Text>
+          </View>
+          <Text className="text-white text-xs">→</Text>
+        </Pressable>
+
         <Subheading className="mb-3">Personalize</Subheading>
         <View className="gap-2 mb-6">
           <Pressable onPress={() => router?.push?.('/settings/edit-nutrition')} className="bg-white dark:bg-slate-900 rounded-xl p-4 flex-row items-center justify-between surf3d surf3d-tap">
@@ -102,6 +131,28 @@ export default function ProfileScreen() {
             <Text className="text-slate-800 dark:text-slate-200 text-sm mb-1">Export my data</Text>
             <Text className="text-slate-500 text-xs">Everything stays on your device. This shares a copy, nothing is uploaded automatically.</Text>
           </Pressable>
+          {hasCloudAccount && !confirmingDeleteAccount && (
+            <Pressable onPress={() => setConfirmingDeleteAccount(true)} className="bg-white dark:bg-slate-900 rounded-xl p-4 surf3d surf3d-tap">
+              <Text className="text-red-500 text-sm mb-1">Delete my cloud backup account</Text>
+              <Text className="text-slate-500 text-xs">Permanently deletes your backup account and the profile saved with it.</Text>
+            </Pressable>
+          )}
+          {confirmingDeleteAccount && (
+            <View className="border-2 border-red-400 bg-red-400/10 rounded-2xl p-4">
+              <Text className="text-red-500 text-sm font-medium mb-3">
+                This permanently deletes your cloud backup account and the profile saved in it. It can't be undone. Data on this device stays.
+              </Text>
+              <View className="flex-row gap-2">
+                <Pressable onPress={handleDeleteCloudAccount} className="flex-1 bg-red-500 rounded-xl py-2.5 items-center active:bg-red-400">
+                  <Text className="text-white text-sm font-semibold">Delete account</Text>
+                </Pressable>
+                <Pressable onPress={() => setConfirmingDeleteAccount(false)} className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2.5 items-center surf3d surf3d-in surf3d-tap">
+                  <Text className="text-slate-600 dark:text-slate-300 text-sm font-semibold">Cancel</Text>
+                </Pressable>
+              </View>
+            </View>
+          )}
+          {!!deleteAccountMessage && <Text className="text-slate-500 text-xs px-1">{deleteAccountMessage}</Text>}
         </View>
 
         {confirmingReset ? (

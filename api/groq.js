@@ -17,6 +17,8 @@
  * /api, independent of the static `expo export -p web` build output.
  */
 
+const { isProCached } = require('../lib/proEntitlement');
+
 const GROQ_BASE_URL = process.env.AI_BASE_URL || 'https://api.groq.com/openai/v1';
 // llama-3.3-70b-versatile was deprecated by Groq on June 17, 2026 and
 // their own docs state requests stop being served by August 2026 —
@@ -101,9 +103,11 @@ function messagesContainImage(messages) {
 // against instead.
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 20;
+// Paying (Pro) customers get more headroom per minute.
+const PRO_RATE_LIMIT_MAX_REQUESTS = 40;
 const requestLog = new Map(); // ip -> array of request timestamps
 
-function isRateLimited(ip) {
+function isRateLimited(ip, maxRequests = RATE_LIMIT_MAX_REQUESTS) {
   const now = Date.now();
   const timestamps = (requestLog.get(ip) || []).filter((t) => now - t < RATE_LIMIT_WINDOW_MS);
   timestamps.push(now);
@@ -115,7 +119,26 @@ function isRateLimited(ip) {
     const oldestKey = requestLog.keys().next().value;
     requestLog.delete(oldestKey);
   }
-  return timestamps.length > RATE_LIMIT_MAX_REQUESTS;
+  return timestamps.length > maxRequests;
+}
+
+// Optional server-side daily cap for free (non-Pro) AI use, per IP.
+// OFF unless FREE_AI_PER_IP_PER_DAY is set in Vercel. The app already
+// limits free AI use on the device (see src/features/pro/proConfig.ts);
+// this is a backstop if someone calls the endpoint directly to dodge
+// that. Keep it generous if you turn it on: many students can share one
+// campus or dorm IP address. Same in-memory caveats as the limiter above.
+const FREE_AI_PER_IP_PER_DAY = Number.parseInt(process.env.FREE_AI_PER_IP_PER_DAY || '', 10);
+const dailyFreeLog = new Map(); // ip -> { day, count }
+
+function exceedsFreeDailyCap(ip) {
+  if (!Number.isFinite(FREE_AI_PER_IP_PER_DAY) || FREE_AI_PER_IP_PER_DAY <= 0) return false;
+  const day = new Date().toISOString().slice(0, 10);
+  const entry = dailyFreeLog.get(ip);
+  const count = entry && entry.day === day ? entry.count + 1 : 1;
+  dailyFreeLog.set(ip, { day, count });
+  if (dailyFreeLog.size > 5000) dailyFreeLog.delete(dailyFreeLog.keys().next().value);
+  return count > FREE_AI_PER_IP_PER_DAY;
 }
 
 function getClientIp(req) {
@@ -131,8 +154,17 @@ module.exports = async function handler(req, res) {
   }
 
   const clientIp = getClientIp(req);
-  if (isRateLimited(clientIp)) {
+  const proHeader = req.headers['x-pro-token'];
+  const proToken = typeof proHeader === 'string' ? proHeader.trim() : '';
+  const isPro = proToken ? await isProCached(proToken) : false;
+
+  if (isRateLimited(clientIp, isPro ? PRO_RATE_LIMIT_MAX_REQUESTS : RATE_LIMIT_MAX_REQUESTS)) {
     res.status(429).json({ error: 'Too many requests. Try again in a moment.' });
+    return;
+  }
+
+  if (!isPro && exceedsFreeDailyCap(clientIp)) {
+    res.status(402).json({ error: "You've used today's free AI help. Upgrade to Pro for unlimited Aviva.", reason: 'pro_required' });
     return;
   }
 
