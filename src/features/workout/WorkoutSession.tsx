@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -148,8 +148,8 @@ export default function WorkoutSession({
       if (currentSet < totalSets) setCurrentSet((s) => s + 1);
       return;
     }
-    const interval = setInterval(() => setRestSecondsLeft((s) => s - 1), 1000);
-    return () => clearInterval(interval);
+    const timer = setTimeout(() => setRestSecondsLeft((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
   }, [phase, restSecondsLeft, currentSet, totalSets]);
 
   if (!exercise) {
@@ -172,14 +172,23 @@ export default function WorkoutSession({
   const restTotal = exercise.rest || 60;
   const restPct = Math.min(100, Math.round(((restTotal - restSecondsLeft) / restTotal) * 100));
 
+  const completingSetRef = useRef(false);
   const handleCompleteSet = async () => {
-    const { isNewRecord } = await logSet(swappedExerciseId, Number(weight) || 0, Number(reps) || 0);
-    if (isNewRecord) {
-      setRecordBanner('🏆 New personal record for this exercise');
-      setTimeout(() => setRecordBanner(null), 3000);
+    if (completingSetRef.current) return;
+    completingSetRef.current = true;
+    try {
+      const safeWeight = Math.max(0, Number(weight) || 0);
+      const safeReps = Math.max(0, Number(String(reps).replace(/s$/i, '')) || 0);
+      const { isNewRecord } = await logSet(swappedExerciseId, safeWeight, safeReps);
+      if (isNewRecord) {
+        setRecordBanner('🏆 New personal record for this exercise');
+        setTimeout(() => setRecordBanner(null), 3000);
+      }
+      setRestSecondsLeft(exercise.rest || 60);
+      setPhase('resting');
+    } finally {
+      completingSetRef.current = false;
     }
-    setRestSecondsLeft(exercise.rest || 60);
-    setPhase('resting');
   };
 
   const goToNextExercise = (nextId: string, remainingQueue: string[], completedSetsForThisExercise: number) => {

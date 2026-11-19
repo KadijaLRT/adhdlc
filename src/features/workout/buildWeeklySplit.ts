@@ -105,7 +105,8 @@ export function getVariedExerciseSelection(
   count: number,
   equipment: EquipmentContext,
   recentCombos: string[][],
-  seed: number
+  seed: number,
+  priorityGroups?: string[] | null
 ): string[] {
   const entries = Object.entries(WORKOUT_EXERCISES || {});
   const matchesGroup = ([, ex]: [string, any]) => muscleGroups.includes(ex.group);
@@ -126,7 +127,11 @@ export function getVariedExerciseSelection(
     list.push(id);
     byGroup.set(ex.group, list);
   }
-  const groupKeys = seededShuffle(Array.from(byGroup.keys()), seed);
+  const priority = new Set(expandLegacyGroups(priorityGroups));
+  const allGroupKeys = Array.from(byGroup.keys());
+  const priorityKeys = seededShuffle(allGroupKeys.filter((g) => priority.has(g)), seed);
+  const otherKeys = seededShuffle(allGroupKeys.filter((g) => !priority.has(g)), seed + 97);
+  const groupKeys = [...priorityKeys, ...otherKeys];
 
   // Build candidate lists by rotating each group's shuffled pool by `offset`
   // and round-robining 1 exercise per group until `count` is reached.

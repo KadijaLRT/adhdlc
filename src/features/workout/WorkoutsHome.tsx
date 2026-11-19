@@ -3,7 +3,7 @@ import { View, Text, Pressable, ScrollView, FlatList } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import {
   useAppStore, selectActiveProgramId, selectFitnessPreferences, selectFitnessCardDismissed, selectEnergyLevel,
-  selectGyms, selectActiveGymId, selectSetLogs, selectWeekdayAssignment, selectRecentDayExerciseHistory, selectCustomPrograms,
+  selectGyms, selectActiveGymId, selectSetLogs, selectWeekdayAssignment, selectRecentDayExerciseHistory, selectCustomPrograms, selectIsHydrated,
 } from '@/store/index';
 import { getProgramById } from '@/content/programs';
 import { getCurrentProgramWeek, getSessionsThisWeek } from './buildProgramSession';
@@ -209,6 +209,7 @@ function DayCard({
 // none of them compete for their own bottom tab slot.
 export default function WorkoutsHome() {
   const router = useRouter();
+  const isHydrated = useAppStore(selectIsHydrated);
   const activeProgramId = useAppStore(selectActiveProgramId);
   const customPrograms = useAppStore(selectCustomPrograms);
   const fitnessPreferences = useAppStore(selectFitnessPreferences);
@@ -288,11 +289,11 @@ export default function WorkoutsHome() {
   // never restarted, since it only ever assigns when activeProgramId is
   // null at call time — see programSlice.ts.
   useEffect(() => {
-    if (hasCheckedAutoAssign) return;
+    if (!isHydrated || hasCheckedAutoAssign) return;
     setHasCheckedAutoAssign(true);
     autoAssignDefaultProgram(fitnessPreferences);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [isHydrated]);
 
   const activeProgram = getProgramById(activeProgramId, customPrograms || []);
   const activeGym = gyms.find((g) => g.id === activeGymId) || null;
@@ -372,7 +373,8 @@ export default function WorkoutsHome() {
       day.exerciseIds.length,
       equipmentContext,
       recentDayExerciseHistory[day.title] || [],
-      seed
+      seed,
+      fitnessPreferences?.focusAreas
     );
     const baseIds = variedIds.length ? variedIds : day.exerciseIds;
     const energyAdjustedIds = getEnergyAdjustedExerciseIds(baseIds, day.muscleGroups, energyLevel, equipmentContext);

@@ -317,8 +317,8 @@ export default function WorkoutDaySession({
     setConfirmingTimerReset(false);
   };
 
-  const totalSets = useMemo(() => Object.values(rowsByExercise).reduce((sum, rows) => sum + rows.length, 0), [rowsByExercise]);
-  const doneSets = useMemo(() => Object.values(rowsByExercise).reduce((sum, rows) => sum + rows.filter((r) => r.done).length, 0), [rowsByExercise]);
+  const totalSets = useMemo(() => sessionExerciseIds.reduce((sum, id) => sum + (rowsByExercise[id]?.length || 0), 0), [sessionExerciseIds, rowsByExercise]);
+  const doneSets = useMemo(() => sessionExerciseIds.reduce((sum, id) => sum + (rowsByExercise[id]?.filter((r) => r.done).length || 0), 0), [sessionExerciseIds, rowsByExercise]);
   const allDone = totalSets > 0 && doneSets === totalSets;
 
   const handleAddSet = (exerciseId: string) => {

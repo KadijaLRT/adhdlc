@@ -3,21 +3,16 @@ import { View, Text, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
-  useAppStore, selectActiveProgramId, selectFitnessPreferences, selectGyms, selectActiveGymId, selectWeekdayAssignment,
+  useAppStore, selectActiveProgramId, selectCustomPrograms, selectFitnessPreferences, selectGyms, selectActiveGymId, selectWeekdayAssignment,
 } from '@/store/index';
-import { PROGRAMS } from '@/content/programs';
+import { getProgramById } from '@/content/programs';
+import { bodyGroupLabel, getBodyGroup } from '@/content/bodyGroups';
 import { buildDayLetterContent, WEEKDAY_LABELS } from './buildWeeklySplit';
 import { buildEquipmentContext } from './exerciseAvailability';
 import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
 
-const GROUP_EMOJI: Record<string, string> = {
-  quads: '🍑', hamstrings: '🍑', glutes: '🍑', calves: '🦵',
-  chest: '💪', back: '⬅️', shoulders: '💪', arms: '💪',
-  core: '🎯', fullbody: '🏋️',
-};
-
 function emojiForGroups(groups: string[]): string {
-  return GROUP_EMOJI[groups[0] || ''] || '💪';
+  return getBodyGroup(groups[0])?.icon || '💪';
 }
 
 /**
@@ -30,13 +25,14 @@ function emojiForGroups(groups: string[]): string {
 export default function WorkoutDaySchedulePicker({ weekdayIndex }: { weekdayIndex: number }) {
   const router = useRouter();
   const activeProgramId = useAppStore(selectActiveProgramId);
+  const customPrograms = useAppStore(selectCustomPrograms);
   const fitnessPreferences = useAppStore(selectFitnessPreferences);
   const gyms = useAppStore(selectGyms);
   const activeGymId = useAppStore(selectActiveGymId);
   const weekdayAssignment = useAppStore(selectWeekdayAssignment);
   const setWeekdayAssignment = useAppStore((s) => s.setWeekdayAssignment);
 
-  const activeProgram = (PROGRAMS || []).find((p) => p.id === activeProgramId);
+  const activeProgram = getProgramById(activeProgramId, customPrograms || []);
   const activeGym = (gyms || []).find((g) => g.id === activeGymId);
 
   const prefsEquipment = fitnessPreferences?.equipment;
@@ -106,8 +102,8 @@ export default function WorkoutDaySchedulePicker({ weekdayIndex }: { weekdayInde
                     </View>
                     {isSelected && <Text className="text-emerald-600 dark:text-emerald-400 text-lg">✓</Text>}
                   </View>
-                  <Text className="text-slate-500 text-sm mt-1 ml-11 capitalize">
-                    {content.muscleGroups.join(' & ')} · {content.estimatedMinutes}-{content.estimatedMinutes + 10} min
+                  <Text className="text-slate-500 text-sm mt-1 ml-11">
+                    {content.muscleGroups.map(bodyGroupLabel).join(' & ')} · {content.estimatedMinutes}-{content.estimatedMinutes + 10} min
                   </Text>
                 </Pressable>
               );

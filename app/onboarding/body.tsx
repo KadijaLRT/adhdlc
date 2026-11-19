@@ -112,7 +112,7 @@ export default function BodyScreen() {
             keyboardType="decimal-pad"
             className="bg-slate-900 text-slate-100 rounded-xl px-4 py-3 mb-3"
           />
-          {o.weightGoalDirections.length > 0 && o.weightGoalDirections[0] !== 'maintain' && (
+          {o.weightGoalDirections.some((d) => d !== 'maintain') && (
             <>
               <TextInput
                 value={o.goalWeightLbs}

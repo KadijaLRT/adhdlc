@@ -113,8 +113,10 @@ export default function FinalScreen() {
       });
 
       await setFitnessPreferences({
-        equipment: ['bodyweight'],
-        primaryGoal: o.exerciseGoals.includes('get_stronger') ? 'strength' : o.exerciseGoals.includes('flexibility') ? 'mobility' : o.exerciseGoals.includes('cardio') ? 'endurance' : 'general',
+        // Onboarding doesn't ask for equipment yet — leave empty (unrestricted)
+        // until the person explicitly picks equipment in Settings or adds a gym.
+        equipment: [],
+        primaryGoal: (o.exerciseGoals.includes('get_stronger') || o.exerciseGoals.includes('build_muscle')) ? 'strength' : o.exerciseGoals.includes('flexibility') ? 'mobility' : o.exerciseGoals.includes('cardio') ? 'endurance' : 'general',
         gender: o.gender,
         weightGoalDirections: o.weightGoalDirections,
         bodyType: o.bodyType || undefined,

@@ -1,9 +1,9 @@
 import { WORKOUT_EXERCISES } from '@/content/exercises';
 import type { ProgramDefinition } from '@/content/programs';
 import type { FitnessPreferences } from '@/store/slices/nutritionFitnessSlice';
-import { targetsGroup } from './exerciseAvailability';
+import { UNRESTRICTED, filterAutoPickEntries, rankForPlanning, targetsGroup, type EquipmentContext } from './exerciseAvailability';
 import { interleaveByGroup } from './interleaveExercises';
-import { UNRESTRICTED, filterAutoPickEntries, type EquipmentContext } from './exerciseAvailability';
+import { getEffectiveSessionExerciseCount } from './buildWeeklySplit';
 
 /**
  * Which week (1-indexed) the person is on, based on sessions completed
@@ -42,7 +42,7 @@ export function buildProgramSessionExerciseIds(
     targetsGroup(program.targetGroups, ex.group);
 
   // No fallback to "everything": equipment that rules out the whole pool yields an empty session.
-  let filtered = filterAutoPickEntries(entries.filter(matchesGroup), equipment);
+  let filtered = rankForPlanning(filterAutoPickEntries(entries.filter(matchesGroup), equipment));
   if (!filtered.length) return [];
 
   // Same fix as the weekly split builder: the content file lists every
@@ -59,12 +59,13 @@ export function buildProgramSessionExerciseIds(
 
   // Every 2 weeks, allow one more exercise in the session, capped at
   // the pool size and at a sensible ceiling so sessions never balloon.
+  const baseCount = getEffectiveSessionExerciseCount(program.sessionExerciseCount || 5, preferences?.sessionTimeBudget);
   const weekBonus = Math.floor((currentWeek - 1) / 2);
-  const targetCount = Math.min(program.sessionExerciseCount + weekBonus, filtered.length, program.sessionExerciseCount + 3);
+  const targetCount = Math.min(baseCount + weekBonus, filtered.length, baseCount + 3);
 
   // Rotate the starting point through the pool by week, so week 2 isn't
   // an identical copy of week 1 even with the same target count.
-  const offset = ((currentWeek - 1) * program.sessionExerciseCount) % filtered.length;
+  const offset = ((currentWeek - 1) * baseCount) % filtered.length;
   const rotated = [...filtered.slice(offset), ...filtered.slice(0, offset)];
 
   return rotated.slice(0, targetCount).map(([id]) => id);
