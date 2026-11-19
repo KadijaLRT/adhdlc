@@ -366,7 +366,7 @@ export default function WorkoutsHome() {
       };
     }
 
-    const seed = Number(new Date().toISOString().slice(0, 10).replace(/-/g, ''));
+    const seed = Number(toLocalDateString(new Date()).replace(/-/g, ''));
     const variedIds = getVariedExerciseSelection(
       day.muscleGroups,
       day.exerciseIds.length,
@@ -385,7 +385,7 @@ export default function WorkoutsHome() {
   const withRestrictions = (ids: string[]): string[] =>
     applyRestrictionsToSession(ids, equipmentContext, {
       energyLevel,
-      seed: Number(new Date().toISOString().slice(0, 10).replace(/-/g, '')),
+      seed: Number(toLocalDateString(new Date()).replace(/-/g, '')),
     });
 
   const handleStartDay = (day: WeeklySplitDay) => {

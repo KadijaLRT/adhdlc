@@ -14,8 +14,6 @@
  * unset.
  */
 
-import { getAiAccessGate } from './aiAccessGate';
-
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL || '';
 
 export interface GroqTextContentBlock {
@@ -34,7 +32,7 @@ export interface GroqMessage {
 
 export class GroqProxyError extends Error {
   /** A stable, machine-checkable reason (not just prose) so callers can distinguish "not configured" from "rate limited" from "network error" without parsing message text. */
-  reason: 'not_configured' | 'rate_limited' | 'network_error' | 'upstream_error' | 'invalid_request' | 'pro_required' | 'unknown';
+  reason: 'not_configured' | 'rate_limited' | 'network_error' | 'upstream_error' | 'invalid_request' | 'unknown';
 
   constructor(message: string, reason: GroqProxyError['reason']) {
     super(message);
@@ -46,7 +44,6 @@ function reasonForStatus(status: number): GroqProxyError['reason'] {
   if (status === 500) return 'not_configured'; // api/groq.js only ever 500s for a missing GROQ_API_KEY
   if (status === 429) return 'rate_limited';
   if (status === 400) return 'invalid_request';
-  if (status === 402) return 'pro_required'; // free daily AI limit reached (see api/groq.js)
   if (status === 502) return 'upstream_error'; // Groq itself failed/timed out
   return 'unknown';
 }
@@ -58,21 +55,11 @@ function reasonForStatus(status: number): GroqProxyError['reason'] {
  * Zod-validating that string, same as before this indirection existed.
  */
 export async function callGroqCompletion(messages: GroqMessage[], temperature = 0.5): Promise<string> {
-  const gate = getAiAccessGate();
-  if (gate && !gate.canMakeRequest()) {
-    gate.onProRequired();
-    throw new GroqProxyError("You've used today's free AI help. Upgrade to Pro for unlimited Aviva.", 'pro_required');
-  }
-
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const proToken = gate?.proToken();
-  if (proToken) headers['X-Pro-Token'] = proToken;
-
   let response: Response;
   try {
     response = await fetch(`${API_BASE_URL}/api/groq`, {
       method: 'POST',
-      headers,
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ messages, temperature }),
     });
   } catch (error) {
@@ -88,11 +75,9 @@ export async function callGroqCompletion(messages: GroqMessage[], temperature = 
     const errorBody = await response.json().catch(() => null);
     const serverMessage = errorBody?.error;
     const reason = reasonForStatus(response.status);
-    if (reason === 'pro_required') gate?.onProRequired();
     throw new GroqProxyError(serverMessage || `AI service responded with ${response.status}`, reason);
   }
 
   const data = await response.json().catch(() => null);
-  gate?.recordSuccess();
   return data?.content || '';
 }

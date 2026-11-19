@@ -11,7 +11,8 @@ import { parseLocalDate, toLocalDateString } from '@/shared/formatDate';
 export function spreadStepsAcrossDays(subSteps: AssignmentSubStep[], dueDate: string): AssignmentSubStep[] {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const due = parseLocalDate(dueDate);
+  const parsedDue = dueDate ? parseLocalDate(dueDate) : new Date(today);
+  const due = isNaN(parsedDue.getTime()) ? new Date(today) : parsedDue;
   due.setHours(0, 0, 0, 0);
 
   const totalDays = Math.max(1, Math.round((due.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));

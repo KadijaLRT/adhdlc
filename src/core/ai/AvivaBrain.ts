@@ -1,7 +1,7 @@
 import { z } from 'zod';
 // @ts-ignore - plain JS by design, see file header.
 import { BODY_GROUP_IDS } from '@/content/bodyGroups';
-import { sanitizeString, sanitizePayload } from './groqSanitizer';
+import { sanitizeString, sanitizePayload, MAX_PAYLOAD_LENGTH } from './groqSanitizer';
 import { restrictionPromptLine } from './restrictionBrief';
 import { callGroqCompletion, GroqProxyError, type GroqMessage } from './groqProxyClient';
 
@@ -158,6 +158,7 @@ export class AvivaBrain {
   lastErrorReason: GroqProxyError['reason'] | null = null;
 
   async decomposeTask(taskTitle: string, context: AvivaContext): Promise<TaskDecomposition | null> {
+    this.lastErrorReason = null;
     const cleanTitle = sanitizeString(taskTitle);
     if (!cleanTitle) return null;
     const cleanContext = sanitizePayload(context) as AvivaContext;
@@ -175,7 +176,7 @@ Respond with ONLY valid JSON matching this exact shape, no markdown fences:
     const userPrompt = `Task: "${cleanTitle}"
 Energy level: ${cleanContext.currentEnergyLevel}
 Overwhelmed: ${cleanContext.isOverwhelmed}
-Time of day: ${cleanContext.timeOfDay}`;
+Time of day: ${cleanContext.timeOfDay}`.slice(0, MAX_PAYLOAD_LENGTH);
 
     try {
       const raw = await callGroqCompletion(
@@ -191,11 +192,13 @@ Time of day: ${cleanContext.timeOfDay}`;
       return validated.data;
     } catch (error) {
       console.error('AvivaBrain: decomposeTask failed', error);
+      if (error instanceof GroqProxyError) this.lastErrorReason = error.reason;
       return null;
     }
   }
 
   async parseBrainDump(rawText: string, context: AvivaContext): Promise<BrainDumpResult | null> {
+    this.lastErrorReason = null;
     const cleanText = sanitizeString(rawText);
     if (!cleanText) return null;
     const cleanContext = sanitizePayload(context) as AvivaContext;
@@ -212,7 +215,7 @@ Respond with ONLY valid JSON, no markdown fences:
     const userPrompt = `Brain dump: "${cleanText}"
 Energy level: ${cleanContext.currentEnergyLevel}
 Overwhelmed: ${cleanContext.isOverwhelmed}
-Time of day: ${cleanContext.timeOfDay}${cleanContext.recentReflection ? `\nTheir most recent evening reflection: "${cleanContext.recentReflection}"` : ''}`;
+Time of day: ${cleanContext.timeOfDay}${cleanContext.recentReflection ? `\nTheir most recent evening reflection: "${cleanContext.recentReflection}"` : ''}`.slice(0, MAX_PAYLOAD_LENGTH);
 
     try {
       const raw = await callGroqCompletion(
@@ -228,6 +231,7 @@ Time of day: ${cleanContext.timeOfDay}${cleanContext.recentReflection ? `\nTheir
       return validated.data;
     } catch (error) {
       console.error('AvivaBrain: parseBrainDump failed', error);
+      if (error instanceof GroqProxyError) this.lastErrorReason = error.reason;
       return null;
     }
   }
@@ -267,7 +271,7 @@ Respond with ONLY valid JSON, no markdown fences:
 
     try {
       const raw = await callGroqCompletion(
-        [{ role: 'system', content: systemPrompt }, { role: 'user', content: `What I want: "${cleanDescription}"` }],
+        [{ role: 'system', content: systemPrompt }, { role: 'user', content: `What I want: "${cleanDescription}"`.slice(0, MAX_PAYLOAD_LENGTH) }],
         0.6 // higher than extraction tasks — generating a program benefits from some real creative variation, not a single deterministic answer every time
       );
       if (!raw) return null;
@@ -362,7 +366,7 @@ Keep titles short and student-facing (e.g. "Midterm Exam", "Problem Set 3", "Res
 Respond with ONLY valid JSON, no markdown fences:
 {"courseName": string|null, "assignments": [{"id": string, "title": string, "dueDate": string, "type": "homework"|"exam"|"quiz"|"project"|"paper"|"reading"|"other"}], "reasoning": string}`;
 
-    const userPrompt = `Today's date: ${todayIsoDate}\n\nSyllabus text:\n"${cleanText}"`;
+    const userPrompt = `Today's date: ${todayIsoDate}\n\nSyllabus text:\n"${cleanText}"`.slice(0, MAX_PAYLOAD_LENGTH);
 
     try {
       const raw = await callGroqCompletion(

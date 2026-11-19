@@ -12,7 +12,6 @@ import { ErrorBoundary } from '@/shared/components/ErrorBoundary';
 import { ThemeProvider } from '@/theme/ThemeProvider';
 import AvivaFloatingButton from '@/features/aviva/AvivaFloatingButton';
 import NotificationsSync from '@/features/notifications/NotificationsSync';
-import ProPaywallModal from '@/features/pro/ProPaywallModal';
 import { completeNativeSessionFromUrl, subscribeToAuthChanges, syncProfileIfSignedIn } from '@/core/supabase/client';
 
 export default function RootLayout() {
@@ -65,12 +64,22 @@ export default function RootLayout() {
   // current profile fresh from the store at the moment a session
   // actually appears, not a stale closure from mount time.
   useEffect(() => {
+    let cancelled = false;
     let unsubscribe: (() => void) | null = null;
     subscribeToAuthChanges(() => {
       const profile = useAppStore.getState().profile;
       if (profile) syncProfileIfSignedIn(profile as any);
-    }).then((unsub) => { unsubscribe = unsub; });
-    return () => unsubscribe?.();
+    }).then((unsub) => {
+      if (cancelled) {
+        unsub?.();
+      } else {
+        unsubscribe = unsub;
+      }
+    });
+    return () => {
+      cancelled = true;
+      unsubscribe?.();
+    };
   }, []);
 
   // Drives NativeWind's actual dark-mode class toggling from the
@@ -93,9 +102,7 @@ export default function RootLayout() {
     if (!fontsLoaded) return;
     const anyText = Text as any;
     anyText.defaultProps = anyText.defaultProps || {};
-    anyText.defaultProps.style = dyslexiaFont
-      ? [anyText.defaultProps.style, { fontFamily: 'Lexend_400Regular' }]
-      : undefined;
+    anyText.defaultProps.style = dyslexiaFont ? { fontFamily: 'Lexend_400Regular' } : undefined;
   }, [dyslexiaFont, fontsLoaded]);
 
   return (
@@ -113,7 +120,6 @@ export default function RootLayout() {
             <Stack screenOptions={{ headerShown: false }} />
             {!hideFloatingButton && <AvivaFloatingButton />}
             <NotificationsSync />
-            <ProPaywallModal />
           </ThemeProvider>
         </QueryClientProvider>
       </ErrorBoundary>

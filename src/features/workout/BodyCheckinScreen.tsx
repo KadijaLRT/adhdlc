@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { toLocalDateString } from '@/shared/formatDate';
 import { useAppStore, selectEnergyLevel } from '@/store/index';
 import { WORKOUT_EXERCISES } from '@/content/exercises';
 import { BODY_PARTS, BODY_PART_SECTIONS, computeCheckinAdjustment, applySkipToExerciseIds, type PainSeverity } from './bodyCheckin';
@@ -68,7 +69,7 @@ export default function BodyCheckinScreen({
       ? exerciseIds
       : applyRestrictionsToSession(exerciseIds, equipmentContext, {
           energyLevel,
-          seed: Number(new Date().toISOString().slice(0, 10).replace(/-/g, '')),
+          seed: Number(toLocalDateString(new Date()).replace(/-/g, '')),
         });
     const adjustedIds = applySkipToExerciseIds(withRestrictions, adjustment.skipGroups, (id) => WORKOUT_EXERCISES?.[id]?.group);
     // Bug fix: this used to silently call router.back() whenever

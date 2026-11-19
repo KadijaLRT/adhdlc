@@ -27,10 +27,13 @@ export function createWriteGuard<T>(save: (data: T) => Promise<void>): (data: T)
 
   return (data: T) => {
     const mySeq = ++seq;
-    chain = chain.then(async () => {
+    const run = chain.then(async () => {
       if (mySeq !== seq) return; // a newer write was queued behind us — skip, it'll persist instead
       await save(data);
     });
-    return chain;
+    // Keep the shared queue alive even if one write rejects, while still
+    // returning `run` so the caller can observe its own failure.
+    chain = run.catch(() => {});
+    return run;
   };
 }

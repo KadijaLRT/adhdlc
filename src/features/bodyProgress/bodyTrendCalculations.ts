@@ -1,5 +1,5 @@
 import type { WeightEntry } from '@/store/slices/bodyProgressSlice';
-import { toLocalDateString } from '@/shared/formatDate';
+import { parseLocalDate, toLocalDateString } from '@/shared/formatDate';
 
 /**
  * Emphasizes trend over any single day's number, on purpose — per the
@@ -55,9 +55,21 @@ export function projectGoalDate(weightLog: WeightEntry[], goalLbs: number | null
   // Only project if moving in the direction of the goal.
   if ((remaining > 0 && change30 <= 0) || (remaining < 0 && change30 >= 0)) return null;
 
-  const dailyRate = change30 / 30;
+  const sorted = [...(weightLog || [])].sort((a, b) => a.date.localeCompare(b.date));
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const cutoff = toLocalDateString(thirtyDaysAgo);
+  const oldEntry = sorted.find((e) => e.date >= cutoff);
+  const latestEntry = sorted[sorted.length - 1];
+  const elapsedDays = oldEntry && latestEntry
+    ? Math.max(1, Math.round((parseLocalDate(latestEntry.date).getTime() - parseLocalDate(oldEntry.date).getTime()) / 86400000))
+    : 30;
+
+  const dailyRate = change30 / elapsedDays;
   const daysNeeded = Math.abs(remaining / dailyRate);
+  if (!Number.isFinite(daysNeeded) || daysNeeded > 36500) return null;
   const projectedDate = new Date();
   projectedDate.setDate(projectedDate.getDate() + Math.round(daysNeeded));
+  if (isNaN(projectedDate.getTime())) return null;
   return toLocalDateString(projectedDate);
 }

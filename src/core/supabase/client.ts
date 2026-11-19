@@ -261,25 +261,3 @@ export async function syncProfileIfSignedIn(profile: Record<string, unknown> & {
     console.error('supabase: unexpected sync error', error);
   }
 }
-
-/**
- * Permanently deletes the signed-in person's cloud backup account and
- * its saved profile, then signs out. Required by App Store Review
- * Guideline 5.1.1(v). Needs the delete_my_account() function from
- * supabase/schema.sql. Data saved on this device is not touched.
- */
-export async function deleteCloudAccount(): Promise<{ error: string | null }> {
-  try {
-    const supabase = await getSupabaseClient();
-    const { error } = await supabase.rpc('delete_my_account');
-    if (error) {
-      console.error('supabase: account deletion failed', error);
-      return { error: "Couldn't delete your backup account right now. Check your connection and try again." };
-    }
-    await supabase.auth.signOut().catch(() => {});
-    return { error: null };
-  } catch (error) {
-    console.error('supabase: account deletion failed', error);
-    return { error: "Couldn't delete your backup account right now. Check your connection and try again." };
-  }
-}

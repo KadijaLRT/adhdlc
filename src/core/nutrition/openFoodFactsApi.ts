@@ -45,21 +45,23 @@ function productToFoodItem(product: OffProduct): FoodItem | null {
   // serving size; otherwise fall back to per-100g, which every product
   // in the database has.
   const usingServing = !!product.serving_size && n['energy-kcal_serving'] !== undefined;
-  const calories = usingServing ? n['energy-kcal_serving'] : n['energy-kcal_100g'];
-  if (calories === undefined) return null; // no usable calorie data — skip rather than show a broken entry
+  const rawCalories = usingServing ? n['energy-kcal_serving'] : n['energy-kcal_100g'];
+  const calories = typeof rawCalories === 'number' ? rawCalories : Number(rawCalories);
+  if (rawCalories === null || rawCalories === undefined || !Number.isFinite(calories)) return null; // no usable calorie data — skip rather than show a broken entry
 
-  const protein = (usingServing ? n.proteins_serving : n.proteins_100g) || 0;
-  const carbs = (usingServing ? n.carbohydrates_serving : n.carbohydrates_100g) || 0;
-  const fat = (usingServing ? n.fat_serving : n.fat_100g) || 0;
+  const safeNum = (v: unknown) => {
+    const num = typeof v === 'number' ? v : Number(v);
+    return Number.isFinite(num) ? Math.round(num) : 0;
+  };
 
   return {
     id: `off-${product.code || name}`,
     name: product.brands ? `${name} (${product.brands})` : name,
     servingLabel: usingServing ? (product.serving_size as string) : '100g',
     calories: Math.round(calories),
-    protein: Math.round(protein),
-    carbs: Math.round(carbs),
-    fat: Math.round(fat),
+    protein: safeNum(usingServing ? n.proteins_serving : n.proteins_100g),
+    carbs: safeNum(usingServing ? n.carbohydrates_serving : n.carbohydrates_100g),
+    fat: safeNum(usingServing ? n.fat_serving : n.fat_100g),
   };
 }
 

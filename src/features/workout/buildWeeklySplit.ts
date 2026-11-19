@@ -115,20 +115,63 @@ export function getVariedExerciseSelection(
   const pool = filterAutoPickEntries(entries.filter(matchesGroup), equipment);
   if (!pool.length) return [];
 
-  const ids = pool.map(([id]) => id);
-  if (ids.length <= count) return ids; // whole pool needed just to hit the count — nothing to rotate
+  if (pool.length <= count) return pool.map(([id]) => id); // whole pool needed just to hit the count — nothing to rotate
 
-  const shuffled = seededShuffle(ids, seed);
+  // Group by muscle group and shuffle each group independently so a flat
+  // shuffle never concentrates all picks into whichever group happens to
+  // have the largest catalog (e.g. 4 chest + 1 triceps on a Full Body day).
+  const byGroup = new Map<string, string[]>();
+  for (const [id, ex] of pool) {
+    const list = byGroup.get(ex.group) || [];
+    list.push(id);
+    byGroup.set(ex.group, list);
+  }
+  const groupKeys = seededShuffle(Array.from(byGroup.keys()), seed);
 
-  // Try every rotation of the shuffled pool until one doesn't match a
-  // recent combo — bounded by pool size, never infinite.
-  for (let offset = 0; offset < shuffled.length; offset++) {
-    const rotated = [...shuffled.slice(offset), ...shuffled.slice(0, offset)];
-    const candidate = rotated.slice(0, count);
+  // Build candidate lists by rotating each group's shuffled pool by `offset`
+  // and round-robining 1 exercise per group until `count` is reached.
+  const shuffledGroups = groupKeys.map((g, idx) => seededShuffle(byGroup.get(g) || [], seed + idx + 1));
+  const maxOffset = Math.max(1, ...shuffledGroups.map((g) => g.length));
+
+  for (let offset = 0; offset < maxOffset; offset++) {
+    const candidate: string[] = [];
+    let round = 0;
+    while (candidate.length < count) {
+      let addedThisRound = false;
+      for (const groupIds of shuffledGroups) {
+        if (candidate.length >= count) break;
+        if (round < groupIds.length) {
+          const picked = groupIds[(round + offset) % groupIds.length];
+          if (picked && !candidate.includes(picked)) {
+            candidate.push(picked);
+            addedThisRound = true;
+          }
+        }
+      }
+      if (!addedThisRound) break;
+      round++;
+    }
     const isRepeat = recentCombos.some((combo) => sameCombo(combo, candidate));
     if (!isRepeat) return candidate;
   }
-  return shuffled.slice(0, count);
+
+  // Fallback: offset 0 round-robin
+  const fallback: string[] = [];
+  let round = 0;
+  while (fallback.length < count) {
+    let added = false;
+    for (const groupIds of shuffledGroups) {
+      if (fallback.length >= count) break;
+      const picked = groupIds[round];
+      if (picked && !fallback.includes(picked)) {
+        fallback.push(picked);
+        added = true;
+      }
+    }
+    if (!added) break;
+    round++;
+  }
+  return fallback;
 }
 
 /**
@@ -324,7 +367,11 @@ export function getAvailableDayLetters(
   return DAY_LETTERS.slice(0, trainingDayCount);
 }
 
-/** One group keeps its own name; groups from the same region read as Upper/Lower Body; anything else is Full Body. */
+/**
+ * One group keeps its own name; two groups name both; same-region groups
+ * read as Upper/Lower Body (plus "& Core" when paired only with core);
+ * only days that actually span upper + lower (or full-body lifts) read as Full Body.
+ */
 function dayTitleForGroups(groups: string[]): string {
   if (groups.length === 1 && groups[0]) return bodyGroupLabel(groups[0]);
   const regions = new Set(groups.map((g) => getBodyGroup(g)?.region || 'full'));
@@ -333,6 +380,14 @@ function dayTitleForGroups(groups: string[]): string {
     if (only === 'upper') return 'Upper Body';
     if (only === 'lower') return 'Lower Body';
     if (only === 'core') return 'Core';
+  }
+  const nonCore = Array.from(regions).filter((r) => r !== 'core');
+  if (nonCore.length === 1 && regions.has('core')) {
+    if (nonCore[0] === 'upper') return 'Upper Body & Core';
+    if (nonCore[0] === 'lower') return 'Lower Body & Core';
+  }
+  if (groups.length === 2 && groups[0] && groups[1]) {
+    return `${bodyGroupLabel(groups[0])} & ${bodyGroupLabel(groups[1])}`;
   }
   return 'Full Body';
 }

@@ -1,7 +1,7 @@
 import { z } from 'zod';
 // @ts-ignore - plain JS by design
 import { restrictionPromptLine } from './restrictionBrief';
-import { sanitizeString, sanitizePayload } from './groqSanitizer';
+import { sanitizeString, sanitizePayload, MAX_PAYLOAD_LENGTH } from './groqSanitizer';
 import { callGroqCompletion } from './groqProxyClient';
 
 export const AgentResponseSchema = z.object({
@@ -68,7 +68,7 @@ Respond with ONLY valid JSON, no markdown fences:
       const userPrompt = `User message: "${cleanMessage}"
 Energy: ${cleanContext.energyLevel}
 Overwhelmed: ${cleanContext.isOverwhelmed}
-Time of day: ${cleanContext.timeOfDay}${cleanContext.recentReflection ? `\nTheir most recent evening reflection: "${cleanContext.recentReflection}"` : ''}`;
+Time of day: ${cleanContext.timeOfDay}${cleanContext.recentReflection ? `\nTheir most recent evening reflection: "${cleanContext.recentReflection}"` : ''}`.slice(0, MAX_PAYLOAD_LENGTH);
 
       try {
         const raw = await callGroqCompletion(

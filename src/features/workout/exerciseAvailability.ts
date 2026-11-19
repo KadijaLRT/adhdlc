@@ -69,8 +69,8 @@ function buildBaseContext(
   if (activeGym) {
     return { restricted: true, source: 'gym', owned: new Set(expandLegacyTokens(activeGym.equipment)) };
   }
-  const prefs = expandLegacyTokens(prefsEquipment).filter((t) => t !== 'bodyweight');
-  if (prefs.length > 0) {
+  if (prefsEquipment && prefsEquipment.length > 0) {
+    const prefs = expandLegacyTokens(prefsEquipment).filter((t) => t !== 'bodyweight');
     return { restricted: true, source: 'preferences', owned: new Set(prefs) };
   }
   return UNRESTRICTED;

@@ -39,9 +39,14 @@ export function useDragReorder(ids: string[], onReorder: (next: string[]) => voi
       const current = activeRef.current;
       if (!current || !Number.isFinite(delta)) return;
       dy.setValue(delta);
-      const list = idsRef.current.map((id) => boxes.current[id]);
-      if (list.some((b) => !b)) return;
-      const target = targetIndexFor(list as ItemBox[], current.from, delta);
+      const renderedIds = idsRef.current.filter((id) => !!boxes.current[id]);
+      const fromRendered = renderedIds.indexOf(current.id);
+      if (fromRendered < 0) return;
+      const list = renderedIds.map((id) => boxes.current[id] as ItemBox);
+      const targetRendered = targetIndexFor(list, fromRendered, delta);
+      const targetId = renderedIds[targetRendered];
+      const target = targetId !== undefined ? idsRef.current.indexOf(targetId) : current.from;
+      if (target < 0) return;
       if (target !== current.target) {
         const next = { ...current, target };
         activeRef.current = next;
@@ -76,7 +81,7 @@ export function useDragReorder(ids: string[], onReorder: (next: string[]) => voi
       return {
         onLayout,
         style: [
-          { zIndex: 20, opacity: 0.96, transform: [{ translateY: dy }, { scale: 1.02 }] },
+          { zIndex: 20, elevation: 20, opacity: 0.96, transform: [{ translateY: dy }, { scale: 1.02 }] },
           Platform.OS === 'web' ? ({ userSelect: 'none' } as ViewStyle) : null,
         ],
       };

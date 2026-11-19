@@ -4,10 +4,12 @@ import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import {
-  useAppStore, selectFitnessPreferences,
+  useAppStore, selectFitnessPreferences, selectActiveProgramId,
   type Gender, type WeightGoalDirection, type BodyType, type ActivityLevel, type SessionTimeBudget,
 } from '@/store/index';
 import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
+import { recommendProgramId } from '@/features/workout/recommendProgram';
+import { PROGRAMS } from '@/content/programs';
 
 const EQUIPMENT_OPTIONS = ['bodyweight', 'dumbbell', 'barbell', 'machine', 'cable', 'resistance_band'];
 const GENDERS: { id: Gender; label: string; emoji: string }[] = [
@@ -72,6 +74,8 @@ export default function EditFitnessPreferencesScreen() {
   const router = useRouter();
   const fitnessPreferences = useAppStore(selectFitnessPreferences);
   const setFitnessPreferences = useAppStore((s) => s.setFitnessPreferences);
+  const activeProgramId = useAppStore(selectActiveProgramId);
+  const startProgram = useAppStore((s) => s.startProgram);
 
   const [equipment, setEquipment] = useState<string[]>(fitnessPreferences?.equipment || ['bodyweight']);
   const [gender, setGender] = useState<Gender>(fitnessPreferences?.gender ?? null);
@@ -82,6 +86,8 @@ export default function EditFitnessPreferencesScreen() {
   const [exerciseGoals, setExerciseGoals] = useState<string[]>(fitnessPreferences?.exerciseGoals || []);
   const [focusAreas, setFocusAreas] = useState<string[]>(expandLegacyGroups(fitnessPreferences?.focusAreas));
   const [saved, setSaved] = useState(false);
+  const [suggestedProgramId, setSuggestedProgramId] = useState<string | null>(null);
+  const [switchedProgram, setSwitchedProgram] = useState(false);
 
   const toggleIn = (list: string[], setList: (v: string[]) => void, item: string) => {
     setList(list.includes(item) ? list.filter((i) => i !== item) : [...list, item]);
@@ -89,10 +95,21 @@ export default function EditFitnessPreferencesScreen() {
   };
 
   const handleSave = async () => {
-    await setFitnessPreferences({
+    const nextPrefs = {
       equipment, gender, weightGoalDirections, bodyType, activityLevel, exerciseGoals, focusAreas, sessionTimeBudget,
       primaryGoal: goalFromExerciseGoals(exerciseGoals),
-    });
+    };
+    await setFitnessPreferences(nextPrefs);
+    const recommendedId = recommendProgramId({ ...fitnessPreferences, ...nextPrefs });
+    if (!activeProgramId) {
+      await startProgram(recommendedId);
+      setSuggestedProgramId(null);
+    } else if (activeProgramId !== recommendedId && PROGRAMS.some((p) => p.id === activeProgramId)) {
+      setSuggestedProgramId(recommendedId);
+      setSwitchedProgram(false);
+    } else {
+      setSuggestedProgramId(null);
+    }
     setSaved(true);
   };
 
@@ -195,6 +212,29 @@ export default function EditFitnessPreferencesScreen() {
             <Text className="text-slate-500 text-xs">{(fitnessPreferences?.restrictions || []).length > 0 ? `${(fitnessPreferences?.restrictions || []).length} set` : 'Set up'}</Text>
           </Pressable>
 
+          {suggestedProgramId && (() => {
+            const prog = PROGRAMS.find((p) => p.id === suggestedProgramId);
+            if (!prog) return null;
+            return (
+              <View className="bg-indigo-500/10 border border-indigo-400/50 rounded-2xl p-4 mb-4">
+                <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold mb-1">
+                  {prog.emoji} {prog.title} matches your updated goals
+                </Text>
+                <Text className="text-slate-600 dark:text-slate-400 text-xs mb-3">
+                  Your reps, sets, and rest already updated automatically. Switch your active program too if you want its schedule and pacing.
+                </Text>
+                <Pressable
+                  onPress={async () => { await startProgram(prog.id); setSwitchedProgram(true); setSuggestedProgramId(null); }}
+                  className="bg-indigo-600 rounded-full py-2.5 px-4 items-center active:bg-indigo-500"
+                >
+                  <Text className="text-white text-xs font-semibold">Switch to {prog.title}</Text>
+                </Pressable>
+              </View>
+            );
+          })()}
+          {switchedProgram && (
+            <Text className="text-emerald-600 dark:text-emerald-400 text-xs text-center mb-3">Active program updated ✓</Text>
+          )}
           <Pressable onPress={handleSave} className="bg-indigo-600 rounded-full py-4 items-center active:bg-indigo-500 mb-3 btn3d btn3d-p">
             <Text className="text-white text-lg font-semibold">{saved ? 'Saved ✓' : 'Save changes'}</Text>
           </Pressable>

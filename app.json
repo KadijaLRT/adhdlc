@@ -8,31 +8,16 @@
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
     "icon": "./assets/icon.png",
-    "splash": {
-      "image": "./assets/splash.png",
-      "resizeMode": "contain",
-      "backgroundColor": "#fafaf9"
-    },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "splash": { "image": "./assets/splash.png", "resizeMode": "contain", "backgroundColor": "#fafaf9" },
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.adhdlifecoach.app",
-      "infoPlist": {
-        "UIViewControllerBasedStatusBarAppearance": true,
-        "NSCameraUsageDescription": "Used only to scan a food barcode when logging what you ate \u2014 nothing is recorded or stored."
-      },
-      "config": {
-        "usesNonExemptEncryption": false
-      }
+      "infoPlist": { "UIViewControllerBasedStatusBarAppearance": true, "NSCameraUsageDescription": "Used only to scan a food barcode when logging what you ate — nothing is recorded or stored." }
     },
     "android": {
       "package": "com.adhdlifecoach.app",
-      "adaptiveIcon": {
-        "foregroundImage": "./assets/adaptive-icon.png",
-        "backgroundColor": "#fafaf9"
-      }
+      "adaptiveIcon": { "foregroundImage": "./assets/adaptive-icon.png", "backgroundColor": "#fafaf9" }
     },
     "web": {
       "bundler": "metro",
@@ -52,30 +37,16 @@
     },
     "plugins": [
       "expo-router",
-      [
-        "expo-camera",
-        {
-          "cameraPermission": "Used only to scan a food barcode when logging what you ate \u2014 nothing is recorded or stored."
-        }
-      ],
-      [
-        "expo-image-picker",
-        {
-          "photosPermission": "Used to select a syllabus screenshot or photo to extract assignments and due dates \u2014 nothing is uploaded except the one image you choose.",
-          "cameraPermission": "Used to take a photo of a syllabus to extract assignments and due dates \u2014 nothing is uploaded except the one photo you take."
-        }
-      ],
-      [
-        "expo-notifications",
-        {
-          "icon": "./assets/icon.png",
-          "color": "#4f46e5"
-        }
-      ],
-      "expo-iap"
+      ["expo-camera", { "cameraPermission": "Used only to scan a food barcode when logging what you ate — nothing is recorded or stored." }],
+      ["expo-image-picker", {
+        "photosPermission": "Used to select a syllabus screenshot or photo to extract assignments and due dates — nothing is uploaded except the one image you choose.",
+        "cameraPermission": "Used to take a photo of a syllabus to extract assignments and due dates — nothing is uploaded except the one photo you take."
+      }],
+      ["expo-notifications", {
+        "icon": "./assets/icon.png",
+        "color": "#4f46e5"
+      }]
     ],
-    "experiments": {
-      "typedRoutes": true
-    }
+    "experiments": { "typedRoutes": true }
   }
 }

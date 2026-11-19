@@ -162,7 +162,7 @@ export default function WorkoutDaySession({
     // Same seeding approach as exercise variety (WorkoutsHome.tsx) —
     // today's date as YYYYMMDD, stable through re-renders today,
     // different the next time this screen is opened.
-    const seed = Number(new Date().toISOString().slice(0, 10).replace(/-/g, ''));
+    const seed = Number(toLocalDateString(new Date()).replace(/-/g, ''));
     return getWarmupForGroups(sessionMuscleGroups, 5, recentWarmupHistory[warmupCategory] || [], seed);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- recentWarmupHistory intentionally excluded: it's read once to pick today's varied warm-up, not something a re-render should re-roll against its own just-recorded entry
   }, [sessionMuscleGroups, warmupCategory]);
@@ -401,7 +401,8 @@ export default function WorkoutDaySession({
 
   // Drag-to-reorder from the grip handle. The same reorder is also reachable
   // from the handle via keyboard arrows and screen-reader actions.
-  const drag = useDragReorder(sessionExerciseIds, setSessionExerciseIds, 12);
+  // Inner card carries mb-3 (12px), so onLayout height already includes that gap.
+  const drag = useDragReorder(sessionExerciseIds, setSessionExerciseIds, 0);
 
   const exerciseSearchResults = useMemo(
     () => searchExercises(exerciseSearch, sessionExerciseIds, equipmentContext),
@@ -456,18 +457,25 @@ export default function WorkoutDaySession({
   // each set (so PRs and volume tracking stay accurate) — just does it
   // for all of them in one action. Tapping again when already fully
   // done un-checks everything, so it's a real toggle, not a one-way door.
+  const togglingExerciseRef = useRef<Set<string>>(new Set());
   const handleToggleExerciseDone = async (exerciseId: string) => {
-    const rows = rowsByExercise[exerciseId] || [];
-    const allDone = rows.length > 0 && rows.every((r) => r.done);
-    if (allDone) {
-      setRowsByExercise((prev) => ({
-        ...prev,
-        [exerciseId]: (prev[exerciseId] || []).map((row) => ({ ...row, done: false })),
-      }));
-      return;
-    }
-    for (let i = 0; i < rows.length; i++) {
-      if (!rows[i]?.done) await handleCompleteSet(exerciseId, i);
+    if (togglingExerciseRef.current.has(exerciseId)) return;
+    togglingExerciseRef.current.add(exerciseId);
+    try {
+      const rows = rowsByExercise[exerciseId] || [];
+      const allDone = rows.length > 0 && rows.every((r) => r.done);
+      if (allDone) {
+        setRowsByExercise((prev) => ({
+          ...prev,
+          [exerciseId]: (prev[exerciseId] || []).map((row) => ({ ...row, done: false })),
+        }));
+        return;
+      }
+      for (let i = 0; i < rows.length; i++) {
+        if (!rows[i]?.done) await handleCompleteSet(exerciseId, i);
+      }
+    } finally {
+      togglingExerciseRef.current.delete(exerciseId);
     }
   };
 
@@ -597,47 +605,51 @@ export default function WorkoutDaySession({
             return (
               <Animated.View key={exerciseId} {...drag.itemProps(exerciseId)}>
               <View className="bg-white dark:bg-slate-900 rounded-2xl mb-3 overflow-hidden surf3d">
-                <Pressable onPress={() => setExpandedId(isExpanded ? null : exerciseId)} className="p-4 flex-row items-center justify-between">
-                  <View className="flex-row items-center gap-2 flex-1 pr-2">
-                    <Pressable
-                      onPress={() => handleToggleExerciseDone(exerciseId)}
-                      hitSlop={8}
-                      className={exerciseDone ? 'w-6 h-6 rounded-full bg-emerald-500 items-center justify-center' : 'w-6 h-6 rounded-full border-2 border-stone-300 dark:border-slate-700 items-center justify-center'}
-                    >
-                      {exerciseDone && <Text className="text-white text-xs">✓</Text>}
-                    </Pressable>
-                    <View className="flex-1">
-                      <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold">{exercise.icon} {exercise.name}</Text>
-                      <Text className="text-slate-500 text-xs">
-                        {exercise.muscle} · {exercise.uni ? Math.round(rows.length / 2) : rows.length} set{(exercise.uni ? Math.round(rows.length / 2) : rows.length) === 1 ? '' : 's'}{exercise.uni ? ' · each side' : ''}{isReducedThisExercise ? ' · lightened' : ''}
-                      </Text>
-                      <RestrictionFitNote exerciseId={exerciseId} ctx={equipmentContext} />
-                      {(() => {
-                        // Recomputed from setLogs (past sessions), not
-                        // the live row state — this should keep
-                        // showing why the prefill happened even as the
-                        // person edits today's numbers, not disappear
-                        // or change as soon as they type.
-                        const suggestion = suggestNextSet(exerciseId, exercise.reps, exercise.repsMin, exercise.inc, setLogs);
-                        if (suggestion.reason === 'increase') {
-                          return <Text className="text-emerald-600 dark:text-emerald-400 text-[11px] mt-0.5">↑ Try {suggestion.weight} — you hit the top of your range last time</Text>;
-                        }
-                        if (suggestion.reason === 'repeat') {
-                          return <Text className="text-slate-400 text-[11px] mt-0.5">Beat {suggestion.reps} reps to earn a weight increase next time</Text>;
-                        }
-                        return null;
-                      })()}
+                <View className="flex-row items-center pr-4">
+                  <Pressable onPress={() => setExpandedId(isExpanded ? null : exerciseId)} className="flex-1 p-4 pr-2 flex-row items-center justify-between">
+                    <View className="flex-row items-center gap-2 flex-1 pr-2">
+                      <Pressable
+                        onPress={() => handleToggleExerciseDone(exerciseId)}
+                        hitSlop={8}
+                        className={exerciseDone ? 'w-6 h-6 rounded-full bg-emerald-500 items-center justify-center' : 'w-6 h-6 rounded-full border-2 border-stone-300 dark:border-slate-700 items-center justify-center'}
+                      >
+                        {exerciseDone && <Text className="text-white text-xs">✓</Text>}
+                      </Pressable>
+                      <View className="flex-1">
+                        <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold">{exercise.icon} {exercise.name}</Text>
+                        <Text className="text-slate-500 text-xs">
+                          {exercise.muscle} · {exercise.uni ? Math.round(rows.length / 2) : rows.length} set{(exercise.uni ? Math.round(rows.length / 2) : rows.length) === 1 ? '' : 's'}{exercise.uni ? ' · each side' : ''}{isReducedThisExercise ? ' · lightened' : ''}
+                        </Text>
+                        <RestrictionFitNote exerciseId={exerciseId} ctx={equipmentContext} />
+                        {(() => {
+                          // Recomputed from setLogs (past sessions), not
+                          // the live row state — this should keep
+                          // showing why the prefill happened even as the
+                          // person edits today's numbers, not disappear
+                          // or change as soon as they type.
+                          const suggestion = suggestNextSet(exerciseId, exercise.reps, exercise.repsMin, exercise.inc, setLogs);
+                          if (suggestion.reason === 'increase') {
+                            return <Text className="text-emerald-600 dark:text-emerald-400 text-[11px] mt-0.5">↑ Try {suggestion.weight} — you hit the top of your range last time</Text>;
+                          }
+                          if (suggestion.reason === 'repeat') {
+                            return <Text className="text-slate-400 text-[11px] mt-0.5">Beat {suggestion.reps} reps to earn a weight increase next time</Text>;
+                          }
+                          return null;
+                        })()}
+                      </View>
                     </View>
-                  </View>
+                  </Pressable>
                   <DragHandle controller={drag.controller} id={exerciseId} label={exercise.name} />
-                  <Pressable onPress={() => { setSwappingId(exerciseId); setShowAddExercise(false); setExerciseSearch(''); }} className="px-2">
+                  <Pressable onPress={() => { setSwappingId(exerciseId); setShowAddExercise(false); setExerciseSearch(''); }} className="px-2 py-2">
                     <Text className="text-slate-400 text-xs">🔄</Text>
                   </Pressable>
-                  <Pressable onPress={() => requestRemoveExercise(exerciseId)} className="px-2">
+                  <Pressable onPress={() => requestRemoveExercise(exerciseId)} className="px-2 py-2">
                     <Text className="text-slate-400 text-xs">✕</Text>
                   </Pressable>
-                  <Text className="text-slate-400 text-xs">{isExpanded ? '▲' : '▼'}</Text>
-                </Pressable>
+                  <Pressable onPress={() => setExpandedId(isExpanded ? null : exerciseId)} className="pl-1 py-2">
+                    <Text className="text-slate-400 text-xs">{isExpanded ? '▲' : '▼'}</Text>
+                  </Pressable>
+                </View>
 
                 {swappingId === exerciseId && (
                   <View className="px-4 pb-4">
