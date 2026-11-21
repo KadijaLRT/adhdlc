@@ -31,7 +31,8 @@ function lookCss(scope: string, look: Look): string {
 /* Chunky: a solid lower edge like a game key. It sinks when pressed. */
 ${b} { background-color: var(--f); background-image: linear-gradient(180deg, var(--hi), var(--f) 55%);
   box-shadow: 0 5px 0 var(--edge), 0 10px 14px -4px rgba(0,0,0,0.45), inset 0 2px 0 rgba(255,255,255,0.35); }
-${b}:hover { filter: brightness(1.06); }
+${b} { margin-bottom: 5px; }
+@media (hover: hover) { ${b}:hover { filter: brightness(1.06); } }
 ${b}:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--edge), 0 3px 6px -2px rgba(0,0,0,0.45), inset 0 2px 0 rgba(255,255,255,0.25); }
 `;
   }
@@ -41,7 +42,7 @@ ${b}:active { transform: translateY(4px); box-shadow: 0 1px 0 var(--edge), 0 3px
 ${b} { background-color: var(--f);
   background-image: linear-gradient(180deg, rgba(255,255,255,0.4) 0%, rgba(255,255,255,0) 50%), linear-gradient(180deg, var(--hi) 0%, var(--f) 48%, var(--lo) 100%);
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -2px 4px rgba(0,0,0,0.18), 0 10px 22px -6px color-mix(in srgb, var(--f) 55%, transparent), 0 2px 4px rgba(0,0,0,0.35); }
-${b}:hover { filter: brightness(1.07); }
+@media (hover: hover) { ${b}:hover { filter: brightness(1.07); } }
 ${b}:active { transform: translateY(1px) scale(0.985); box-shadow: inset 0 2px 5px rgba(0,0,0,0.3), 0 3px 8px -4px color-mix(in srgb, var(--f) 55%, transparent); }
 `;
   }
@@ -51,7 +52,8 @@ ${b}:active { transform: translateY(1px) scale(0.985); box-shadow: inset 0 2px 5
 ${b} { background-color: var(--f);
   background-image: linear-gradient(180deg, rgba(255,255,255,0.32) 0%, rgba(255,255,255,0) 50%), linear-gradient(180deg, var(--hi) 0%, var(--f) 50%, var(--lo) 100%);
   box-shadow: 0 4px 0 var(--edge), 0 12px 20px -6px color-mix(in srgb, var(--f) 50%, transparent), inset 0 1px 0 rgba(255,255,255,0.55), inset 0 -2px 3px rgba(0,0,0,0.16); }
-${b}:hover { filter: brightness(1.06); }
+${b} { margin-bottom: 4px; }
+@media (hover: hover) { ${b}:hover { filter: brightness(1.06); } }
 ${b}:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge), 0 4px 8px -4px color-mix(in srgb, var(--f) 50%, transparent), inset 0 2px 4px rgba(0,0,0,0.25); }
 `;
   }
@@ -59,7 +61,7 @@ ${b}:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--edge), 0 4px
 /* Subtle raised: a flat face with a light top bevel and a small shadow. */
 ${b} { background-color: var(--f); background-image: none;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.28), inset 0 -2px 0 rgba(0,0,0,0.22), 0 2px 5px rgba(0,0,0,0.4); }
-${b}:hover { filter: brightness(1.06); }
+@media (hover: hover) { ${b}:hover { filter: brightness(1.06); } }
 ${b}:active { transform: translateY(1px); box-shadow: inset 0 2px 4px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.3); }
 `;
 }
@@ -143,5 +145,17 @@ export const WEB_BUTTON_CSS =
   LOOKS.map((l) => lookCss(`html [data-look="${l}"]`, l)).join('') +
   LOOKS.map((l) => surfaceCss(`html [data-surf="${l}"]`, l)).join('') +
   `
+/* Ensure React Navigation web tab bar respects iOS safe-area-inset-bottom and never clips label descenders */
+[role="tablist"] {
+  height: auto !important;
+  min-height: 62px;
+  padding-top: 6px !important;
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+  box-sizing: border-box !important;
+}
+[role="tablist"] [role="tab"] {
+  overflow: visible !important;
+  padding-bottom: 2px !important;
+}
 @media (prefers-reduced-motion: reduce) { .btn3d, .surf3d, .inset3d, .bar3d { transition: none; } }
 `;

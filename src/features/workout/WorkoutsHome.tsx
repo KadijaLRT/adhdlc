@@ -126,11 +126,11 @@ function DayCard({
         <Text className="text-indigo-700 text-xs font-bold dark:text-indigo-300">DAY {day.dayLetter}</Text>
       </View>
       <Text className="text-slate-900 text-xl font-bold mb-1 dark:text-slate-100">{day.title}</Text>
-      <Text className="text-slate-500 text-xs mb-1">{day.muscleGroups.map(bodyGroupLabel).join(' & ')}</Text>
+      <Text className="text-slate-500 text-xs mb-1">{day.muscleGroups.map(bodyGroupLabel).join(' · ')}</Text>
       {isCheckingResume ? (
         <Text className="text-slate-400 text-xs mb-4">Checking for a workout in progress…</Text>
       ) : (
-        <Text className="text-slate-500 text-xs mb-4">~{day.estimatedMinutes} min (estimate) · {displayedExerciseIds.length} exercises</Text>
+        <Text className="text-slate-500 text-xs mb-4">~{displayedExerciseIds.length * 10} min (estimate) · {displayedExerciseIds.length} exercises</Text>
       )}
       {!!restrictionNote && !isResumable && !isCheckingResume && (
         <Text className="text-emerald-600 dark:text-emerald-400 text-xs -mt-2 mb-4">🩹 {restrictionNote}</Text>
@@ -172,7 +172,7 @@ function DayCard({
 
       {isResumable && (
         <View className="bg-indigo-400/10 border border-indigo-400 rounded-xl p-3 mb-3">
-          <Text className="text-indigo-700 dark:text-indigo-300 text-xs font-medium">↩ Workout in progress — pick up right where you left off.</Text>
+          <Text className="text-indigo-700 dark:text-indigo-300 text-xs font-medium">↩ Workout in progress — pick up where you left off.</Text>
         </View>
       )}
       <Pressable onPress={onStart} className="bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500 btn3d btn3d-p">

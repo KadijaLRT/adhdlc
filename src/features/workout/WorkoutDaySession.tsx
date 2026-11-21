@@ -317,9 +317,23 @@ export default function WorkoutDaySession({
     setConfirmingTimerReset(false);
   };
 
-  const totalSets = useMemo(() => sessionExerciseIds.reduce((sum, id) => sum + (rowsByExercise[id]?.length || 0), 0), [sessionExerciseIds, rowsByExercise]);
-  const doneSets = useMemo(() => sessionExerciseIds.reduce((sum, id) => sum + (rowsByExercise[id]?.filter((r) => r.done).length || 0), 0), [sessionExerciseIds, rowsByExercise]);
-  const allDone = totalSets > 0 && doneSets === totalSets;
+  const totalRows = useMemo(() => sessionExerciseIds.reduce((sum, id) => sum + (rowsByExercise[id]?.length || 0), 0), [sessionExerciseIds, rowsByExercise]);
+  const doneRows = useMemo(() => sessionExerciseIds.reduce((sum, id) => sum + (rowsByExercise[id]?.filter((r) => r.done).length || 0), 0), [sessionExerciseIds, rowsByExercise]);
+  const totalSets = useMemo(
+    () => sessionExerciseIds.reduce((sum, id) => {
+      const count = rowsByExercise[id]?.length || 0;
+      return sum + (WORKOUT_EXERCISES?.[id]?.uni ? Math.round(count / 2) : count);
+    }, 0),
+    [sessionExerciseIds, rowsByExercise]
+  );
+  const doneSets = useMemo(
+    () => sessionExerciseIds.reduce((sum, id) => {
+      const done = rowsByExercise[id]?.filter((r) => r.done).length || 0;
+      return sum + (WORKOUT_EXERCISES?.[id]?.uni ? Math.floor(done / 2) : done);
+    }, 0),
+    [sessionExerciseIds, rowsByExercise]
+  );
+  const allDone = totalRows > 0 && doneRows === totalRows;
 
   const handleAddSet = (exerciseId: string) => {
     const exercise = getExercise(exerciseId);
@@ -560,13 +574,13 @@ export default function WorkoutDaySession({
         </View>
         <View className="flex-row items-center gap-2 mt-2">
           <View className="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-800 overflow-hidden">
-            <View className="h-full bg-emerald-500 rounded-full" style={{ width: `${totalSets > 0 ? (doneSets / totalSets) * 100 : 0}%` }} />
+            <View className="h-full bg-emerald-500 rounded-full" style={{ width: `${totalRows > 0 ? (doneRows / totalRows) * 100 : 0}%` }} />
           </View>
           <Text className="text-slate-500 text-xs font-medium">{doneSets}/{totalSets} sets</Text>
         </View>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20 }} scrollEnabled={!drag.dragging}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 72 }} scrollEnabled={!drag.dragging}>
         <View className="w-full max-w-md self-center">
           {recordBanner && (
             <View className="bg-amber-400/10 border border-amber-400 rounded-xl p-3 mb-4">
@@ -605,16 +619,18 @@ export default function WorkoutDaySession({
             return (
               <Animated.View key={exerciseId} {...drag.itemProps(exerciseId)}>
               <View className="bg-white dark:bg-slate-900 rounded-2xl mb-3 overflow-hidden surf3d">
-                <View className="flex-row items-center pr-4">
-                  <Pressable onPress={() => setExpandedId(isExpanded ? null : exerciseId)} className="flex-1 p-4 pr-2 flex-row items-center justify-between">
-                    <View className="flex-row items-center gap-2 flex-1 pr-2">
-                      <Pressable
-                        onPress={() => handleToggleExerciseDone(exerciseId)}
-                        hitSlop={8}
-                        className={exerciseDone ? 'w-6 h-6 rounded-full bg-emerald-500 items-center justify-center' : 'w-6 h-6 rounded-full border-2 border-stone-300 dark:border-slate-700 items-center justify-center'}
-                      >
-                        {exerciseDone && <Text className="text-white text-xs">✓</Text>}
-                      </Pressable>
+                <View className="flex-row items-center pl-4 pr-3">
+                  <Pressable
+                    onPress={() => handleToggleExerciseDone(exerciseId)}
+                    hitSlop={8}
+                    accessibilityRole="checkbox"
+                    accessibilityState={{ checked: exerciseDone }}
+                    className={exerciseDone ? 'w-6 h-6 rounded-full bg-emerald-500 items-center justify-center shrink-0 mr-2.5' : 'w-6 h-6 rounded-full border-2 border-stone-300 dark:border-slate-700 items-center justify-center shrink-0 mr-2.5'}
+                  >
+                    {exerciseDone && <Text className="text-white text-xs">✓</Text>}
+                  </Pressable>
+                  <Pressable onPress={() => setExpandedId(isExpanded ? null : exerciseId)} className="flex-1 py-4 pr-2 flex-row items-center justify-between">
+                    <View className="flex-row items-center gap-2 flex-1">
                       <View className="flex-1">
                         <Text className="text-slate-900 dark:text-slate-100 text-sm font-semibold">{exercise.icon} {exercise.name}</Text>
                         <Text className="text-slate-500 text-xs">
@@ -639,16 +655,18 @@ export default function WorkoutDaySession({
                       </View>
                     </View>
                   </Pressable>
-                  <DragHandle controller={drag.controller} id={exerciseId} label={exercise.name} />
-                  <Pressable onPress={() => { setSwappingId(exerciseId); setShowAddExercise(false); setExerciseSearch(''); }} className="px-2 py-2">
-                    <Text className="text-slate-400 text-xs">🔄</Text>
-                  </Pressable>
-                  <Pressable onPress={() => requestRemoveExercise(exerciseId)} className="px-2 py-2">
-                    <Text className="text-slate-400 text-xs">✕</Text>
-                  </Pressable>
-                  <Pressable onPress={() => setExpandedId(isExpanded ? null : exerciseId)} className="pl-1 py-2">
-                    <Text className="text-slate-400 text-xs">{isExpanded ? '▲' : '▼'}</Text>
-                  </Pressable>
+                  <View className="flex-row items-center shrink-0">
+                    <DragHandle controller={drag.controller} id={exerciseId} label={exercise.name} />
+                    <Pressable onPress={() => { setSwappingId(exerciseId); setShowAddExercise(false); setExerciseSearch(''); }} hitSlop={4} className="w-8 h-9 items-center justify-center shrink-0">
+                      <Text className="text-slate-400 text-sm">🔄</Text>
+                    </Pressable>
+                    <Pressable onPress={() => requestRemoveExercise(exerciseId)} hitSlop={4} className="w-8 h-9 items-center justify-center shrink-0">
+                      <Text className="text-slate-400 text-sm">✕</Text>
+                    </Pressable>
+                    <Pressable onPress={() => setExpandedId(isExpanded ? null : exerciseId)} hitSlop={4} className="w-7 h-9 items-center justify-center shrink-0">
+                      <Text className="text-slate-400 text-xs">{isExpanded ? '▲' : '▼'}</Text>
+                    </Pressable>
+                  </View>
                 </View>
 
                 {swappingId === exerciseId && (

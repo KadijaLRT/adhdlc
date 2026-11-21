@@ -103,7 +103,7 @@ export default function WorkoutDaySchedulePicker({ weekdayIndex }: { weekdayInde
                     {isSelected && <Text className="text-emerald-600 dark:text-emerald-400 text-lg">✓</Text>}
                   </View>
                   <Text className="text-slate-500 text-sm mt-1 ml-11">
-                    {content.muscleGroups.map(bodyGroupLabel).join(' & ')} · {content.estimatedMinutes}-{content.estimatedMinutes + 10} min
+                    {content.muscleGroups.map(bodyGroupLabel).join(' · ')} · {content.estimatedMinutes}-{content.estimatedMinutes + 10} min
                   </Text>
                 </Pressable>
               );

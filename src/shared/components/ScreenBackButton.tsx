@@ -31,7 +31,7 @@ export function ScreenBackButton({ toHome = false, dark = false }: { toHome?: bo
     // floor means there's always at least a small gap under the
     // status bar even in that stale-install case, instead of content
     // rendering flush against (and behind) it.
-    <View className={`px-5 pb-1 bar3d bar3d-top relative z-10 ${dark ? 'bg-slate-950' : 'bg-stone-50 dark:bg-slate-950'}`} style={{ paddingTop: Math.max(insets.top, 12) }}>
+    <View className={`px-5 pb-1 bar3d bar3d-top relative z-10 ${dark ? 'bg-slate-950' : 'bg-stone-50 dark:bg-slate-950'}`} style={{ paddingTop: insets.top > 0 ? 4 : 12 }}>
       <Pressable onPress={handlePress} accessibilityRole="button" accessibilityLabel={toHome ? 'Go to Home' : 'Go back'} className="py-2 flex-row items-center gap-1">
         <Text className={dark ? 'text-slate-400 text-sm' : 'text-slate-500 text-sm'}>{toHome ? '🏠 Home' : '← Back'}</Text>
       </Pressable>

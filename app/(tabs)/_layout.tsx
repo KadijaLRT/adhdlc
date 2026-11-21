@@ -1,10 +1,11 @@
 import { Tabs } from 'expo-router';
-import { Text } from 'react-native';
+import { Platform, Text } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColorScheme } from 'nativewind';
 import { useThemeHex } from '@/theme/useThemeHex';
 
 function TabIcon({ emoji }: { emoji: string }) {
-  return <Text style={{ fontSize: 20 }}>{emoji}</Text>;
+  return <Text style={{ fontSize: 18, lineHeight: 22 }}>{emoji}</Text>;
 }
 
 // Seven tabs, matching the document's IA: Home (command center), Today
@@ -23,6 +24,8 @@ export default function TabsLayout() {
   // everywhere else.
   const { colorScheme } = useColorScheme();
   const isDark = colorScheme === 'dark';
+  const insets = useSafeAreaInsets();
+  const bottomPad = Math.max(insets.bottom, 8);
 
   return (
     <Tabs
@@ -33,6 +36,21 @@ export default function TabsLayout() {
         tabBarStyle: {
           backgroundColor: isDark ? '#020617' : '#fafaf9',
           borderTopColor: isDark ? '#1e293b' : '#e7e5e4',
+          paddingTop: 6,
+          paddingBottom: bottomPad,
+          height: Platform.OS === 'web' ? undefined : 54 + bottomPad,
+          minHeight: 62,
+        },
+        tabBarItemStyle: {
+          paddingVertical: 2,
+          paddingHorizontal: 0,
+          justifyContent: 'center',
+        },
+        tabBarLabelStyle: {
+          fontSize: 10,
+          lineHeight: 14,
+          marginTop: 2,
+          marginBottom: 2,
         },
       }}
     >

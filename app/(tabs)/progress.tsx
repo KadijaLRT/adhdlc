@@ -4,7 +4,7 @@ import { ScreenBackButton } from '@/shared/components/ScreenBackButton';
 
 export default function ProgressTabRoute() {
   return (
-    <SafeAreaView className="flex-1 bg-stone-50 dark:bg-slate-950">
+    <SafeAreaView edges={['top', 'left', 'right']} className="flex-1 bg-stone-50 dark:bg-slate-950">
       <ScreenBackButton toHome />
       <ProgressHub />
     </SafeAreaView>
