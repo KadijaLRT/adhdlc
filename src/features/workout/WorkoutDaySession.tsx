@@ -14,6 +14,7 @@ import { toLocalDateString } from '@/shared/formatDate';
 import { getWarmupForGroups, warmupCategoryForGroups } from '@/content/warmupContent';
 import { buildCareRoutine } from '@/content/restrictionCare';
 import { restrictionLabels } from './restrictionSession';
+import { sanitizeSessionExerciseIds } from './sessionExerciseSync';
 import { useDragReorder, DragHandle } from '@/shared/components/useDragReorder';
 import InlineStepTimer from '@/shared/components/InlineStepTimer';
 import InlineSetTimer from '@/shared/components/InlineSetTimer';
@@ -133,8 +134,9 @@ export default function WorkoutDaySession({
     return base ? getEffectiveExercise(base, fitnessPreferences) : undefined;
   };
 
-  const [sessionExerciseIds, setSessionExerciseIds] = useState<string[]>(exerciseIds);
-  const [expandedId, setExpandedId] = useState<string | null>(exerciseIds[0] || null);
+  const initialExerciseIds = useMemo(() => sanitizeSessionExerciseIds(exerciseIds), [exerciseIds]);
+  const [sessionExerciseIds, setSessionExerciseIds] = useState<string[]>(initialExerciseIds);
+  const [expandedId, setExpandedId] = useState<string | null>(initialExerciseIds[0] || null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [recordBanner, setRecordBanner] = useState<string | null>(null);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
@@ -198,7 +200,7 @@ export default function WorkoutDaySession({
   // from there for just this session.
   const [rowsByExercise, setRowsByExercise] = useState<Record<string, SetRow[]>>(() => {
     const initial: Record<string, SetRow[]> = {};
-    for (const id of exerciseIds) {
+    for (const id of initialExerciseIds) {
       const exercise = getExercise(id);
       if (!exercise) continue;
       const isReduced = energyLightened || (reducedGroups?.length && reducedGroups.includes(exercise.group));
@@ -230,8 +232,8 @@ export default function WorkoutDaySession({
           if (isStale) {
             await repo.saveWorkoutSessionDraft(null);
           } else {
-            // Ignore ids from before the exercise list was rebuilt.
-            const restoredIds = (draft.sessionExerciseIds || []).filter((id) => !!WORKOUT_EXERCISES?.[id]);
+            // Ignore ids from before the exercise list was rebuilt and drop duplicates.
+            const restoredIds = sanitizeSessionExerciseIds(draft.sessionExerciseIds);
             if (restoredIds.length) setSessionExerciseIds(restoredIds);
             if (draft.rowsByExercise) setRowsByExercise(draft.rowsByExercise);
             if (draft.sessionStartedAt) setStartedAtMs(new Date(draft.sessionStartedAt).getTime());

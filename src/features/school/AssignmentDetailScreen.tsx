@@ -199,7 +199,7 @@ export default function AssignmentDetailScreen({ assignmentId }: { assignmentId:
                       <View className={step.isComplete ? 'w-5 h-5 rounded-full bg-emerald-500 items-center justify-center' : 'w-5 h-5 rounded-full border-2 border-stone-300'}>
                         {step.isComplete && <Text className="text-white text-xs">✓</Text>}
                       </View>
-                      <Text className={step.isComplete ? 'text-slate-500 line-through flex-1' : 'text-slate-900 flex-1'}>{step.title}</Text>
+                      <Text className={step.isComplete ? 'text-slate-500 line-through flex-1' : 'text-slate-900 dark:text-slate-100 flex-1'}>{step.title}</Text>
                     </Pressable>
                   ))}
                 </View>

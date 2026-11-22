@@ -22,6 +22,7 @@ import CardioActivityCard from './CardioActivityCard';
 import { Heading, Subheading } from '@/shared/components/Heading';
 import { getRepository } from '@/core/storage';
 import { buildSessionKey } from './WorkoutDaySession';
+import { sanitizeSessionExerciseIds } from './sessionExerciseSync';
 import type { WorkoutSessionDraft } from '@/store/slices/workoutSlice';
 import { toLocalDateString } from '@/shared/formatDate';
 
@@ -70,14 +71,15 @@ function firstSixTwelveTwentyFiveGroup(muscleGroups: string[]): SixTwelveTwentyF
 }
 
 function DayCard({
-  day, onStart, onBodyCheckin, onLayout, programId, isResumable, resumingExerciseIds, isCheckingResume, restrictionNote,
+  day, onStart, onRestart, onBodyCheckin, onLayout, programId, isResumable, resumingExerciseIds, previewExerciseIds, isCheckingResume, restrictionNote,
 }: {
-  day: WeeklySplitDay; onStart: () => void; onBodyCheckin: () => void; onLayout: (y: number) => void; programId?: string; isResumable?: boolean; resumingExerciseIds?: string[]; isCheckingResume?: boolean;
+  day: WeeklySplitDay; onStart: () => void; onRestart: () => void; onBodyCheckin: () => void; onLayout: (y: number) => void; programId?: string; isResumable?: boolean; resumingExerciseIds?: string[]; previewExerciseIds?: string[]; isCheckingResume?: boolean;
   /** One line explaining how saved restrictions shape this workout. Empty when there are none. */
   restrictionNote?: string;
 }) {
   const router = useRouter();
   const [showCardioLog, setShowCardioLog] = useState(false);
+  const [confirmingRestart, setConfirmingRestart] = useState(false);
   const sixTwelveTwentyFiveGroup = firstSixTwelveTwentyFiveGroup(day.muscleGroups);
   const sixTwelveTwentyFiveLabel = SIX_TWELVE_TWENTYFIVE_GROUPS.find((g) => g.id === sixTwelveTwentyFiveGroup)?.label;
   const setLogs = useAppStore(selectSetLogs);
@@ -99,7 +101,9 @@ function DayCard({
   // the check actually completed — reported as the preview briefly
   // showing something different right after opening the screen, with
   // no action taken in between.
-  const displayedExerciseIds = isResumable && resumingExerciseIds?.length ? resumingExerciseIds : day.exerciseIds;
+  const displayedExerciseIds = isResumable && resumingExerciseIds?.length
+    ? resumingExerciseIds
+    : (previewExerciseIds?.length ? previewExerciseIds : day.exerciseIds);
 
   if (day.isRestDay) {
     return (
@@ -178,6 +182,34 @@ function DayCard({
       <Pressable onPress={onStart} className="bg-indigo-600 rounded-2xl py-4 items-center active:bg-indigo-500 btn3d btn3d-p">
         <Text className="text-white font-semibold">{isResumable ? `▶ Resume Day ${day.dayLetter}` : `▶ Start Day ${day.dayLetter}`}</Text>
       </Pressable>
+
+      {isResumable && (
+        confirmingRestart ? (
+          <View className="bg-amber-400/10 border border-amber-400/50 rounded-xl p-3 mt-3">
+            <Text className="text-slate-800 dark:text-slate-200 text-xs font-medium mb-2">
+              Restart Day {day.dayLetter} from scratch? Your in-progress draft for today will be cleared.
+            </Text>
+            <View className="flex-row gap-2">
+              <Pressable
+                onPress={() => setConfirmingRestart(false)}
+                className="flex-1 bg-stone-100 dark:bg-slate-800 rounded-xl py-2 items-center"
+              >
+                <Text className="text-slate-600 dark:text-slate-300 text-xs font-semibold">Cancel</Text>
+              </Pressable>
+              <Pressable
+                onPress={() => { setConfirmingRestart(false); onRestart(); }}
+                className="flex-1 bg-amber-500 rounded-xl py-2 items-center active:bg-amber-400 btn3d btn3d-a"
+              >
+                <Text className="text-white text-xs font-semibold">Restart</Text>
+              </Pressable>
+            </View>
+          </View>
+        ) : (
+          <Pressable onPress={() => setConfirmingRestart(true)} className="items-center pt-3">
+            <Text className="text-slate-500 text-xs">↻ Restart Day {day.dayLetter} from scratch</Text>
+          </Pressable>
+        )
+      )}
 
       {sixTwelveTwentyFiveGroup && !isResumable && (
         <Pressable
@@ -352,21 +384,15 @@ export default function WorkoutsHome() {
    * produced two different exercise sets for the exact same day,
    * depending purely on which button was tapped.
    */
-  const resolveEffectiveExerciseIds = (day: WeeklySplitDay): { exerciseIds: string[]; sessionStartedAt?: string; resumed: boolean } => {
-    const sessionKey = buildSessionKey(activeProgram?.id, day.title);
-    const matchingDraft = inProgressDraft?.sessionKey === sessionKey ? inProgressDraft : null;
+  /** Restrictions are applied once, right before a fresh session opens (Start Day here, Body Check-in on its Continue). */
+  const withRestrictions = (ids: string[]): string[] =>
+    applyRestrictionsToSession(ids, equipmentContext, {
+      energyLevel,
+      seed: Number(toLocalDateString(new Date()).replace(/-/g, '')),
+    });
 
-    if (matchingDraft) {
-      // Drop ids from before the list was rebuilt so a resumed session never points at an exercise that no longer exists.
-      const draftIds = (matchingDraft.sessionExerciseIds || []).filter((id) => !!WORKOUT_EXERCISES?.[id]);
-      return {
-        exerciseIds: draftIds.length ? draftIds : day.exerciseIds,
-        sessionStartedAt: matchingDraft.sessionStartedAt,
-        // A resumed session already has its restriction changes baked in; applying them again would duplicate them.
-        resumed: true,
-      };
-    }
-
+  /** Pure, deterministic selection for today so DayCard previews and Start Day always show the exact same lineup. */
+  const computeFreshSession = (day: WeeklySplitDay): { baseIds: string[]; effectiveExerciseIds: string[] } => {
     const seed = Number(toLocalDateString(new Date()).replace(/-/g, ''));
     const variedIds = getVariedExerciseSelection(
       day.muscleGroups,
@@ -378,17 +404,37 @@ export default function WorkoutsHome() {
     );
     const baseIds = variedIds.length ? variedIds : day.exerciseIds;
     const energyAdjustedIds = getEnergyAdjustedExerciseIds(baseIds, day.muscleGroups, energyLevel, equipmentContext);
-    const effectiveExerciseIds = orderExercisesLikeATrainer(energyAdjustedIds, fitnessPreferences?.focusAreas);
+    const effectiveExerciseIds = sanitizeSessionExerciseIds(
+      orderExercisesLikeATrainer(energyAdjustedIds, fitnessPreferences?.focusAreas)
+    );
+    return { baseIds, effectiveExerciseIds };
+  };
+
+  const previewExerciseIdsForDay = (day: WeeklySplitDay): string[] => {
+    if (day.isRestDay || !day.exerciseIds.length) return [];
+    const { effectiveExerciseIds } = computeFreshSession(day);
+    return sanitizeSessionExerciseIds(withRestrictions(effectiveExerciseIds));
+  };
+
+  const resolveEffectiveExerciseIds = (day: WeeklySplitDay): { exerciseIds: string[]; sessionStartedAt?: string; resumed: boolean } => {
+    const sessionKey = buildSessionKey(activeProgram?.id, day.title);
+    const matchingDraft = inProgressDraft?.sessionKey === sessionKey ? inProgressDraft : null;
+
+    if (matchingDraft) {
+      // Drop ids from before the list was rebuilt so a resumed session never points at an exercise that no longer exists.
+      const draftIds = sanitizeSessionExerciseIds(matchingDraft.sessionExerciseIds);
+      return {
+        exerciseIds: draftIds.length ? draftIds : sanitizeSessionExerciseIds(day.exerciseIds),
+        sessionStartedAt: matchingDraft.sessionStartedAt,
+        // A resumed session already has its restriction changes baked in; applying them again would duplicate them.
+        resumed: true,
+      };
+    }
+
+    const { baseIds, effectiveExerciseIds } = computeFreshSession(day);
     recordUsedExerciseCombo(day.title, baseIds);
     return { exerciseIds: effectiveExerciseIds, resumed: false };
   };
-
-  /** Restrictions are applied once, right before a fresh session opens (Start Day here, Body Check-in on its Continue). */
-  const withRestrictions = (ids: string[]): string[] =>
-    applyRestrictionsToSession(ids, equipmentContext, {
-      energyLevel,
-      seed: Number(toLocalDateString(new Date()).replace(/-/g, '')),
-    });
 
   const handleStartDay = (day: WeeklySplitDay) => {
     if (!day.exerciseIds.length) return;
@@ -406,6 +452,31 @@ export default function WorkoutsHome() {
         // timer reflects when the workout actually began rather than
         // restarting from zero.
         sessionStartedAt: sessionStartedAt || new Date().toISOString(),
+        energyLightened: isLowEnergyToday ? '1' : '',
+      },
+    });
+  };
+
+  const handleRestartDay = async (day: WeeklySplitDay) => {
+    if (!day.exerciseIds.length) return;
+    try {
+      const repo = await getRepository();
+      await repo.saveWorkoutSessionDraft(null);
+      setInProgressDraft(null);
+    } catch (error) {
+      console.error('WorkoutsHome: failed to clear workout draft on restart', error);
+    }
+    const { baseIds, effectiveExerciseIds } = computeFreshSession(day);
+    const withRestrict = sanitizeSessionExerciseIds(withRestrictions(effectiveExerciseIds));
+    if (!withRestrict.length) return;
+    recordUsedExerciseCombo(day.title, baseIds);
+    router?.push?.({
+      pathname: '/workout/day-session',
+      params: {
+        exerciseIds: withRestrict.join(','),
+        programId: activeProgram?.id || '',
+        dayTitle: day.title,
+        sessionStartedAt: new Date().toISOString(),
         energyLightened: isLowEnergyToday ? '1' : '',
       },
     });
@@ -517,11 +588,13 @@ export default function WorkoutsHome() {
                   key={day.weekdayLabel}
                   day={day}
                   onStart={() => handleStartDay(day)}
+                  onRestart={() => handleRestartDay(day)}
                   onBodyCheckin={() => handleBodyCheckin(day)}
                   onLayout={(y) => { cardOffsets.current[index] = y; }}
                   programId={activeProgram?.id}
                   isResumable={!!matchingDraft}
-                  resumingExerciseIds={matchingDraft?.sessionExerciseIds?.filter((id) => !!WORKOUT_EXERCISES?.[id])}
+                  resumingExerciseIds={sanitizeSessionExerciseIds(matchingDraft?.sessionExerciseIds)}
+                  previewExerciseIds={day.isRestDay ? [] : previewExerciseIdsForDay(day)}
                   isCheckingResume={!isDraftCheckComplete}
                   restrictionNote={restrictionNote}
                 />

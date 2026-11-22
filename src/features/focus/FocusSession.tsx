@@ -27,16 +27,21 @@ export default function FocusSession({ taskId, taskTitle, durationMinutes }: Foc
 
   useEffect(() => {
     if (phase !== 'settling') return;
+    let loop: Animated.CompositeAnimation | null = null;
     if (!reduceMotion) {
-      Animated.loop(
+      loop = Animated.loop(
         Animated.sequence([
           Animated.timing(pulse, { toValue: 1.15, duration: 2000, useNativeDriver: true }),
           Animated.timing(pulse, { toValue: 1, duration: 2000, useNativeDriver: true }),
         ])
-      ).start();
+      );
+      loop.start();
     }
     const settleTimer = setTimeout(() => { setPhase('running'); logMomentum('started_session'); }, 6000);
-    return () => clearTimeout(settleTimer);
+    return () => {
+      clearTimeout(settleTimer);
+      loop?.stop();
+    };
   }, [phase]);
 
   useEffect(() => {
@@ -45,8 +50,8 @@ export default function FocusSession({ taskId, taskTitle, durationMinutes }: Foc
       setPhase('ended');
       return;
     }
-    const interval = setInterval(() => setSecondsLeft((s) => s - 1), 1000);
-    return () => clearInterval(interval);
+    const timer = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
   }, [phase, secondsLeft]);
 
   const handleStopEarly = () => setPhase('ended');
@@ -89,7 +94,7 @@ export default function FocusSession({ taskId, taskTitle, durationMinutes }: Foc
         {phase === 'running' && (
           <>
             <Text className="text-slate-500 text-sm uppercase tracking-wider mb-2">{taskTitle || 'Focus session'}</Text>
-            <Text className="text-slate-50 text-6xl font-bold mb-10">
+            <Text className="text-slate-900 dark:text-slate-50 text-6xl font-bold mb-10">
               {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
             </Text>
             <Pressable onPress={handleStopEarly} className="py-3">

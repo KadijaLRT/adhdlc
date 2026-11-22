@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { CameraView, useCameraPermissions, type BarcodeScanningResult } from 'expo-camera';
 import { lookupBarcodeProduct } from '@/core/nutrition/openFoodFactsApi';
@@ -22,6 +22,11 @@ export default function BarcodeScannerModal({
   const [looking, setLooking] = useState(false);
   const [notFound, setNotFound] = useState(false);
   const [mountError, setMountError] = useState(false);
+  const retryTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => { if (retryTimerRef.current) clearTimeout(retryTimerRef.current); };
+  }, []);
 
   const handleScanned = async (result: BarcodeScanningResult | { nativeEvent: BarcodeScanningResult }) => {
     if (!scanning) return;
@@ -51,7 +56,8 @@ export default function BarcodeScannerModal({
     } else {
       setNotFound(true);
       // Give a moment to read the "not found" message, then let them try again.
-      setTimeout(() => { setScanning(true); }, 1800);
+      if (retryTimerRef.current) clearTimeout(retryTimerRef.current);
+      retryTimerRef.current = setTimeout(() => { setScanning(true); }, 1800);
     }
   };
 
@@ -114,21 +120,20 @@ export default function BarcodeScannerModal({
       <View className="absolute top-0 left-0 right-0 px-4 pb-3 bg-black/50" style={{ paddingTop: topInset }}>
         <Text className="text-white text-center text-sm">Point the camera at a product barcode</Text>
       </View>
-      {(looking || notFound) && (
-        <View className="absolute bottom-0 left-0 right-0 px-4 pt-4 bg-black/70 items-center" style={{ paddingBottom: bottomInset }}>
-          {looking ? (
-            <View className="flex-row items-center gap-2">
-              <ActivityIndicator color="#fff" size="small" />
-              <Text className="text-white text-sm">Looking it up…</Text>
-            </View>
-          ) : (
-            <Text className="text-amber-400 text-sm">Couldn't find that product — try again or add it manually.</Text>
-          )}
-        </View>
-      )}
-      <Pressable onPress={onClose} className="absolute bottom-0 left-0 right-0 px-4 pt-3 items-center" style={{ paddingBottom: bottomInset }}>
-        <Text className="text-slate-300 text-sm">Cancel</Text>
-      </Pressable>
+      <View className="absolute bottom-0 left-0 right-0 bg-black/70 px-4 pt-4 items-center gap-3" style={{ paddingBottom: Math.max(bottomInset, 16) }}>
+        {looking && (
+          <View className="flex-row items-center gap-2">
+            <ActivityIndicator color="#fff" size="small" />
+            <Text className="text-white text-sm">Looking it up…</Text>
+          </View>
+        )}
+        {notFound && !looking && (
+          <Text className="text-amber-400 text-sm text-center">Couldn't find that product — try again or add it manually.</Text>
+        )}
+        <Pressable onPress={onClose} className="py-2 px-6">
+          <Text className="text-slate-200 text-sm font-medium">Cancel</Text>
+        </Pressable>
+      </View>
     </View>
   );
 }

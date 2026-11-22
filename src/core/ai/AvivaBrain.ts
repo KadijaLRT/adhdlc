@@ -3,7 +3,7 @@ import { z } from 'zod';
 import { BODY_GROUP_IDS } from '@/content/bodyGroups';
 import { sanitizeString, sanitizePayload, MAX_PAYLOAD_LENGTH } from './groqSanitizer';
 import { restrictionPromptLine } from './restrictionBrief';
-import { callGroqCompletion, GroqProxyError, type GroqMessage } from './groqProxyClient';
+import { callGroqCompletion, parseModelJson, GroqProxyError, type GroqMessage } from './groqProxyClient';
 
 export interface AvivaContext {
   currentEnergyLevel: 'low' | 'medium' | 'high';
@@ -120,7 +120,7 @@ const LenientSyllabusParseResultSchema = z.object({
  * surfaced as a hard failure to the person reviewing the results.
  */
 function parseSyllabusResultLeniently(raw: string, context: string): SyllabusParseResult | null {
-  const outer = LenientSyllabusParseResultSchema.safeParse(JSON.parse(raw));
+  const outer = LenientSyllabusParseResultSchema.safeParse(parseModelJson(raw));
   if (!outer.success) {
     console.error(`AvivaBrain: ${context} schema validation failed`, outer.error.flatten());
     return null;
@@ -184,7 +184,7 @@ Time of day: ${cleanContext.timeOfDay}`.slice(0, MAX_PAYLOAD_LENGTH);
         0.4
       );
       if (!raw) return null;
-      const validated = TaskDecompositionSchema.safeParse(JSON.parse(raw));
+      const validated = TaskDecompositionSchema.safeParse(parseModelJson(raw));
       if (!validated.success) {
         console.error('AvivaBrain: decomposeTask schema validation failed', validated.error.flatten());
         return null;
@@ -223,7 +223,7 @@ Time of day: ${cleanContext.timeOfDay}${cleanContext.recentReflection ? `\nTheir
         0.4
       );
       if (!raw) return null;
-      const validated = BrainDumpResultSchema.safeParse(JSON.parse(raw));
+      const validated = BrainDumpResultSchema.safeParse(parseModelJson(raw));
       if (!validated.success) {
         console.error('AvivaBrain: brain dump schema validation failed', validated.error.flatten());
         return null;
@@ -275,7 +275,7 @@ Respond with ONLY valid JSON, no markdown fences:
         0.6 // higher than extraction tasks — generating a program benefits from some real creative variation, not a single deterministic answer every time
       );
       if (!raw) return null;
-      const parsed = JSON.parse(raw);
+      const parsed = parseModelJson(raw);
       // Defensively drop any group name the model invented anyway,
       // rather than reject the whole program over one bad entry —
       // matches the same lenient-validation reasoning already used for
@@ -329,7 +329,7 @@ Respond with ONLY valid JSON, no markdown fences:
     try {
       const raw = await callGroqCompletion(messages, 0.1); // near-zero — transcription should be faithful, not creative
       if (!raw) return null;
-      const validated = z.object({ text: z.string() }).safeParse(JSON.parse(raw));
+      const validated = z.object({ text: z.string() }).safeParse(parseModelJson(raw));
       if (!validated.success) {
         console.error('AvivaBrain: transcribeImageToText schema validation failed', validated.error.flatten());
         return null;

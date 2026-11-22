@@ -18,17 +18,17 @@ export default function RSDProtocol({ onClose }: { onClose?: () => void }) {
 
   useEffect(() => {
     if (!timerRunning) return;
+    const targetEndMs = Date.now() + secondsLeft * 1000;
     intervalRef.current = setInterval(() => {
-      setSecondsLeft((s) => {
-        if (s <= 1) {
-          if (intervalRef.current) clearInterval(intervalRef.current);
-          setTimerRunning(false);
-          return 0;
-        }
-        return s - 1;
-      });
-    }, 1000);
+      const remaining = Math.max(0, Math.ceil((targetEndMs - Date.now()) / 1000));
+      setSecondsLeft(remaining);
+      if (remaining <= 0) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setTimerRunning(false);
+      }
+    }, 500);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timerRunning]);
 
   const handleNext = () => {

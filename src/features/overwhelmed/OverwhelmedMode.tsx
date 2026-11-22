@@ -84,7 +84,7 @@ export default function OverwhelmedMode() {
 
             {timerSeconds !== null && timerSeconds > 0 && (
               <View className="bg-white rounded-2xl p-5 items-center dark:bg-slate-900 surf3d">
-                <Text className="text-slate-50 text-4xl font-bold">
+                <Text className="text-slate-900 dark:text-slate-50 text-4xl font-bold">
                   {String(Math.floor(timerSeconds / 60)).padStart(2, '0')}:{String(timerSeconds % 60).padStart(2, '0')}
                 </Text>
               </View>

@@ -1,7 +1,7 @@
 import type { z } from 'zod';
 // @ts-ignore - plain JS by design
 import { sanitizeString, sanitizePayload } from './groqSanitizer';
-import { callGroqCompletion } from './groqProxyClient';
+import { callGroqCompletion, parseModelJson } from './groqProxyClient';
 
 /**
  * Shared low-level JSON-mode call for one-off structured generation
@@ -32,7 +32,7 @@ export async function callGroqJSON<T>(
     );
     if (!raw) return null;
 
-    const validated = schema.safeParse(JSON.parse(raw));
+    const validated = schema.safeParse(parseModelJson(raw));
     if (!validated.success) {
       console.error('callGroqJSON: schema validation failed', validated.error.flatten());
       return null;

@@ -2,7 +2,7 @@ import { z } from 'zod';
 // @ts-ignore - plain JS by design
 import { restrictionPromptLine } from './restrictionBrief';
 import { sanitizeString, sanitizePayload, MAX_PAYLOAD_LENGTH } from './groqSanitizer';
-import { callGroqCompletion } from './groqProxyClient';
+import { callGroqCompletion, parseModelJson } from './groqProxyClient';
 
 export const AgentResponseSchema = z.object({
   message: z.string(),
@@ -79,7 +79,7 @@ Time of day: ${cleanContext.timeOfDay}${cleanContext.recentReflection ? `\nTheir
           0.5
         );
         if (!raw) return null;
-        const validated = AgentResponseSchema.safeParse(JSON.parse(raw));
+        const validated = AgentResponseSchema.safeParse(parseModelJson(raw));
         if (!validated.success) {
           console.error(`agent[${config.id}]: schema validation failed`, validated.error.flatten());
           return null;

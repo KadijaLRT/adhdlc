@@ -15,32 +15,27 @@ export default function PomodoroTimer() {
   const [secondsLeft, setSecondsLeft] = useState(MODES['25/5'].workMin * 60);
   const [running, setRunning] = useState(false);
   const [justSwitched, setJustSwitched] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => { if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current); };
+  }, []);
 
   useEffect(() => {
     if (!running) return;
-    intervalRef.current = setInterval(() => {
-      setSecondsLeft((s) => {
-        if (s <= 1) {
-          const nextPhase = phase === 'work' ? 'break' : 'work';
-          setPhase(nextPhase);
-          // Bug fix: reaching 0 used to switch work<->break completely
-          // silently — no sound, no vibration, no visual change beyond
-          // a tiny label swap easy to miss if the phone isn't being
-          // looked at right then. Someone using this to manage
-          // attention could come back 20 minutes later having been "on
-          // break" the whole time with no idea it happened. A brief,
-          // impossible-to-miss banner now marks every transition.
-          setJustSwitched(true);
-          setTimeout(() => setJustSwitched(false), 4000);
-          const current = MODES[mode];
-          return (nextPhase === 'work' ? current.workMin : current.breakMin) * 60;
-        }
-        return s - 1;
-      });
-    }, 1000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
-  }, [running, phase, mode]);
+    if (secondsLeft <= 0) {
+      const nextPhase = phase === 'work' ? 'break' : 'work';
+      const current = MODES[mode];
+      setPhase(nextPhase);
+      setSecondsLeft((nextPhase === 'work' ? current.workMin : current.breakMin) * 60);
+      setJustSwitched(true);
+      if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+      bannerTimerRef.current = setTimeout(() => setJustSwitched(false), 4000);
+      return;
+    }
+    const timer = setTimeout(() => setSecondsLeft((s) => s - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [running, secondsLeft, phase, mode]);
 
   const handleModeChange = (m: ModeKey) => {
     setMode(m);

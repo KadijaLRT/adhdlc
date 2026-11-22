@@ -2,20 +2,26 @@ import * as SQLite from 'expo-sqlite';
 import type { TaskRepository } from './types';
 
 const DB_NAME = 'adhd_life_coach.db';
-let dbInstance: SQLite.SQLiteDatabase | null = null;
+let dbPromise: Promise<SQLite.SQLiteDatabase> | null = null;
 
 async function getDb(): Promise<SQLite.SQLiteDatabase> {
-  if (dbInstance) return dbInstance;
-  const db = await SQLite.openDatabaseAsync(DB_NAME);
-  await db.execAsync(`
-    PRAGMA journal_mode = WAL;
-    CREATE TABLE IF NOT EXISTS key_value_store (
-      key TEXT PRIMARY KEY NOT NULL,
-      value TEXT NOT NULL
-    );
-  `);
-  dbInstance = db;
-  return db;
+  if (!dbPromise) {
+    dbPromise = (async () => {
+      const db = await SQLite.openDatabaseAsync(DB_NAME);
+      await db.execAsync(`
+        PRAGMA journal_mode = WAL;
+        CREATE TABLE IF NOT EXISTS key_value_store (
+          key TEXT PRIMARY KEY NOT NULL,
+          value TEXT NOT NULL
+        );
+      `);
+      return db;
+    })().catch((err) => {
+      dbPromise = null;
+      throw err;
+    });
+  }
+  return dbPromise;
 }
 
 async function readJson<T>(key: string, fallback: T): Promise<T> {

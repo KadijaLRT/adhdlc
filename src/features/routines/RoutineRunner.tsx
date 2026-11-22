@@ -53,8 +53,8 @@ export default function RoutineRunner({ routineId }: { routineId: string }) {
 
   useEffect(() => {
     if (!currentStep?.durationMinutes || isPaused || secondsLeft <= 0) return;
-    intervalRef.current = setInterval(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
-    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+    const timer = setTimeout(() => setSecondsLeft((s) => Math.max(0, s - 1)), 1000);
+    return () => clearTimeout(timer);
   }, [isPaused, secondsLeft, currentStep]);
 
   const goToNextStep = async () => {
@@ -137,7 +137,7 @@ export default function RoutineRunner({ routineId }: { routineId: string }) {
           </Text>
         </Pressable>
 
-        <ScrollView>
+        <ScrollView contentContainerStyle={{ paddingBottom: 48 }}>
           {steps.map((step, index) => {
             const isChecked = checkedIds.includes(step.id) || index < currentIndex;
             const isCurrent = index === currentIndex;

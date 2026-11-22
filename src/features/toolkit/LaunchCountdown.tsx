@@ -18,17 +18,18 @@ export default function LaunchCountdown() {
     if (!task.trim()) return;
     setLaunched(false);
     setCount(5);
+    const targetEndMs = Date.now() + 5000;
     if (intervalRef.current) clearInterval(intervalRef.current);
     intervalRef.current = setInterval(() => {
-      setCount((c) => {
-        if (c === null || c <= 1) {
-          if (intervalRef.current) clearInterval(intervalRef.current);
-          setLaunched(true);
-          return 0;
-        }
-        return c - 1;
-      });
-    }, 1000);
+      const remaining = Math.max(0, Math.ceil((targetEndMs - Date.now()) / 1000));
+      if (remaining <= 0) {
+        if (intervalRef.current) clearInterval(intervalRef.current);
+        setCount(0);
+        setLaunched(true);
+      } else {
+        setCount(remaining);
+      }
+    }, 250);
   };
 
   const handleReset = () => {

@@ -141,11 +141,12 @@ export default function FinalScreen() {
       // concrete answer to "wire it to functionality," not just stored data.
       if (o.wantsMedicationReminders && o.medicationTimes?.trim()) {
         const times = parseList(o.medicationTimes);
-        for (const rawTime of times) {
+        for (let idx = 0; idx < times.length; idx++) {
+          const rawTime = times[idx]!;
           const parsedTime = parseTimeToHHMM(rawTime);
           if (parsedTime) {
             await addScheduleItem({
-              id: `med-${Date.now()}-${rawTime}`,
+              id: `med-${Date.now()}-${idx}-${rawTime}`,
               label: '💊 Medication',
               time: parsedTime,
               refKind: 'freeform',

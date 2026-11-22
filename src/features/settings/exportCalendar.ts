@@ -37,7 +37,7 @@ function nextDayIcsDate(dateStr: string): string {
  * calendar apps.
  */
 function escapeIcsText(text: string): string {
-  return (text || '').replace(/\n/g, ' ').replace(/[,;\\]/g, (match) => `\\${match}`);
+  return (text || '').replace(/[\r\n]+/g, ' ').replace(/[,;\\]/g, (match) => `\\${match}`);
 }
 
 export function buildIcsContent(tasks: Task[], assignments: Assignment[]): string {
@@ -45,6 +45,7 @@ export function buildIcsContent(tasks: Task[], assignments: Assignment[]): strin
 
   for (const task of tasks || []) {
     if (task.isComplete || !task.scheduledFor) continue;
+    if (isNaN(parseLocalDate(task.scheduledFor).getTime())) continue;
     const date = formatIcsDate(task.scheduledFor);
     lines.push(
       'BEGIN:VEVENT',
@@ -58,6 +59,7 @@ export function buildIcsContent(tasks: Task[], assignments: Assignment[]): strin
 
   for (const assignment of assignments || []) {
     if (assignment.isComplete || !assignment.dueDate) continue;
+    if (isNaN(parseLocalDate(assignment.dueDate).getTime())) continue;
     const date = formatIcsDate(assignment.dueDate);
     lines.push(
       'BEGIN:VEVENT',
@@ -90,7 +92,7 @@ export async function downloadIcsFile(content: string, filename = 'schedule.ics'
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      URL.revokeObjectURL(url);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
       return true;
     } catch (error) {
       console.error('exportCalendar: web download failed', error);

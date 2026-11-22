@@ -43,7 +43,7 @@ export default function AppleHealthImportCard() {
         // see pickWebFile's own comment for why: it forces every file
         // through FileReader.readAsDataURL(), which is a real crash
         // risk for a file this size.
-        const webFile = await pickWebFile('.zip,.xml,application/zip,application/xml,text/xml');
+        const webFile = await pickWebFile('.zip,.xml');
         if (!webFile) {
           setImporting(false);
           return;

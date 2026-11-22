@@ -98,8 +98,15 @@ export const createBodyProgressSlice: StateCreator<BodyProgressSlice> = (set, ge
   // This does one date-correct merge and one write for the whole batch.
   importWeightEntries: async (entries) => {
     const existingByDate = new Map((get().weightLog || []).map((w) => [w.date, w]));
-    for (const entry of entries) {
-      if (entry?.date && typeof entry.weightLbs === 'number') existingByDate.set(entry.date, entry);
+    for (const entry of entries || []) {
+      if (
+        entry?.date &&
+        typeof entry.weightLbs === 'number' &&
+        Number.isFinite(entry.weightLbs) &&
+        entry.weightLbs > 0
+      ) {
+        existingByDate.set(entry.date, entry);
+      }
     }
     const next = Array.from(existingByDate.values()).sort((a, b) => a.date.localeCompare(b.date));
     const nextState = { ...currentState(get), weightLog: next };

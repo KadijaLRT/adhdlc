@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, Pressable, TextInput, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -59,6 +59,7 @@ export default function SixTwelveTwentyFiveRunner({
   const [reps, setReps] = useState('');
   const [phase, setPhase] = useState<'set' | 'resting' | 'done'>('set');
   const [restSecondsLeft, setRestSecondsLeft] = useState(60);
+  const restEndMsRef = useRef<number | null>(null);
   const [recordBanner, setRecordBanner] = useState<string | null>(null);
   const [showFinishConfirm, setShowFinishConfirm] = useState(false);
   const [completedSets, setCompletedSets] = useState(0);
@@ -100,20 +101,32 @@ export default function SixTwelveTwentyFiveRunner({
   }, [stepIndex, sequence]);
 
   useEffect(() => {
-    if (phase !== 'resting') return;
-    if (restSecondsLeft <= 0) {
-      const isLastStep = !sequence || stepIndex >= sequence.length - 1;
-      if (isLastStep) {
-        setPhase('done');
-      } else {
-        setStepIndex((i) => i + 1);
-        setPhase('set');
-      }
+    if (phase !== 'resting') {
+      restEndMsRef.current = null;
       return;
     }
-    const interval = setInterval(() => setRestSecondsLeft((s) => s - 1), 1000);
+    if (restEndMsRef.current === null) {
+      restEndMsRef.current = Date.now() + restSecondsLeft * 1000;
+    }
+    const tick = () => {
+      const endMs = restEndMsRef.current ?? Date.now();
+      const remaining = Math.max(0, Math.ceil((endMs - Date.now()) / 1000));
+      setRestSecondsLeft(remaining);
+      if (remaining <= 0) {
+        restEndMsRef.current = null;
+        const isLastStep = !sequence || stepIndex >= sequence.length - 1;
+        if (isLastStep) {
+          setPhase('done');
+        } else {
+          setStepIndex((i) => i + 1);
+          setPhase('set');
+        }
+      }
+    };
+    const interval = setInterval(tick, 500);
     return () => clearInterval(interval);
-  }, [phase, restSecondsLeft, stepIndex, sequence]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [phase, stepIndex, sequence]);
 
   const handleCompleteSet = async () => {
     if (!currentStep) return;
@@ -298,7 +311,15 @@ export default function SixTwelveTwentyFiveRunner({
                 Next: {SIX_TWELVE_TWENTYFIVE_ROLE_LABELS[sequence[stepIndex + 1]!.slot.role]} — {WORKOUT_EXERCISES?.[sequence[stepIndex + 1]!.slot.exerciseId]?.name}
               </Text>
             )}
-            <Pressable onPress={() => setRestSecondsLeft(0)} className="mt-6 py-2">
+            <Pressable
+              onPress={() => {
+                restEndMsRef.current = null;
+                setRestSecondsLeft(0);
+                if (!sequence || stepIndex >= sequence.length - 1) setPhase('done');
+                else { setStepIndex((i) => i + 1); setPhase('set'); }
+              }}
+              className="mt-6 py-2"
+            >
               <Text className="text-slate-500 text-sm">Skip rest ›</Text>
             </Pressable>
           </View>

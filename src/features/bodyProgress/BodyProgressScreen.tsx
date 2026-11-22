@@ -147,7 +147,7 @@ export default function BodyProgressScreen() {
               <Text className="text-slate-500 text-xs">7-day average</Text>
             </View>
             <View className="flex-1 min-w-[45%]">
-              <Text className={thirtyDayChange !== null && thirtyDayChange < 0 ? 'text-emerald-700 text-xl font-bold' : 'text-slate-800 text-xl font-bold'}>
+              <Text className={thirtyDayChange !== null && thirtyDayChange < 0 ? 'text-emerald-700 dark:text-emerald-400 text-xl font-bold' : 'text-slate-800 dark:text-slate-100 text-xl font-bold'}>
                 {thirtyDayChange !== null ? `${thirtyDayChange > 0 ? '+' : ''}${convertWeightForDisplay(thirtyDayChange, unitSystem).toFixed(1)} ${wUnit}` : '—'}
               </Text>
               <Text className="text-slate-500 text-xs">30-day change</Text>

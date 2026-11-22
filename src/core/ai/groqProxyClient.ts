@@ -81,3 +81,11 @@ export async function callGroqCompletion(messages: GroqMessage[], temperature = 
   const data = await response.json().catch(() => null);
   return data?.content || '';
 }
+
+/** Strips optional ```json ... ``` markdown fences before JSON.parse so harmless wrapping never fails parsing. */
+export function parseModelJson(raw: string): unknown {
+  const trimmed = (raw || '').trim();
+  const fenced = trimmed.match(/^```(?:json)?\s*([\s\S]*?)\s*```$/i);
+  const candidate = fenced && fenced[1] ? fenced[1].trim() : trimmed;
+  return JSON.parse(candidate);
+}

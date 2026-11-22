@@ -175,7 +175,11 @@ module.exports = async function handler(req, res) {
       return;
     }
 
-    const data = await groqResponse.json();
+    const data = await groqResponse.json().catch(() => null);
+    if (!data || !Array.isArray(data.choices)) {
+      res.status(502).json({ error: 'AI service is temporarily unavailable.' });
+      return;
+    }
     const content = data?.choices?.[0]?.message?.content || '';
     res.status(200).json({ content });
   } catch (error) {

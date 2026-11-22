@@ -56,7 +56,7 @@ export default function StuckFlow() {
         </View>
         <View className="bg-white rounded-2xl p-8 mb-8 items-center dark:bg-slate-900 surf3d">
           <Text className="text-indigo-700 text-xs uppercase tracking-wider mb-3 dark:text-indigo-300">Try this micro step</Text>
-          <Text className="text-slate-50 text-xl text-center font-medium">{currentPrompt?.text || 'Take a sip of water.'}</Text>
+          <Text className="text-slate-900 dark:text-slate-50 text-xl text-center font-medium">{currentPrompt?.text || 'Take a sip of water.'}</Text>
         </View>
         <Pressable onPress={handleNextStep} className="bg-indigo-600 rounded-full py-4 px-8 mb-4 active:bg-indigo-500 btn3d btn3d-p">
           <Text className="text-white text-lg text-center font-semibold">Did it. What&apos;s next?</Text>
@@ -69,7 +69,7 @@ export default function StuckFlow() {
               return (
                 <Pressable key={room} onPress={() => handleRoomSelect(room)}
                   className={isActive ? 'border-2 border-emerald-400 bg-emerald-400/10 rounded-full py-3 px-5' : 'border-2 border-stone-300 rounded-full py-3 px-5 active:border-slate-500'}>
-                  <Text className={isActive ? 'text-emerald-700 font-medium' : 'text-slate-700 font-medium'}>
+                  <Text className={isActive ? 'text-emerald-700 dark:text-emerald-400 font-medium' : 'text-slate-700 dark:text-slate-300 font-medium'}>
                     {bodyDoublingRoom === room ? '🟢 ' : '⚪️ '}{ROOM_LABELS[room]}
                   </Text>
                 </Pressable>

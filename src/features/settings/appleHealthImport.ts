@@ -50,22 +50,27 @@ export function pickWebFile(accept: string): Promise<File | null> {
     input.style.display = 'none';
     document.body.appendChild(input);
 
-    const cleanup = () => {
+    let settled = false;
+    let focusTimer: ReturnType<typeof setTimeout> | null = null;
+    const finish = (file: File | null) => {
+      if (settled) return;
+      settled = true;
+      if (focusTimer) clearTimeout(focusTimer);
       input.removeEventListener('change', handleChange);
-      document.body.removeChild(input);
-    };
-    const handleChange = () => {
-      const file = input.files?.[0] || null;
-      cleanup();
+      input.removeEventListener('cancel', handleCancel);
+      window.removeEventListener('focus', handleFocus);
+      if (input.parentNode) input.parentNode.removeChild(input);
       resolve(file);
     };
+    const handleChange = () => finish(input.files?.[0] || null);
+    const handleCancel = () => finish(null);
+    const handleFocus = () => {
+      // Fallback for browsers that don't fire 'cancel': wait briefly so a real 'change' event wins first.
+      focusTimer = setTimeout(() => finish(input.files?.[0] || null), 500);
+    };
     input.addEventListener('change', handleChange);
-    // No 'cancel' event wired here (unlike expo-document-picker's own
-    // web fallback) — browser support for the file input 'cancel' event
-    // is inconsistent, and resolving null only on a real change event
-    // is the safer default: a person who dismisses the picker just
-    // sees the button return to normal, no different from any other
-    // no-op cancel elsewhere in this flow.
+    input.addEventListener('cancel', handleCancel);
+    window.addEventListener('focus', handleFocus);
     input.click();
   });
 }

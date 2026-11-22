@@ -173,6 +173,10 @@ export default function WorkoutSession({
   const restPct = Math.min(100, Math.round(((restTotal - restSecondsLeft) / restTotal) * 100));
 
   const completingSetRef = useRef(false);
+  const bannerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    return () => { if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current); };
+  }, []);
   const handleCompleteSet = async () => {
     if (completingSetRef.current) return;
     completingSetRef.current = true;
@@ -182,7 +186,8 @@ export default function WorkoutSession({
       const { isNewRecord } = await logSet(swappedExerciseId, safeWeight, safeReps);
       if (isNewRecord) {
         setRecordBanner('🏆 New personal record for this exercise');
-        setTimeout(() => setRecordBanner(null), 3000);
+        if (bannerTimerRef.current) clearTimeout(bannerTimerRef.current);
+        bannerTimerRef.current = setTimeout(() => setRecordBanner(null), 3000);
       }
       setRestSecondsLeft(exercise.rest || 60);
       setPhase('resting');

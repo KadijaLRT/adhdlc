@@ -52,7 +52,7 @@ export default function SemesterCalendar() {
                   <View key={a.id} className="bg-white rounded-xl p-3 flex-row items-center gap-3 dark:bg-slate-900 surf3d">
                     <View style={{ width: 4, height: '100%', minHeight: 32, backgroundColor: courseColor(a.courseId), borderRadius: 2 }} />
                     <View className="flex-1">
-                      <Text className={a.isComplete ? 'text-slate-500 line-through text-sm' : 'text-slate-900 text-sm'}>{a.title}</Text>
+                      <Text className={a.isComplete ? 'text-slate-500 line-through text-sm' : 'text-slate-900 dark:text-slate-100 text-sm'}>{a.title}</Text>
                       <Text className="text-slate-500 text-xs">{course ? `${course.emoji} ${course.name} · ` : ''}{formatDate(a.dueDate, dateFormat)}</Text>
                     </View>
                   </View>
