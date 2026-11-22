@@ -8,7 +8,7 @@ export default function LearnRoute() {
   return (
     <SafeAreaView className="flex-1 bg-stone-50 dark:bg-slate-950">
       <ScreenBackButton />
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
         <View className="w-full max-w-md self-center">
           <LearnLibraryCard />
         </View>

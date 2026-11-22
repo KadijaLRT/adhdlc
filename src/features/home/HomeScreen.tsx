@@ -70,7 +70,7 @@ export default function HomeScreen() {
   };
 
   return (
-    <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, gap: 14 }}>
+    <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: 88, gap: 14 }}>
       <View className="w-full max-w-md self-center gap-4">
         <View>
           <Heading>{greeting}</Heading>

@@ -46,29 +46,34 @@ function TaskRow({
 }) {
   const motivatorEmojis = (task.motivators || []).map((m) => MOTIVATOR_OPTIONS.find((o) => o.id === m)?.emoji).filter(Boolean);
   return (
-    <Pressable onPress={onPress} className="bg-white rounded-xl p-4 flex-row items-center gap-3 dark:bg-slate-900 surf3d surf3d-tap">
+    <View className="bg-white rounded-xl flex-row items-center dark:bg-slate-900 surf3d">
       <Pressable
         onPress={onToggle}
+        hitSlop={8}
         accessibilityRole="checkbox"
         accessibilityState={{ checked: task.isComplete }}
-        className={task.isComplete ? 'w-6 h-6 rounded-full bg-emerald-500 items-center justify-center' : 'w-6 h-6 rounded-full border-2 border-stone-300'}
+        className="pl-4 py-4 pr-3 items-center justify-center shrink-0"
       >
-        {task.isComplete && <Text className="text-white text-xs">✓</Text>}
+        <View className={task.isComplete ? 'w-6 h-6 rounded-full bg-emerald-500 items-center justify-center' : 'w-6 h-6 rounded-full border-2 border-stone-300'}>
+          {task.isComplete && <Text className="text-white text-xs">✓</Text>}
+        </View>
       </Pressable>
-      <View className="flex-1">
-        <Text className={task.isComplete ? 'text-slate-500 line-through' : 'text-slate-900 dark:text-slate-100'}>
-          {task.priority ? `${PRIORITY_DOT[task.priority]} ` : ''}{task.title || 'Untitled task'}
-        </Text>
-        {(task.subSteps?.length || 0) > 0 && (
-          <Text className="text-slate-500 text-xs mt-1">
-            {(task.subSteps || []).filter((s) => s?.isComplete).length} of {task.subSteps?.length} steps
+      <Pressable onPress={onPress} className="flex-1 py-4 pr-4 flex-row items-center gap-3">
+        <View className="flex-1">
+          <Text className={task.isComplete ? 'text-slate-500 line-through' : 'text-slate-900 dark:text-slate-100'}>
+            {task.priority ? `${PRIORITY_DOT[task.priority]} ` : ''}{task.title || 'Untitled task'}
           </Text>
+          {(task.subSteps?.length || 0) > 0 && (
+            <Text className="text-slate-500 text-xs mt-1">
+              {(task.subSteps || []).filter((s) => s?.isComplete).length} of {task.subSteps?.length} steps
+            </Text>
+          )}
+        </View>
+        {motivatorEmojis.length > 0 && (
+          <Text className="text-sm">{motivatorEmojis.join(' ')}</Text>
         )}
-      </View>
-      {motivatorEmojis.length > 0 && (
-        <Text className="text-sm">{motivatorEmojis.join(' ')}</Text>
-      )}
-    </Pressable>
+      </Pressable>
+    </View>
   );
 }
 

@@ -10,7 +10,7 @@
  */
 const BASE_CSS = `
 .btn3d { --f: var(--b-p-face); --hi: var(--b-p-hi); --lo: var(--b-p-lo); --edge: var(--b-p-edge); --ink: var(--b-p-ink);
-  position: relative; user-select: none; -webkit-tap-highlight-color: transparent; cursor: pointer;
+  user-select: none; -webkit-tap-highlight-color: transparent; cursor: pointer;
   transition: transform 80ms ease, box-shadow 80ms ease, filter 120ms ease; }
 .btn3d.btn3d-s { --f: var(--b-s-face); --hi: var(--b-s-hi); --lo: var(--b-s-lo); --edge: var(--b-s-edge); --ink: var(--b-s-ink); }
 .btn3d.btn3d-a { --f: var(--b-a-face); --hi: var(--b-a-hi); --lo: var(--b-a-lo); --edge: var(--b-a-edge); --ink: var(--b-a-ink); }
@@ -145,16 +145,17 @@ export const WEB_BUTTON_CSS =
   LOOKS.map((l) => lookCss(`html [data-look="${l}"]`, l)).join('') +
   LOOKS.map((l) => surfaceCss(`html [data-surf="${l}"]`, l)).join('') +
   `
-/* Ensure React Navigation web tab bar respects iOS safe-area-inset-bottom and never clips label descenders */
+/* Ensure React Navigation web tab bar reserves full room for icons + labels ABOVE iOS safe-area-inset-bottom */
 [role="tablist"] {
-  height: auto !important;
-  min-height: 62px;
+  height: calc(64px + env(safe-area-inset-bottom, 0px)) !important;
   padding-top: 6px !important;
-  padding-bottom: max(8px, env(safe-area-inset-bottom, 0px)) !important;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom, 0px)) !important;
   box-sizing: border-box !important;
 }
 [role="tablist"] [role="tab"] {
   overflow: visible !important;
+  height: auto !important;
+  padding-top: 2px !important;
   padding-bottom: 2px !important;
 }
 @media (prefers-reduced-motion: reduce) { .btn3d, .surf3d, .inset3d, .bar3d { transition: none; } }

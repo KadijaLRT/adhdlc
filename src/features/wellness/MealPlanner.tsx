@@ -8,7 +8,7 @@ export default function MealPlanner() {
   const meals = getMealSuggestions(energyLevel);
 
   return (
-    <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, gap: 16 }}>
+    <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, gap: 16, paddingBottom: 48 }}>
       <View className="w-full max-w-md self-center gap-4">
         <View className="gap-3">
           <Subheading>Today&apos;s suggestions</Subheading>

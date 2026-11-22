@@ -68,7 +68,7 @@ export default function WorkoutDaySchedulePicker({ weekdayIndex }: { weekdayInde
   return (
     <SafeAreaView className="flex-1 bg-stone-50 dark:bg-slate-950">
       <ScreenBackButton />
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
         <View className="w-full max-w-md self-center">
           <Text className="text-slate-900 dark:text-slate-100 text-2xl font-bold mb-1">Schedule: {weekdayLabel}</Text>
           <Text className="text-slate-500 text-sm mb-6">Choose the workout for {weekdayFull[weekdayLabel] || weekdayLabel} this week</Text>

@@ -10,7 +10,8 @@ export default function AvivaFloatingButton() {
           before — it was overlapping bottom-of-screen content
           (primary buttons, list items) on several screens. */}
       <Pressable onPress={() => setOpen(true)}
-        className="absolute bottom-24 right-4 bg-indigo-600 rounded-full w-12 h-12 items-center justify-center shadow-lg active:bg-indigo-500 z-50 btn3d btn3d-p">
+        style={{ position: 'absolute', right: 16, bottom: 96, zIndex: 50 }}
+        className="bg-indigo-600 rounded-full w-12 h-12 items-center justify-center shadow-lg active:bg-indigo-500 btn3d btn3d-p">
         <Text className="text-lg">✨</Text>
       </Pressable>
       <BrainDumpSheet visible={open} onClose={() => setOpen(false)} />

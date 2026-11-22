@@ -169,7 +169,7 @@ export default function CourseDetailScreen({ courseId }: { courseId: string }) {
   const courseStatus = getCourseStatus(course);
 
   return (
-    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
+    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
       <View className="w-full max-w-md self-center">
         {editingCourse ? (
           <View className="bg-white dark:bg-slate-900 rounded-2xl p-4 mb-6 mt-2 surf3d">

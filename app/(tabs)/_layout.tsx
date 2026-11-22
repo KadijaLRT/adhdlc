@@ -38,8 +38,7 @@ export default function TabsLayout() {
           borderTopColor: isDark ? '#1e293b' : '#e7e5e4',
           paddingTop: 6,
           paddingBottom: bottomPad,
-          height: Platform.OS === 'web' ? undefined : 54 + bottomPad,
-          minHeight: 62,
+          height: Platform.OS === 'web' ? 64 : 56 + bottomPad,
         },
         tabBarItemStyle: {
           paddingVertical: 2,
@@ -48,8 +47,8 @@ export default function TabsLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 10,
-          lineHeight: 14,
-          marginTop: 2,
+          lineHeight: 15,
+          marginTop: 1,
           marginBottom: 2,
         },
       }}

@@ -31,7 +31,7 @@ export default function SleepScreen() {
   return (
     <SafeAreaView className="flex-1 bg-slate-950">
       <OnboardingProgressBar step={step} total={total} />
-      <ScrollView contentContainerStyle={{ padding: 24 }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 48 }}>
         <View className="w-full max-w-md self-center">
           <OnboardingStepHeader step={step} total={total} />
           <Text className="text-slate-100 text-2xl font-semibold mb-2">What do you struggle with?</Text>

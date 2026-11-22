@@ -116,7 +116,7 @@ export default function GroceryScreen() {
   const hasAnything = savedRecipes.length > 0 || !!mealPlan;
 
   return (
-    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
+    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
       <View className="w-full max-w-md self-center">
         <View className="flex-row items-center justify-between mb-1 mt-2">
           <Heading>Groceries</Heading>

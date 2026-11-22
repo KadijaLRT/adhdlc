@@ -55,7 +55,7 @@ export default function AppearanceScreen() {
   const isWeb = Platform.OS === 'web';
 
   return (
-    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
+    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
       <View className="w-full max-w-md self-center">
         <Heading className="mb-1 mt-2">Colors and buttons</Heading>
         <Text className="text-slate-500 text-sm mb-6">Pick the colors and the button feel that are easiest on you. Changes apply instantly and are saved on this device.</Text>

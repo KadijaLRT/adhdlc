@@ -51,7 +51,7 @@ export default function RestrictionsScreen() {
   return (
     <SafeAreaView className="flex-1 bg-stone-50 dark:bg-slate-950">
       <ScreenBackButton />
-      <ScrollView contentContainerStyle={{ padding: 24 }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 48 }}>
         <View className="w-full max-w-md self-center">
           <Text className="text-slate-900 dark:text-slate-100 text-xl font-bold mb-1">Injuries and weak spots</Text>
           <Text className="text-slate-500 text-sm mb-4">

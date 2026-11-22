@@ -119,15 +119,14 @@ export default function BodyCheckinScreen({
             {BODY_PARTS.filter((p) => p.section === section.id).map((part) => {
               const isFlagged = !!severityByPart[part.id];
               return (
-                <Pressable
+                <View
                   key={part.id}
-                  onPress={() => togglePart(part.id)}
-                  className={isFlagged ? 'w-[48%] border-2 border-red-400 bg-red-400/10 rounded-xl p-3' : 'w-[48%] border-2 border-transparent bg-white dark:bg-slate-900 rounded-xl p-3 surf3d surf3d-tap'}
+                  className={isFlagged ? 'w-[48%] border-2 border-red-400 bg-red-400/10 rounded-xl p-3' : 'w-[48%] border-2 border-transparent bg-white dark:bg-slate-900 rounded-xl p-3 surf3d'}
                 >
-                  <View className="flex-row items-center gap-2">
+                  <Pressable onPress={() => togglePart(part.id)} className="flex-row items-center gap-2">
                     <Text className="text-base">{part.icon}</Text>
                     <Text className={isFlagged ? 'text-red-500 text-sm font-semibold' : 'text-slate-500 text-sm font-semibold'}>{part.label}</Text>
-                  </View>
+                  </Pressable>
                   {isFlagged && (
                     <View className="flex-row gap-1 mt-2">
                       {SEVERITY_OPTIONS.map((opt) => {
@@ -144,7 +143,7 @@ export default function BodyCheckinScreen({
                       })}
                     </View>
                   )}
-                </Pressable>
+                </View>
               );
             })}
           </View>

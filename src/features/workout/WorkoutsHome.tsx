@@ -448,7 +448,7 @@ export default function WorkoutsHome() {
   const sessionsThisWeek = activeProgram ? getSessionsThisWeek(activeProgram, sessionsCompletedInProgram) : 0;
 
   return (
-    <ScrollView ref={scrollRef} className="flex-1" contentContainerStyle={{ padding: 20 }}>
+    <ScrollView ref={scrollRef} className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
       <View className="w-full max-w-md self-center">
         <Heading className="mb-1 mt-2">Workout</Heading>
         <Text className="text-slate-500 text-sm mb-4">Do as much or as little as feels right today.</Text>

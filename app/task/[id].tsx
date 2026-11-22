@@ -90,7 +90,7 @@ export default function TaskDetailScreen() {
   return (
     <SafeAreaView className="flex-1 bg-stone-50 dark:bg-slate-950">
       <ScreenBackButton />
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
         <View className="w-full max-w-md self-center">
           <Heading className="mb-2">{task?.title || 'Untitled task'}</Heading>
 

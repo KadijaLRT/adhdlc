@@ -18,7 +18,7 @@ export default function ReflectionHistoryScreen() {
   return (
     <SafeAreaView className="flex-1 bg-stone-50 dark:bg-slate-950">
       <ScreenBackButton />
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
         <View className="w-full max-w-md self-center">
           <Heading className="mb-1 mt-2">Past check-ins</Heading>
           <Text className="text-slate-500 text-sm mb-6">Everything you've written in the evening check-in, in one place.</Text>

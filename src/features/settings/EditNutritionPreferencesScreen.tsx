@@ -34,7 +34,7 @@ export default function EditNutritionPreferencesScreen() {
   return (
     <SafeAreaView className="flex-1 bg-stone-50 dark:bg-slate-950">
       <ScreenBackButton />
-      <ScrollView contentContainerStyle={{ padding: 24 }}>
+      <ScrollView contentContainerStyle={{ padding: 24, paddingBottom: 48 }}>
         <View className="w-full max-w-md self-center">
           <Text className="text-slate-900 dark:text-slate-100 text-2xl font-semibold mb-2">Food — what works for you?</Text>
           <Text className="text-slate-500 text-sm mb-6">The same questions from setup — personalizes your recipes and meal plans.</Text>

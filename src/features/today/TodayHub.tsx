@@ -28,7 +28,7 @@ export default function TodayHub() {
   }).length;
 
   return (
-    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
+    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
       <View className="w-full max-w-md self-center">
         <Heading className="mb-1 mt-2">Today</Heading>
         <Text className="text-slate-500 text-sm mb-6">One thing at a time.</Text>

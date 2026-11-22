@@ -108,7 +108,7 @@ export default function SchoolScreen() {
   };
 
   return (
-    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
+    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
       <View className="w-full max-w-md self-center">
         <Heading className="mb-1 mt-2">School</Heading>
         <Text className="text-slate-500 text-sm mb-4">What should I study next?</Text>

@@ -15,7 +15,7 @@ export default function AchievementsScreen() {
         genuinely broken spaced out across 1200px+, since it was never
         designed with that much horizontal room in mind.
       */}
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16 }}>
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 16, paddingBottom: 48 }}>
         <View className="w-full max-w-md self-center">
           <AchievementsGrid />
         </View>

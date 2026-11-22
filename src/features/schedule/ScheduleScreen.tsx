@@ -186,7 +186,7 @@ export default function ScheduleScreen() {
   };
 
   return (
-    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
+    <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
       <View className="w-full max-w-md self-center">
         <Heading className="mb-1 mt-2">Schedule</Heading>
         <Text className="text-slate-500 text-sm mb-4">What's next, not just what's stored.</Text>
@@ -343,16 +343,18 @@ export default function ScheduleScreen() {
                       {!isCollapsed && (
                         <View className="gap-2">
                           {bucketItems.map((item) => (
-                            <Pressable key={item.id} onPress={() => toggleScheduleItemDone(item.id)} className="bg-white rounded-xl p-3 flex-row items-center gap-3 dark:bg-slate-900 surf3d surf3d-tap">
-                              <View className={item.isDone ? 'w-5 h-5 rounded-full bg-emerald-500 items-center justify-center' : 'w-5 h-5 rounded-full border-2 border-stone-300 dark:border-slate-700'}>
-                                {item.isDone && <Text className="text-white text-xs">✓</Text>}
-                              </View>
-                              {item.time && <Text className="text-slate-500 text-xs w-12">{item.time}</Text>}
-                              <Text className={item.isDone ? 'text-slate-500 line-through flex-1' : 'text-slate-900 dark:text-slate-100 flex-1'}>{item.label}</Text>
-                              <Pressable onPress={() => removeScheduleItem(item.id)}>
+                            <View key={item.id} className="bg-white rounded-xl flex-row items-center dark:bg-slate-900 surf3d">
+                              <Pressable onPress={() => toggleScheduleItemDone(item.id)} className="flex-1 p-3 flex-row items-center gap-3">
+                                <View className={item.isDone ? 'w-5 h-5 rounded-full bg-emerald-500 items-center justify-center' : 'w-5 h-5 rounded-full border-2 border-stone-300 dark:border-slate-700'}>
+                                  {item.isDone && <Text className="text-white text-xs">✓</Text>}
+                                </View>
+                                {item.time && <Text className="text-slate-500 text-xs w-12">{item.time}</Text>}
+                                <Text className={item.isDone ? 'text-slate-500 line-through flex-1' : 'text-slate-900 dark:text-slate-100 flex-1'}>{item.label}</Text>
+                              </Pressable>
+                              <Pressable onPress={() => removeScheduleItem(item.id)} hitSlop={8} className="px-3 py-3 shrink-0">
                                 <Text className="text-slate-700 text-xs dark:text-slate-300">✕</Text>
                               </Pressable>
-                            </Pressable>
+                            </View>
                           ))}
                         </View>
                       )}

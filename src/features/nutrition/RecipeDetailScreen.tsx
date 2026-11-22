@@ -84,7 +84,7 @@ export default function RecipeDetailScreen({ recipeId }: { recipeId: string }) {
   return (
     <SafeAreaView className="flex-1 bg-stone-50 dark:bg-slate-950">
       <ScreenBackButton />
-      <ScrollView contentContainerStyle={{ padding: 20 }}>
+      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
         <View className="w-full max-w-md self-center">
           <View className="flex-row items-start justify-between mb-2">
             <Heading className="flex-1 pr-3">{recipe.n}</Heading>

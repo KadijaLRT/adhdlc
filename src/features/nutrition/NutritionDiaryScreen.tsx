@@ -386,7 +386,7 @@ export default function NutritionDiaryScreen() {
 
   return (
     <View className="flex-1">
-      <ScrollView className="flex-1" contentContainerStyle={{ padding: 20 }}>
+      <ScrollView className="flex-1" contentContainerStyle={{ padding: 20, paddingBottom: 48 }}>
         <View className="w-full max-w-md self-center">
           <Heading className="mb-1 mt-2">Nutrition Diary</Heading>
           <Text className="text-slate-500 text-sm mb-4">Log what you eat — no perfect days required, just what's true.</Text>
@@ -526,15 +526,15 @@ export default function NutritionDiaryScreen() {
                     </View>
                   </View>
                 ) : (
-                  <Pressable key={entry.id} onPress={() => handleStartEdit(entry)} className="flex-row items-center justify-between py-1.5 border-t border-stone-100 dark:border-slate-800">
-                    <View className="flex-1">
+                  <View key={entry.id} className="flex-row items-center justify-between border-t border-stone-100 dark:border-slate-800">
+                    <Pressable onPress={() => handleStartEdit(entry)} className="flex-1 py-1.5">
                       <Text className="text-slate-800 dark:text-slate-200 text-sm">{entry.foodName}{entry.servings !== 1 ? ` ×${entry.servings}` : ''}</Text>
                       <Text className="text-slate-500 text-xs">{entry.calories} cal · {entry.protein}p · {entry.carbs}c · {entry.fat}f</Text>
-                    </View>
-                    <Pressable onPress={() => removeFoodLogEntry(entry.id)} className="p-2">
+                    </Pressable>
+                    <Pressable onPress={() => removeFoodLogEntry(entry.id)} hitSlop={6} className="p-2 shrink-0">
                       <Text className="text-slate-400 text-xs">✕</Text>
                     </Pressable>
-                  </Pressable>
+                  </View>
                 )
               ))}
 
